@@ -23,6 +23,7 @@
 // Maximum number of range finder instances available on this platform
 #ifndef RANGEFINDER_MAX_INSTANCES
 #define RANGEFINDER_MAX_INSTANCES 10
+//#define RANGEFINDER_MAX_INSTANCES 2
 #endif
 
 #define RANGEFINDER_GROUND_CLEARANCE_CM_DEFAULT 10
@@ -146,6 +147,7 @@ public:
 
     // methods to return a distance on a particular orientation from
     // any sensor which can current supply it
+    void distance_cm_set_orient(enum Rotation orientation, uint16_t dist) const; // YIG-ADD
     uint16_t distance_cm_orient(enum Rotation orientation) const;
     uint16_t voltage_mv_orient(enum Rotation orientation) const;
     int16_t max_distance_cm_orient(enum Rotation orientation) const;

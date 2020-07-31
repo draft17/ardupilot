@@ -766,6 +766,11 @@ float Mode::get_pilot_desired_climb_rate(float throttle_control)
     return copter.get_pilot_desired_climb_rate(throttle_control);
 }
 
+bool Mode::get_pilot_desired_throttle_below(float throttle_control) // YIG-ADD
+{
+    return copter.get_pilot_desired_throttle_below(throttle_control);
+}
+
 float Mode::get_non_takeoff_throttle()
 {
     return copter.get_non_takeoff_throttle();

@@ -262,7 +262,8 @@ private:
         int16_t alt_cm_glitch_protected;    // last glitch protected altitude
         int8_t glitch_count;    // non-zero number indicates rangefinder is glitching
         uint32_t glitch_cleared_ms; // system time glitch cleared
-    } rangefinder_state, rangefinder_up_state;
+    //} rangefinder_state, rangefinder_up_state;
+    } rangefinder_state, rangefinder_up_state, rangefinder_fw_state;
 
     /*
       return rangefinder height interpolated using inertial altitude
@@ -654,6 +655,7 @@ private:
     void update_throttle_hover();
     void set_throttle_takeoff();
     float get_pilot_desired_climb_rate(float throttle_control);
+    bool get_pilot_desired_throttle_below(float throttle_control); // YIG-ADD
     float get_non_takeoff_throttle();
     float get_avoidance_adjusted_climbrate(float target_rate);
     void set_accel_throttle_I_from_pilot_throttle();

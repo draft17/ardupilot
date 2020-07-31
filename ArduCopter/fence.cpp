@@ -23,8 +23,32 @@ void Copter::fence_check()
     // if there is a new breach take action
     if (new_breaches) {
 
-        // if the user wants some kind of response and motors are armed
         uint8_t fence_act = fence.get_action();
+
+		const char *type_string = "";
+		const char *act_string = "";
+
+		if (new_breaches & AC_FENCE_TYPE_ALT_MAX) {
+			type_string = "ALTITUDE";
+		}
+		else if (new_breaches & AC_FENCE_TYPE_CIRCLE) {
+			type_string = "CIRCLE";
+		}
+		else if (new_breaches & AC_FENCE_TYPE_POLYGON) {
+			type_string = "POLYGON";
+		}
+
+		if(fence_act == AC_FENCE_ACTION_RTL_AND_LAND)
+			act_string = "RTL";
+		else if(fence_act == AC_FENCE_ACTION_ALWAYS_LAND)
+			act_string = "LAND";
+		else if(fence_act == AC_FENCE_ACTION_SMART_RTL)
+			act_string = "SMART_RTL";
+		else if(fence_act == AC_FENCE_ACTION_BRAKE)
+			act_string = "BRAKE";
+
+        // if the user wants some kind of response and motors are armed
+        //uint8_t fence_act = fence.get_action();
         if (fence_act != AC_FENCE_ACTION_REPORT_ONLY ) {
 
             // disarm immediately if we think we are on the ground or in a manual flight mode with zero throttle
@@ -37,7 +61,9 @@ void Copter::fence_check()
                 // if more than 100m outside the fence just force a land
                 if (fence.get_breach_distance(new_breaches) > AC_FENCE_GIVE_UP_DISTANCE) {
                     set_mode(Mode::Number::LAND, ModeReason::FENCE_BREACHED);
+					gcs().send_text(MAV_SEVERITY_CRITICAL,"Failsafe %s LAND", type_string);
                 } else {
+					gcs().send_text(MAV_SEVERITY_CRITICAL,"Failsafe %s %s", type_string, act_string);
                     switch (fence_act) {
                     case AC_FENCE_ACTION_RTL_AND_LAND:
                     default:
@@ -68,12 +94,17 @@ void Copter::fence_check()
                 }
             }
         }
+		else
+		{
+			gcs().send_text(MAV_SEVERITY_CRITICAL,"Failsafe %s REPORT", type_string);
+		}
 
         AP::logger().Write_Error(LogErrorSubsystem::FAILSAFE_FENCE, LogErrorCode(new_breaches));
 
     } else if (orig_breaches) {
         // record clearing of breach
         AP::logger().Write_Error(LogErrorSubsystem::FAILSAFE_FENCE, LogErrorCode::ERROR_RESOLVED);
+		gcs().send_text(MAV_SEVERITY_CRITICAL,"Geofence Failsafe CLEARED");
     }
 }
 

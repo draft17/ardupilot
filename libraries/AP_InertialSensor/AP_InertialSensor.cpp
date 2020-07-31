@@ -54,6 +54,8 @@ extern const AP_HAL::HAL& hal;
 #define DEFAULT_STILL_THRESH 0.1f
 #endif
 
+#define GENESIS_V2 1
+
 #define SAMPLE_UNIT 1
 
 #define GYRO_INIT_MAX_DIFF_DPS 0.1f
@@ -797,8 +799,21 @@ AP_InertialSensor::detect_backends(void)
         return;
     }
 #if defined(HAL_INS_PROBE_LIST)
+#ifdef GENESIS_V2
+    ADD_BACKEND(AP_InertialSensor_Invensense::probe(*this, hal.spi->get_device(HAL_INS_MPU9250_EXT_NAME), ROTATION_NONE));
+#if 0
+    ADD_BACKEND(AP_InertialSensor_LSM9DS0::probe(*this,
+                                                  hal.spi->get_device(HAL_INS_LSM9DS0_EXT_G_NAME),
+                                                  hal.spi->get_device(HAL_INS_LSM9DS0_EXT_A_NAME),
+                                                  ROTATION_YAW_180,
+                                                  ROTATION_YAW_90,
+                                                  ROTATION_YAW_270));
+#endif
+    ADD_BACKEND(AP_InertialSensor_Invensense::probe(*this, hal.spi->get_device(HAL_INS_MPU9250_NAME), ROTATION_NONE));
+#else
     // IMUs defined by IMU lines in hwdef.dat
     HAL_INS_PROBE_LIST;
+#endif
 #elif CONFIG_HAL_BOARD == HAL_BOARD_SITL
     ADD_BACKEND(AP_InertialSensor_SITL::detect(*this, INS_SITL_SENSOR_A));
     ADD_BACKEND(AP_InertialSensor_SITL::detect(*this, INS_SITL_SENSOR_B));
@@ -823,6 +838,18 @@ AP_InertialSensor::detect_backends(void)
     case AP_BoardConfig::PX4_BOARD_PIXHAWK2:
         // older Pixhawk2 boards have the MPU6000 instead of MPU9250
         _fast_sampling_mask.set_default(1);
+#ifdef GENESIS_V2
+        ADD_BACKEND(AP_InertialSensor_Invensense::probe(*this, hal.spi->get_device(HAL_INS_MPU9250_EXT_NAME), ROTATION_NONE));
+#if 0
+        ADD_BACKEND(AP_InertialSensor_LSM9DS0::probe(*this,
+                                                      hal.spi->get_device(HAL_INS_LSM9DS0_EXT_G_NAME),
+                                                      hal.spi->get_device(HAL_INS_LSM9DS0_EXT_A_NAME),
+                                                      ROTATION_YAW_180,
+                                                      ROTATION_YAW_90,
+                                                      ROTATION_YAW_270));
+#endif
+        ADD_BACKEND(AP_InertialSensor_Invensense::probe(*this, hal.spi->get_device(HAL_INS_MPU9250_NAME), ROTATION_NONE));
+#else
         ADD_BACKEND(AP_InertialSensor_Invensense::probe(*this, hal.spi->get_device(HAL_INS_MPU9250_EXT_NAME), ROTATION_PITCH_180));
         ADD_BACKEND(AP_InertialSensor_LSM9DS0::probe(*this,
                                                       hal.spi->get_device(HAL_INS_LSM9DS0_EXT_G_NAME),
@@ -835,6 +862,7 @@ AP_InertialSensor::detect_backends(void)
         ADD_BACKEND(AP_InertialSensor_Invensense::probe(*this, hal.spi->get_device("icm20602_ext"), ROTATION_ROLL_180_YAW_270));
         ADD_BACKEND(AP_InertialSensor_Invensensev2::probe(*this, hal.spi->get_device("icm20948_ext"), ROTATION_PITCH_180));
         ADD_BACKEND(AP_InertialSensor_Invensensev2::probe(*this, hal.spi->get_device("icm20948"), ROTATION_YAW_270));
+#endif
         break;
 
     case AP_BoardConfig::PX4_BOARD_FMUV5:

@@ -21,6 +21,10 @@ void Copter::init_rangefinder(void)
    // upward facing range finder
    rangefinder_up_state.alt_cm_filt.set_cutoff_frequency(RANGEFINDER_WPNAV_FILT_HZ);
    rangefinder_up_state.enabled = rangefinder.has_orientation(ROTATION_PITCH_90);
+
+   // YIG-ADD
+   rangefinder_fw_state.alt_cm_filt.set_cutoff_frequency(RANGEFINDER_WPNAV_FILT_HZ);
+   rangefinder_fw_state.enabled = rangefinder.has_orientation(ROTATION_NONE);
 #endif
 }
 
@@ -40,7 +44,8 @@ void Copter::read_rangefinder(void)
     struct {
         RangeFinderState &state;
         enum Rotation orientation;
-    } rngfnd[2] = {{rangefinder_state, ROTATION_PITCH_270}, {rangefinder_up_state, ROTATION_PITCH_90}};
+    //} rngfnd[2] = {{rangefinder_state, ROTATION_PITCH_270}, {rangefinder_up_state, ROTATION_PITCH_90}}; // YIG-ADD
+    } rngfnd[3] = {{rangefinder_state, ROTATION_PITCH_270}, {rangefinder_up_state, ROTATION_PITCH_90}, {rangefinder_fw_state, ROTATION_NONE}};
 
     for (uint8_t i=0; i < ARRAY_SIZE(rngfnd); i++) {
         // local variables to make accessing simpler
@@ -89,6 +94,56 @@ void Copter::read_rangefinder(void)
             }
             rf_state.last_healthy_ms = now;
         }
+
+
+#if 1 // YIG-ADD : AVOID
+
+		if(copter.avoid.get_margin() >= 10)
+		{
+        	if (rf_orient == ROTATION_NONE) 
+			{
+				if(copter.control_mode == Mode::Number::AUTO) {
+					if(mode_auto.mission.get_current_nav_id() == MAV_CMD_NAV_WAYPOINT || 
+					   mode_auto.mission.get_current_nav_id() == MAV_CMD_NAV_RETURN_TO_LAUNCH) {
+						if(rf_state.alt_cm > 200 && rf_state.alt_cm < (copter.avoid.get_margin() * 100)) {
+			    			copter.set_mode(Mode::Number::BRAKE, ModeReason::FAILSAFE);
+							gcs().send_text(MAV_SEVERITY_WARNING, "Failsafe OBS-F BRAKE");
+						}
+					}
+				}
+				else if(copter.control_mode == Mode::Number::LOITER ||
+						copter.control_mode == Mode::Number::ALT_HOLD) {
+					if(rf_state.alt_cm > 100 && rf_state.alt_cm < 1500) {
+			    		//copter.set_mode(Mode::Number::BRAKE, ModeReason::FAILSAFE);
+						gcs().send_text(MAV_SEVERITY_WARNING, "Failsafe OBS-F BRAKE");
+					}
+				}
+			}
+
+			if(((unsigned int)copter.avoid.get_margin() % 10) == 1)
+			{
+        		if (rf_orient == ROTATION_PITCH_270)
+				{
+					if(copter.control_mode != Mode::Number::LAND) {
+        				if(inertial_nav.get_altitude() > 1000) { // 10m
+        					if(rf_state.alt_cm > 100 && rf_state.alt_cm < 700) {
+			    				copter.set_mode(Mode::Number::BRAKE, ModeReason::FAILSAFE);
+								gcs().send_text(MAV_SEVERITY_WARNING, "Failsafe OBS-D BRAKE");
+							}
+						}
+					}
+					else if(copter.control_mode == Mode::Number::LAND) {
+        				if(inertial_nav.get_altitude() > 1000) {
+							if(rf_state.alt_cm > 100 && rf_state.alt_cm < 700) {
+			    				copter.set_mode(Mode::Number::BRAKE, ModeReason::FAILSAFE);
+								gcs().send_text(MAV_SEVERITY_WARNING, "Failsafe OBS-D BRAKE");
+							}
+						}
+					}
+				}
+			}
+		}
+#endif
 
         // send downward facing lidar altitude and health to waypoint and circle navigation libraries
         if (rf_orient == ROTATION_PITCH_270) {

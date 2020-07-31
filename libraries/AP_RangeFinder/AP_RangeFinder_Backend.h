@@ -34,6 +34,7 @@ public:
     virtual void handle_msg(const mavlink_message_t &msg) { return; }
 
     enum Rotation orientation() const { return (Rotation)params.orientation.get(); }
+    void distance_cm_set(uint16_t dist) const { state.distance_cm = dist; } // YIG-ADD
     uint16_t distance_cm() const { return state.distance_cm; }
     uint16_t voltage_mv() const { return state.voltage_mv; }
     int16_t max_distance_cm() const { return params.max_distance_cm; }

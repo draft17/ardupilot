@@ -150,7 +150,7 @@ void AP_Vehicle::scheduler_delay_callback()
     // don't allow potentially expensive logging calls:
     logger.EnableWrites(false);
 
-    const uint32_t tnow = AP_HAL::millis();
+	const uint32_t tnow = AP_HAL::millis();
     if (tnow - last_1hz > 1000) {
         last_1hz = tnow;
         gcs().send_message(MSG_HEARTBEAT);

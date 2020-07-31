@@ -332,6 +332,7 @@ uint8_t RC_Channel::percent_input() const
 */
 bool RC_Channel::in_trim_dz() const
 {
+    gcs().send_text(MAV_SEVERITY_INFO, "Radio_in %d\n", radio_in);
     return is_bounded_int32(radio_in, radio_trim - dead_zone, radio_trim + dead_zone);
 }
 

@@ -31,6 +31,8 @@ bool ModeLoiter::init(bool ignore_checks)
         pos_control->set_desired_velocity_z(inertial_nav.get_velocity_z());
     }
 
+	loiter_loop_time = AP_HAL::millis();
+
     return true;
 }
 
@@ -182,6 +184,35 @@ void ModeLoiter::run()
 
         // get avoidance adjusted climb rate
         target_climb_rate = get_avoidance_adjusted_climbrate(target_climb_rate);
+
+#if 1 // YIG-ADD : 투하시, 3.0m 이하 내려가지 않도록
+
+#if 0
+		bool healthy = ((copter.rangefinder.status_orient(ROTATION_NONE) == RangeFinder::Status::Good) &&
+		                (copter.rangefinder.range_valid_count_orient(ROTATION_NONE) >= RANGEFINDER_HEALTH_MAX));
+#endif
+		uint16_t down_dist = (uint16_t)copter.avoid.get_margin();
+
+		if(AP_HAL::millis() - loiter_loop_time > 2000)
+	    {
+			gcs().send_text(MAV_SEVERITY_INFO,"Flying %d %d", down_dist, copter.rangefinder.distance_cm_orient(ROTATION_NONE));
+			loiter_loop_time = AP_HAL::millis();
+		}
+
+		//if(healthy && (down_dist < 6 && down_dist > 2))
+		if(down_dist < 6 && down_dist > 2)
+		{
+			if(copter.rangefinder.distance_cm_orient(ROTATION_NONE) < down_dist * 100)
+			{
+				if(get_pilot_desired_throttle_below(channel_throttle->get_control_in()))
+				{
+					target_climb_rate = 0.0f;
+					//gcs().send_text(MAV_SEVERITY_INFO,"Stopped : %u below", (unsigned)copter.avoid.get_margin());
+					//gcs().send_text(MAV_SEVERITY_INFO,"Stopped");
+				}
+			}
+		}
+#endif
 
         pos_control->set_alt_target_from_climb_rate_ff(target_climb_rate, G_Dt, false);
         pos_control->update_z_controller();

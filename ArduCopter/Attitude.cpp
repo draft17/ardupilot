@@ -119,6 +119,39 @@ float Copter::get_pilot_desired_climb_rate(float throttle_control)
     return desired_rate;
 }
 
+bool Copter::get_pilot_desired_throttle_below(float throttle_control) // YIG-ADD
+{
+    // throttle failsafe check
+    if (failsafe.radio || !ap.rc_receiver_present) {
+        return 0.0f;
+    }
+
+    bool throttle_below = false;
+    float mid_stick = get_throttle_mid();
+    float deadband_top = mid_stick + g.throttle_deadzone;
+    float deadband_bottom = mid_stick - g.throttle_deadzone;
+
+    // ensure a reasonable throttle value
+    throttle_control = constrain_float(throttle_control,0.0f,1000.0f);
+
+    // ensure a reasonable deadzone
+    g.throttle_deadzone = constrain_int16(g.throttle_deadzone, 0, 400);
+
+    // check throttle is above, below or in the deadband
+    if (throttle_control < deadband_bottom) {
+        // below the deadband
+		throttle_below = true;
+    } else if (throttle_control > deadband_top) {
+        // above the deadband
+		throttle_below = false;
+    } else {
+        // must be in the deadband
+		throttle_below = false;
+    }
+
+    return throttle_below;
+}
+
 // get_non_takeoff_throttle - a throttle somewhere between min and mid throttle which should not lead to a takeoff
 float Copter::get_non_takeoff_throttle()
 {

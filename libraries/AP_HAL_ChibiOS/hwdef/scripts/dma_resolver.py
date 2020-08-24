@@ -4,7 +4,7 @@ import sys, fnmatch
 import importlib
 
 # peripheral types that can be shared, wildcard patterns
-SHARED_MAP = ["I2C*", "USART*_TX", "UART*_TX", "SPI*", "TIM*_UP"]
+SHARED_MAP = ["I2C*", "USART*_TX", "UART*_TX", "SPI*", "TIM*_UP", "ADC*"]
 
 ignore_list = []
 dma_map = None

@@ -32,6 +32,7 @@
   #endif
   #include <AP_ToshibaCAN/AP_ToshibaCAN.h>
 #endif
+#include <AP_MSC/AP_MSC.h>
 
 extern const AP_HAL::HAL& hal;
 
@@ -243,6 +244,8 @@ void SRV_Channels::push()
 
     // give robotis library a chance to update
     robotis_ptr->update();
+	AP_MSC *ap_msc = AP_MSC::get_msc();
+	ap_msc->SRV_push_servos();
     
 #if HAL_SUPPORT_RCOUT_SERIAL
     // give blheli telemetry a chance to update

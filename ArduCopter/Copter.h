@@ -67,6 +67,7 @@
 #include <AP_TempCalibration/AP_TempCalibration.h>
 #include <AC_AutoTune/AC_AutoTune.h>
 #include <AP_Common/AP_FWVersion.h>
+#include <AP_MSC/AP_MSC.h>
 
 // Configuration
 #include "defines.h"
@@ -573,6 +574,7 @@ private:
     // setup the var_info table
     AP_Param param_loader;
 
+	AP_MSC msc;
 #if FRAME_CONFIG == HELI_FRAME
     // Mode filter to reject RC Input glitches.  Filter size is 5, and it draws the 4th element, so it can reject 3 low glitches,
     // and 1 high glitch.  This is because any "off" glitches can be highly problematic for a helicopter running an ESC

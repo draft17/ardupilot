@@ -56,6 +56,7 @@ void AP_MSC::init()
         debug_msc(2, "MSC: init called more than once\n\r");
         return;
     }
+    //_dev = std::move(hal.spi->get_device("ms5611_spi5"));
     _dev = std::move(hal.spi->get_device("ms5611_spi5"));
     debug_msc(2, "MSC: SPI bus %d addr %d id %d\n\r", _dev->bus_num(), _dev->get_bus_address(), _dev->get_bus_id());
 
@@ -70,6 +71,7 @@ void AP_MSC::init()
 
     _initialized = true;
     debug_msc(2, "MSC: init done\n\r");
+    ::printf("---------MSC: init done\n\r");
 }
 
 void AP_MSC::loop(void)
@@ -140,7 +142,7 @@ void AP_MSC::SRV_send_esc(void)
                 _dev->get_semaphore()->give();
                 if(crc_crc32(0xFFFFFFFF, msc_spidata, 4) == spirxdata->spiCRC)
                     debug_msc(1, "%d %d %d\r\n", spirxdata->err, spirxdata->channel, spirxdata->rpm);
-                hal.scheduler->delay(4);
+                //hal.scheduler->delay(4);
             } else {
                 // esc_msg.cmd.push_back(static_cast<unsigned>(0));
             }

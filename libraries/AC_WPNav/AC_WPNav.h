@@ -46,13 +46,17 @@ public:
     };
 
     /// Constructor
-    AC_WPNav(const AP_InertialNav& inav, const AP_AHRS_View& ahrs, AC_PosControl& pos_control, const AC_AttitudeControl& attitude_control);
+	// YIG-CHG
+    AC_WPNav(AP_Mission &_mission, const AP_InertialNav& inav, const AP_AHRS_View& ahrs, AC_PosControl& pos_control, const AC_AttitudeControl& attitude_control);
 
     /// provide pointer to terrain database
     void set_terrain(AP_Terrain* terrain_ptr) { _terrain = terrain_ptr; }
 
     /// provide rangefinder altitude
     void set_rangefinder_alt(bool use, bool healthy, float alt_cm) { _rangefinder_available = use; _rangefinder_healthy = healthy; _rangefinder_alt_cm = alt_cm; }
+
+	// YIG-CHG, AVOID_AUTO_USE_RANGEFINDER
+	void wp_set_rangefinder(RangeFinder* rangefinder_ptr) { wp_rangefinder = rangefinder_ptr; }
 
     // return true if range finder may be used for terrain following
     bool rangefinder_used() const { return _rangefinder_use; }
@@ -178,6 +182,16 @@ public:
     /// calculate_wp_leash_length - calculates track speed, acceleration and leash lengths for waypoint controller
     void calculate_wp_leash_length();
 
+	 // YIG-ADD : AVOID_AUTO
+	 bool is_processing_avoidance() const { return _flags.processing_avoidance; }
+	 void processing_avoidance_clear() {
+	     _flags.processing_avoidance = false; do_avoid = 0; slowing_down_avoidance_time = 0;
+	     _flags.speed_down_before_avoidance = false; _obs_far_cnt = 0;
+	     auto_loop_time = AP_HAL::millis();
+	     avoid_loop_time = AP_HAL::millis();
+	}
+	//
+
     ///
     /// spline methods
     ///
@@ -259,6 +273,9 @@ protected:
         uint8_t new_wp_destination      : 1;    // true if we have just received a new destination.  allows us to freeze the position controller's xy feed forward
         SegmentType segment_type        : 1;    // active segment is either straight or spline
         uint8_t wp_yaw_set              : 1;    // true if yaw target has been set
+		// YIG-ADD : AVOID_AUTO
+		uint8_t processing_avoidance	: 1;
+		uint8_t speed_down_before_avoidance	: 1;
     } _flags;
 
     /// calc_slow_down_distance - calculates distance before waypoint that target point should begin to slow-down assuming it is traveling at full speed
@@ -300,6 +317,11 @@ protected:
     const AC_AttitudeControl& _attitude_control;
     AP_Terrain              *_terrain;
 
+	// YIG-ADD, AVOID_AUTO
+	AC_Avoid			*_avoid = nullptr;
+	AP_Mission&         mission;
+	RangeFinder         *wp_rangefinder = nullptr;
+
     // parameters
     AP_Float    _wp_speed_cms;          // default maximum horizontal speed in cm/s during missions
     AP_Float    _wp_speed_up_cms;       // default maximum climb rate in cm/s
@@ -318,6 +340,9 @@ protected:
     float       _track_length;          // distance in cm between origin and destination
     float       _track_length_xy;       // horizontal distance in cm between origin and destination
     float       _track_desired;         // our desired distance along the track in cm
+	// YIG-ADD
+    float       _avoid_track_desired;   // our desired distance along the track in cm
+	//
     float       _limited_speed_xy_cms;  // horizontal speed in cm/s used to advance the intermediate target towards the destination.  used to limit extreme acceleration after passing a waypoint
     float       _track_accel;           // acceleration along track
     float       _track_speed;           // speed in cm/s along track
@@ -339,4 +364,12 @@ protected:
     AP_Int8     _rangefinder_use;
     bool        _rangefinder_healthy;
     float       _rangefinder_alt_cm;
+
+	// YIG-ADD
+	uint8_t     do_avoid = 0;
+	uint8_t     _obs_far_cnt = 0;
+	uint32_t    slowing_down_avoidance_time = 0;
+	uint32_t    auto_loop_time = 0;
+	uint32_t    avoid_loop_time = 0;
+	// 
 };

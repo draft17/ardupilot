@@ -163,6 +163,9 @@ void Copter::init_ardupilot()
     // initialise rangefinder
     init_rangefinder();
 
+	// YIG-ADD : AVOID_AUTO
+	wp_nav->wp_set_rangefinder(&rangefinder);
+
     // init proximity sensor
     init_proximity();
 
@@ -558,9 +561,11 @@ void Copter::allocate_motors(void)
     AP_Param::load_object_from_eeprom(pos_control, pos_control->var_info);
 
 #if AC_OAPATHPLANNER_ENABLED == ENABLED
-    wp_nav = new AC_WPNav_OA(inertial_nav, *ahrs_view, *pos_control, *attitude_control);
+	// YIG-CHG
+    wp_nav = new AC_WPNav_OA(mode_auto.mission, inertial_nav, *ahrs_view, *pos_control, *attitude_control);
 #else
-    wp_nav = new AC_WPNav(inertial_nav, *ahrs_view, *pos_control, *attitude_control);
+	// YIG-CHG
+    wp_nav = new AC_WPNav(mode_auto.mission, inertial_nav, *ahrs_view, *pos_control, *attitude_control);
 #endif
     if (wp_nav == nullptr) {
         AP_HAL::panic("Unable to allocate WPNav");

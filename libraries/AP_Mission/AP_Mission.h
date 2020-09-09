@@ -357,6 +357,16 @@ public:
     ///     previous running commands will be re-initialised
     void resume();
 
+	// YIG-ADD : AVOID_AUTO
+	void assert_for_avoid(uint8_t& arrow, float yaw_head, float avoid_len, bool avoid_opt);
+	uint16_t curr_nav_idx();
+	float nav_loc_alt();
+	bool mode_for_avoid();
+	bool get_avoid_flag();
+	void get_origin(Vector3f& Origin);
+	void location_for_avoid(Location& loc);
+	//
+
     /// start_or_resume - if MIS_AUTORESTART=0 this will call resume(), otherwise it will call start()
     void start_or_resume();
 
@@ -516,11 +526,23 @@ private:
 
     static bool stored_in_location(uint16_t id);
 
+	// YIG-ADD : AVOID_AUTO
+	uint8_t direction_avoid;
+	float length_avoid;
+	float yaw_avoid;
+	bool opt_avoid;
+	Location _prev_nav_cmd_location;
+	Vector3f _origin_avoid;
+	//
+
     struct Mission_Flags {
         mission_state state;
         uint8_t nav_cmd_loaded    : 1; // true if a "navigation" command has been loaded into _nav_cmd
         uint8_t do_cmd_loaded     : 1; // true if a "do"/"conditional" command has been loaded into _do_cmd
         uint8_t do_cmd_all_done   : 1; // true if all "do"/"conditional" commands have been completed (stops unnecessary searching through eeprom for do commands)
+		// YIG-ADD : AVOID_AUTO
+		uint8_t need_avoid		  : 1;
+		//
         bool in_landing_sequence  : 1; // true if the mission has jumped to a landing
         bool resuming_mission     : 1; // true if the mission is resuming and set false once the aircraft attains the interupted WP
     } _flags;

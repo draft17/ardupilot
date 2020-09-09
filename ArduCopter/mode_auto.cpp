@@ -37,6 +37,11 @@ bool ModeAuto::init(bool ignore_checks)
             auto_yaw.set_mode(AUTO_YAW_HOLD);
         }
 
+		 // YIG-ADD : AVOID_AUTO
+		 wp_nav->processing_avoidance_clear();
+		 gcs().send_text(MAV_SEVERITY_INFO, "Processing_avoidance_clear");
+		 //
+
         // initialise waypoint and spline controller
         wp_nav->wp_and_spline_init();
 
@@ -1101,6 +1106,13 @@ Location ModeAuto::loc_from_cmd(const AP_Mission::Mission_Command& cmd) const
 void ModeAuto::do_nav_wp(const AP_Mission::Mission_Command& cmd)
 {
     Location target_loc = loc_from_cmd(cmd);
+
+	// YIG-ADD : AVOID_AUTO
+	if(mission.get_avoid_flag()) {
+		mission.location_for_avoid(target_loc);
+        gcs().send_text(MAV_SEVERITY_INFO, "Auto : new avoid waypoint");
+	}
+	//
 
     // this will be used to remember the time in millis after we reach or pass the WP.
     loiter_time = 0;

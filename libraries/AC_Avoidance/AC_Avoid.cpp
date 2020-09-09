@@ -18,6 +18,7 @@
 #include <AC_Fence/AC_Fence.h>         // Failsafe fence library
 #include <AP_Proximity/AP_Proximity.h>
 #include <AP_Beacon/AP_Beacon.h>
+#include <GCS_MAVLink/GCS.h>
 
 #include <stdio.h>
 
@@ -286,6 +287,15 @@ float AC_Avoid::get_max_speed(float kP, float accel_cmss, float distance_cm, flo
         return AC_AttitudeControl::sqrt_controller(distance_cm, kP, accel_cmss, dt);
     }
 }
+
+// YIG-ADD
+float AC_Avoid::adjust_velocity_circle_fence_margin()
+{
+    //gcs().send_text(MAV_SEVERITY_INFO, "fence %4.2f", _fence.get_margin());
+	AC_Fence *_fence = AP::fence();
+	return (_fence->get_margin() * 100.0f);
+}
+//
 
 /*
  * Adjusts the desired velocity for the circular fence.
@@ -814,6 +824,13 @@ void AC_Avoid::adjust_velocity_polygon(float kP, float accel_cmss, Vector2f &des
         desired_vel_cms.y = safe_vel.x * _ahrs.sin_yaw() + safe_vel.y * _ahrs.cos_yaw();
     }
 }
+
+// YIG-ADD
+float AC_Avoid::fence_margin()
+{
+	return adjust_velocity_circle_fence_margin();
+}
+//
 
 /*
  * Computes distance required to stop, given current speed.

@@ -30,6 +30,8 @@ protected:
 
 private:
     uint16_t distance_cm;
+    uint16_t ri_distance_cm;
+    uint16_t le_distance_cm;
 
     // start a reading
     static bool start_reading(void);

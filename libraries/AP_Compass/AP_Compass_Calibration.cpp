@@ -267,6 +267,21 @@ bool Compass::send_mag_cal_report(const GCS_MAVLINK& link)
     return true;
 }
 
+// YIG-DIAG
+bool Compass::is_calibrating_instance(uint8_t instance) const
+{
+	switch(_calibrator[instance].get_status()) {
+    	case CompassCalibrator::Status::NOT_STARTED:
+        case CompassCalibrator::Status::SUCCESS:
+        case CompassCalibrator::Status::FAILED:
+        case CompassCalibrator::Status::BAD_ORIENTATION:
+            return false;
+        default:
+            return true;
+    }
+}
+//
+
 bool Compass::is_calibrating() const
 {
     for (uint8_t i=0; i<COMPASS_MAX_INSTANCES; i++) {

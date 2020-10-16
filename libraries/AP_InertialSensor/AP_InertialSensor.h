@@ -141,6 +141,7 @@ public:
     bool get_accel_health(void) const { return get_accel_health(_primary_accel); }
     bool get_accel_health_all(void) const;
     uint8_t get_accel_count(void) const { return _accel_count; }
+    bool accel_calibrated_ok(uint8_t instance) const;
     bool accel_calibrated_ok_all() const;
     bool use_accel(uint8_t instance) const;
 

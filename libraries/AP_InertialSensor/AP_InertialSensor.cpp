@@ -1025,6 +1025,35 @@ failed:
 /*
   check if the accelerometers are calibrated in 3D and that current number of accels matched number when calibrated
  */
+// YIG-ADD
+bool AP_InertialSensor::accel_calibrated_ok(uint8_t instance) const
+{
+    // calibration is not applicable for HIL mode
+    if (_hil_mode) {
+        return true;
+    }
+
+    // check each accelerometer has offsets saved
+    if (!_accel_id_ok[instance]) {
+        return false;
+    }
+    // exactly 0.0 offset is extremely unlikely
+    if (_accel_offset[instance].get().is_zero()) {
+        return false;
+    }
+    // zero scaling also indicates not calibrated
+    if (_accel_scale[instance].get().is_zero()) {
+        return false;
+    }
+    if (_accel_id[instance] != 0) {
+        // missing accel
+        return false;
+    }
+
+	return true;
+}
+//
+
 bool AP_InertialSensor::accel_calibrated_ok_all() const
 {
     // calibration is not applicable for HIL mode
@@ -1315,15 +1344,41 @@ void AP_InertialSensor::update(void)
         for (uint8_t i=0; i<INS_MAX_INSTANCES; i++) {
             if (_gyro_healthy[i] && _use[i]) {
                 _primary_gyro = i;
+
+				// YIG-ADD
+				AP_Notify::diag_status.pri_gyro = i;
+
                 break;
             }
         }
+
+		// YIG-ADD
+		for (uint8_t i=0; i<INS_MAX_INSTANCES; i++) {
+			if (_gyro_healthy[i] && _use[i])
+				AP_Notify::diag_status.gyro_failed[i] = true;
+			else
+			    AP_Notify::diag_status.gyro_failed[i] = false;
+	    }
+
         for (uint8_t i=0; i<INS_MAX_INSTANCES; i++) {
             if (_accel_healthy[i] && _use[i]) {
                 _primary_accel = i;
+
+				// YIG-ADD
+				AP_Notify::diag_status.pri_accel = i;
+
                 break;
             }
         }
+
+		// YIG-ADD
+		for (uint8_t i=0; i<INS_MAX_INSTANCES; i++) {
+			if (_accel_healthy[i] && _use[i])
+				AP_Notify::diag_status.accel_failed[i] = true;
+			else
+			    AP_Notify::diag_status.accel_failed[i] = false;
+	    }
+
     }
 
     _last_update_usec = AP_HAL::micros();

@@ -5,6 +5,7 @@
 #include <AP_HAL/I2CDevice.h>
 
 #define NUM_SF20_DATA_STREAMS 1
+#define SP_LIDAR 2
 
 class AP_RangeFinder_LightWareI2C : public AP_RangeFinder_Backend
 {

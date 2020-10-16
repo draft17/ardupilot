@@ -181,6 +181,7 @@ AP_Notify::AP_Notify()
 // static flags, to allow for direct class update from device drivers
 struct AP_Notify::notify_flags_and_values_type AP_Notify::flags;
 struct AP_Notify::notify_events_type AP_Notify::events;
+struct AP_Notify::notify_diagnosis_status AP_Notify::diag_status; // YIG-DIAG
 
 NotifyDevice *AP_Notify::_devices[CONFIG_NOTIFY_DEVICES_MAX];
 uint8_t AP_Notify::_num_devices;

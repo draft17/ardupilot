@@ -782,14 +782,33 @@ void AP_Baro::update(void)
     // choose primary sensor
     if (_primary_baro >= 0 && _primary_baro < _num_sensors && healthy(_primary_baro)) {
         _primary = _primary_baro;
+
+		// YIG-ADD
+		AP_Notify::diag_status.pri_baro = _primary_baro;
+
     } else {
         _primary = 0;
         for (uint8_t i=0; i<_num_sensors; i++) {
             if (healthy(i)) {
                 _primary = i;
+
+				// YIG-ADD
+				AP_Notify::diag_status.pri_baro = _primary;
+				// End
+
                 break;
             }
         }
+
+		// YIG-ADD
+		for (uint8_t i=0; i<_num_sensors; i++) 
+		{
+			if (healthy(i))
+				AP_Notify::diag_status.baro_failed[i] = true;
+			else
+			    AP_Notify::diag_status.baro_failed[i] = false;
+	    }
+
     }
 
     // logging

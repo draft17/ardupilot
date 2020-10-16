@@ -8,6 +8,7 @@
 #include <AP_RangeFinder/RangeFinder_Backend.h>
 #include <AP_GPS/AP_GPS.h>
 #include <AP_Baro/AP_Baro.h>
+#include <AP_Notify/AP_Notify.h> // YIG-DIAG
 
 #include <stdio.h>
 
@@ -198,6 +199,12 @@ void NavEKF2_core::readMagData()
     uint8_t maxCount = _ahrs->get_compass()->get_count();
     if (allMagSensorsFailed || (magTimeout && assume_zero_sideslip() && magSelectIndex >= maxCount-1 && inFlight)) {
         allMagSensorsFailed = true;
+
+		// YIG-DIAG
+		AP_Notify::diag_status.compass_failed[0] = 1;
+		AP_Notify::diag_status.compass_failed[1] = 1;
+		AP_Notify::diag_status.compass_failed[2] = 1;
+
         return;
     }
 

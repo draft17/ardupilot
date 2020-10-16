@@ -228,9 +228,11 @@ bool AC_WPNav::set_wp_origin_and_destination(const Vector3f& origin, const Vecto
     _origin = origin;
     _destination = destination;
     _terrain_alt = terrain_alt;
-    Vector3f pos_delta = _destination - _origin;
+    Vector3f pos_delta = _destination - _origin; // 벡터의 뺄셈은 벡터의 방향(출발점에서 도착점의로의 방향)을 구함
 
-    _track_length = pos_delta.length(); // get track length
+    _track_length = pos_delta.length(); // get track length : 일반벡터의 길이(3차원임)
+
+	// 2차원(xy) 벡터의 길이 구함 : Root(x제곱 + y제곱)
     _track_length_xy = safe_sqrt(sq(pos_delta.x)+sq(pos_delta.y));  // get horizontal track length (used to decide if we should update yaw)
 
     // calculate each axis' percentage of the total distance to the destination
@@ -240,7 +242,7 @@ bool AC_WPNav::set_wp_origin_and_destination(const Vector3f& origin, const Vecto
         _pos_delta_unit.y = 0;
         _pos_delta_unit.z = 0;
     }else{
-        _pos_delta_unit = pos_delta/_track_length;
+        _pos_delta_unit = pos_delta/_track_length; // 각 축의 단위벡터(origin에서 destination을 바라보는 1의 길이를 가진 방향만을 가진 벡터) 생성 : 정규화
     }
 
     // calculate leash lengths
@@ -320,6 +322,7 @@ bool AC_WPNav::advance_wp_target_along_track(float dt)
     float track_desired_max;    // the farthest distance (in cm) along the track that the leash will allow
     float track_leash_slack;    // additional distance (in cm) along the track from our track_covered position that our leash will allow
     bool reached_leash_limit = false;   // true when track has reached leash limit and we need to slow down the target point
+	// leash : 구간 최대속도로 갈 수 있는 위치로 그 위치를 넘어서 목적지가 있으므로 속도를 줄여야함
 
     // get current location
     const Vector3f &curr_pos = _inav.get_position();
@@ -331,15 +334,18 @@ bool AC_WPNav::advance_wp_target_along_track(float dt)
     }
 
     // calculate 3d vector from segment's origin
-    Vector3f curr_delta = (curr_pos - Vector3f(0,0,terr_offset)) - _origin;
+    Vector3f curr_delta = (curr_pos - Vector3f(0,0,terr_offset)) - _origin; // 출발지점에서 현위치로의 3차원 방향벡터 구함
 
     // calculate how far along the track we are
+	// 기체가 원래의 트랙 방향을 벗어날 수 있으므로, 트랙 라인 상의 거리로 환산해놓음
     track_covered = curr_delta.x * _pos_delta_unit.x + curr_delta.y * _pos_delta_unit.y + curr_delta.z * _pos_delta_unit.z;
 
     // calculate the point closest to the vehicle on the segment from origin to destination
+	// 트랙상의 벡터로 변환
     Vector3f track_covered_pos = _pos_delta_unit * track_covered;
 
     // calculate the distance vector from the vehicle to the closest point on the segment from origin to destination
+	// 원래 트랙 상의 위치에서 현재 기체로의 벡터 계산
     track_error = curr_delta - track_covered_pos;
 
     // calculate the horizontal error
@@ -384,7 +390,7 @@ bool AC_WPNav::advance_wp_target_along_track(float dt)
     }else{
         // increase intermediate target point's velocity if not yet at the leash limit
         if(dt > 0 && !reached_leash_limit) {
-            _limited_speed_xy_cms += 2.0f * _track_accel * dt;
+            _limited_speed_xy_cms += 2.0f * _track_accel * dt; // 속도 = 가속도 * 시간
         }
         // do not allow speed to be below zero or over top speed
         _limited_speed_xy_cms = constrain_float(_limited_speed_xy_cms, 0.0f, _track_speed);
@@ -408,7 +414,7 @@ bool AC_WPNav::advance_wp_target_along_track(float dt)
     }
     // advance the current target
     if (!reached_leash_limit) {
-    	_track_desired += _limited_speed_xy_cms * dt;
+    	_track_desired += _limited_speed_xy_cms * dt; // 거리 = 속력 * 시간
 
     	// reduce speed if we reach end of leash
         if (_track_desired > track_desired_max) {
@@ -428,6 +434,7 @@ bool AC_WPNav::advance_wp_target_along_track(float dt)
     }
 
     // recalculate the desired position
+	// 현재 위치에서 단위벡터 거리만큼 추가 target point 설정
     Vector3f final_target = _origin + _pos_delta_unit * _track_desired;
     // convert final_target.z to altitude above the ekf origin
     final_target.z += terr_offset;
@@ -528,7 +535,7 @@ void AC_WPNav::check_wp_leash_length()
 void AC_WPNav::calculate_wp_leash_length()
 {
     // length of the unit direction vector in the horizontal
-    float pos_delta_unit_xy = norm(_pos_delta_unit.x, _pos_delta_unit.y);
+    float pos_delta_unit_xy = norm(_pos_delta_unit.x, _pos_delta_unit.y); // xy방향의 "단위벡터" 구함 : Root(1의제곱 + 1의제곱) = 1.41421356...
     float pos_delta_unit_z = fabsf(_pos_delta_unit.z);
 
     float speed_z;
@@ -554,7 +561,7 @@ void AC_WPNav::calculate_wp_leash_length()
         _track_accel = _wp_accel_z_cmss/pos_delta_unit_z;
         _track_speed = speed_z/pos_delta_unit_z;
         _track_leash_length = leash_z/pos_delta_unit_z;
-    }else{
+    }else{ // 3차원 벡터일경우(즉, 고도까지 고려) 고도설정 속도에 맞춤 : 고도설정 속도를 빠르게 해야할 것임
         _track_accel = MIN(_wp_accel_z_cmss/pos_delta_unit_z, _wp_accel_cmss/pos_delta_unit_xy);
         _track_speed = MIN(speed_z/pos_delta_unit_z, _pos_control.get_max_speed_xy() / pos_delta_unit_xy);
         _track_leash_length = MIN(leash_z/pos_delta_unit_z, _pos_control.get_leash_xy()/pos_delta_unit_xy);

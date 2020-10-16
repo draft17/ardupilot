@@ -51,6 +51,8 @@ protected:
     bool oa_checks(bool display_failure);
     bool mandatory_gps_checks(bool display_failure);
     bool gcs_failsafe_check(bool display_failure);
+	// YIG-ADD
+    bool interlock_estop_checks(bool display_failure);
 
     void set_pre_arm_check(bool b);
 

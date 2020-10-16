@@ -8,6 +8,8 @@
 
 enum ap_message : uint8_t {
     MSG_HEARTBEAT,
+	// YIG-ADD
+    MSG_REDUNDANCY,
     MSG_ATTITUDE,
     MSG_LOCATION,
     MSG_SYS_STATUS,

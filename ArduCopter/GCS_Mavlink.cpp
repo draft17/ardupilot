@@ -1289,6 +1289,15 @@ void Copter::mavlink_delay_cb()
     logger.EnableWrites(true);
 }
 
+// YIG-ADD
+void Copter::transfer_redundancy(uint16_t switch_over)
+{
+    //gcs().send_redundancy(switch_over);
+    gcs().send_message(MSG_REDUNDANCY);
+	gcs().send_text(MAV_SEVERITY_WARNING, "Redundancy Module : F/C Switch Over !!!!");
+}
+//
+
 MAV_RESULT GCS_MAVLINK_Copter::handle_flight_termination(const mavlink_command_long_t &packet) {
     MAV_RESULT result = MAV_RESULT_FAILED;
 

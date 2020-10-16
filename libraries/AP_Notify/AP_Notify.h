@@ -125,10 +125,40 @@ public:
         uint32_t tune_error             : 1;    // tuning controller error
     };
 
+	// YIG-ADD
+	struct notify_diagnosis_status {
+		bool ov;
+		bool oc;
+		bool ot;
+		bool deadlock;
+		bool gyro_failed[3];
+		bool accel_failed[3];
+		bool baro_failed[2];
+		bool compass_failed[3];
+		bool gps_failed[3];
+		bool lidar_failed[2];
+		bool lte_link_failed[3];
+		bool rf_link_failed;
+		bool motor_failed[8];
+		bool storage_failed[2];
+		bool watchdog_on;
+		uint8_t pri_gyro;
+		uint8_t pri_accel;
+		uint8_t pri_baro;
+		uint8_t pri_compass;
+		uint8_t pri_gps;
+		uint8_t pri_lidar;
+		uint8_t pri_lte;
+		uint8_t pri_storage;
+		uint32_t watchdog_pat_time;
+	};
+	// End
+
     // The notify flags and values are static to allow direct class access
     // without declaring the object.
     static struct notify_flags_and_values_type flags;
     static struct notify_events_type events;
+	static struct notify_diagnosis_status diag_status; // YIG-ADD
 
     // initialisation
     void init(void);

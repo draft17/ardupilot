@@ -330,6 +330,21 @@ void GCS_MAVLINK::send_rangefinder() const
             s->voltage_mv() * 0.001f);
 }
 
+ // YIG-ADD : redundancy data send
+void GCS_MAVLINK::send_redundancy_data(uint16_t fc_switch_over)
+{
+     mavlink_msg_distance_sensor_send(
+         chan,
+         AP_HAL::millis(),
+         20,
+         100,
+         (uint16_t)(fc_switch_over),
+         MAV_DISTANCE_SENSOR_LASER,
+         11,
+         MAV_SENSOR_ROTATION_PITCH_90,
+         0, 0, 0, nullptr);
+}
+
 void GCS_MAVLINK::send_proximity() const
 {
     AP_Proximity *proximity = AP_Proximity::get_singleton();
@@ -1855,6 +1870,13 @@ void GCS::send_message(enum ap_message id)
     }
 }
 
+// YIG-ADD : redundancy data send
+void GCS::send_redundancy(uint16_t fc_switch_over)
+{
+    chan(0)->send_redundancy_data(fc_switch_over);
+    chan(1)->send_redundancy_data(fc_switch_over);
+}
+
 void GCS::update_send()
 {
     if (!initialised_missionitemprotocol_objects) {
@@ -2247,6 +2269,17 @@ void GCS_MAVLINK::send_heartbeat() const
         base_mode(),
         gcs().custom_mode(),
         system_status());
+}
+
+void GCS_MAVLINK::send_redundancy() const
+{
+    mavlink_msg_heartbeat_send(
+        chan,
+        gcs().frame_type(),
+        MAV_AUTOPILOT_ARDUPILOTMEGA,
+        base_mode(),
+        gcs().custom_mode(),
+        7);
 }
 
 MAV_RESULT GCS_MAVLINK::handle_command_set_message_interval(const mavlink_command_long_t &packet)
@@ -4190,6 +4223,13 @@ bool GCS_MAVLINK::try_send_message(const enum ap_message id)
         last_heartbeat_time = AP_HAL::millis();
         send_heartbeat();
         break;
+
+	// YIG-ADD
+	case MSG_REDUNDANCY:
+	    CHECK_PAYLOAD_SIZE(HEARTBEAT);
+	    last_heartbeat_time = AP_HAL::millis();
+	    send_redundancy();
+	    break;
 
     case MSG_HWSTATUS:
         CHECK_PAYLOAD_SIZE(HWSTATUS);

@@ -15,6 +15,7 @@
 
 #include "AP_RangeFinder_MAVLink.h"
 #include <AP_HAL/AP_HAL.h>
+#include <AP_Notify/AP_Notify.h>
 
 
 
@@ -69,6 +70,11 @@ void AP_RangeFinder_MAVLink::update(void)
     if (AP_HAL::millis() - state.last_reading_ms > AP_RANGEFINDER_MAVLINK_TIMEOUT_MS) {
         set_status(RangeFinder::RangeFinder_NoData);
         state.distance_cm = 0;
+
+		// YIG-DIAG
+		AP_Notify::diag_status.lidar_failed[0] = 1;
+		AP_Notify::diag_status.pri_lidar = 2;
+
     } else {
         state.distance_cm = distance_cm;
         update_status();

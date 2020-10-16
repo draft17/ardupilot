@@ -71,6 +71,7 @@ public:
     void        send_text(MAV_SEVERITY severity, const char *fmt, ...) const FMT_PRINTF(3, 4);
     void        queued_param_send();
     void        queued_mission_request_send();
+	void send_redundancy_data(uint16_t fc_switch_over); // YIG-ADD
 
     bool sending_mavlink1() const;
 
@@ -168,6 +169,7 @@ public:
 
     // common send functions
     void send_heartbeat(void) const;
+	void send_redundancy(void) const; // YIG-ADD
     void send_meminfo(void);
     void send_fence_status() const;
     void send_power_status(void);
@@ -841,6 +843,7 @@ public:
 
     void setup_console();
     void setup_uarts();
+	void send_redundancy(uint16_t fc_switch_over); // YIG-ADD
 
     bool out_of_time() const;
 

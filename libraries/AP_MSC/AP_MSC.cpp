@@ -166,6 +166,16 @@ void AP_MSC::SRV_push_servos()
     _SRV_armed = hal.util->safety_switch_state() != AP_HAL::Util::SAFETY_DISARMED;
 }
 
+bool AP_MSC::motor_status_check(uint8_t num, uint32_t &error_code)
+{
+	if (_motor_status[num].err_code) {
+		error_code = _motor_status[num].err_code; 
+		return false;
+	}
+
+	return true;
+}
+
 AP_MSC *AP_MSC::msc_singleton;
 
 #endif // HAL_WITH_MSC

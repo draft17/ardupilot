@@ -432,6 +432,10 @@ private:
         uint8_t primary_gps : 2;    // primary gps index
     } sensor_health;
 
+     // YIG-ADD
+     bool fc_switch_over;
+     bool diagnosis_enabled;
+
     // Motor Output
     MOTOR_CLASS *motors;
     const struct AP_Param::GroupInfo *motors_var_info;
@@ -753,8 +757,14 @@ private:
     void afs_fs_check(void);
 #endif
 
+	// YIG-ADD
+	void enable_diagnosis();
+	void disable_diagnosis();
+
     // fence.cpp
     void fence_check();
+
+	void transfer_redundancy(uint16_t switch_over);
 
     // heli.cpp
     void heli_init();
@@ -1006,6 +1016,10 @@ private:
 public:
     void mavlink_delay_cb();    // GCS_Mavlink.cpp
     void failsafe_check();      // failsafe.cpp
+
+	// YIG-ADD
+	bool check_diagnosis();     // failsafe.cpp
+	bool redundancy_transfer(); // failsafe.cpp
 };
 
 extern Copter copter;

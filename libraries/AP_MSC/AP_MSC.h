@@ -37,6 +37,7 @@ public:
 
     ///// SRV output /////
     void SRV_push_servos(void);
+	bool motor_status_check(uint8_t num, uint32_t &error_code);
 
  private:
 
@@ -58,6 +59,11 @@ public:
         bool esc_pending;
         bool servo_pending;
     } _SRV_conf[MSC_SRV_NUMBER];
+
+    struct {
+        uint32_t err_code;
+        uint32_t rpm;
+    } _motor_status[MSC_SRV_NUMBER];
 
     uint8_t _SRV_armed;
     HAL_Semaphore SRV_sem;

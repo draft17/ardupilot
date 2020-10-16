@@ -280,6 +280,10 @@ void Copter::fast_loop()
     if (should_log(MASK_LOG_ANY)) {
         Log_Sensor_Health();
     }
+
+	// YIG-ADD
+	check_diagnosis();
+	redundancy_transfer();
 }
 
 // rc_loops - reads user input from transmitter/receiver

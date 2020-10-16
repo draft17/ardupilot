@@ -15,6 +15,7 @@
 #include "AP_RangeFinder_LightWareI2C.h"
 #include <AP_HAL/AP_HAL.h>
 #include <AP_HAL/utility/sparse-endian.h>
+#include <AP_Notify/AP_Notify.h> // YIG-DIAG
 
 extern const AP_HAL::HAL& hal;
 
@@ -350,6 +351,11 @@ bool AP_RangeFinder_LightWareI2C::legacy_get_reading(uint16_t &reading_cm)
     if (_dev->transfer(&read_reg, 1, (uint8_t *)&val, sizeof(val))) {
         // combine results into distance
         reading_cm = be16toh(val);
+
+		// YIG-DIAG
+		if(!AP_Notify::diag_status.lidar_failed[1] && AP_Notify::diag_status.pri_lidar != SP_LIDAR) // SP_LIDAR : 2
+			reading_cm = 10;
+
         return true;
     }
     return false;
@@ -454,6 +460,7 @@ void AP_RangeFinder_LightWareI2C::legacy_timer(void)
         update_status();
     } else {
         set_status(RangeFinder::RangeFinder_NoData);
+		AP_Notify::diag_status.lidar_failed[1] = 1; // YIG-DIAG
     }
 }
 

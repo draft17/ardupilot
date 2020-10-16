@@ -5,6 +5,7 @@
 #include <AP_Vehicle/AP_Vehicle.h>
 #include <AP_BoardConfig/AP_BoardConfig.h>
 #include <AP_Logger/AP_Logger.h>
+#include <AP_Notify/AP_Notify.h> // YIG-ADD
 
 #include "AP_Compass_SITL.h"
 #include "AP_Compass_AK8963.h"
@@ -983,6 +984,16 @@ Compass::read(void)
     for (uint8_t i=0; i < COMPASS_MAX_INSTANCES; i++) {
         _state[i].healthy = (time - _state[i].last_update_ms < 500);
     }
+
+	// YIG-ADD
+	uint8_t j;
+	for (j=0; j < COMPASS_MAX_INSTANCES; j++) {
+		if(_state[j].healthy)
+			AP_Notify::diag_status.compass_failed[j] = true;
+		else
+		    AP_Notify::diag_status.compass_failed[j] = false;
+    }
+
 #if COMPASS_LEARN_ENABLED
     if (_learn == LEARN_INFLIGHT && !learn_allocated) {
         learn_allocated = true;

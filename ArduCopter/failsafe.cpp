@@ -71,6 +71,96 @@ void Copter::failsafe_check()
     }
 }
 
+#if 1 // YIG-ADD
+void Copter::disable_diagnosis()
+{
+	diagnosis_enabled = false;
+}
+
+void Copter::enable_diagnosis()
+{
+	// 초기화
+	AP_Notify::diag_status.ov = 0;
+	AP_Notify::diag_status.oc = 0;
+	AP_Notify::diag_status.ot = 0;
+	AP_Notify::diag_status.deadlock = 0;
+	AP_Notify::diag_status.gyro_failed[0] = 0;
+	AP_Notify::diag_status.gyro_failed[1] = 0;
+	AP_Notify::diag_status.gyro_failed[2] = 0;
+	AP_Notify::diag_status.pri_gyro = 0;
+	AP_Notify::diag_status.accel_failed[0] = 0;
+	AP_Notify::diag_status.accel_failed[1] = 0;
+	AP_Notify::diag_status.accel_failed[2] = 0;
+	AP_Notify::diag_status.pri_accel = 0;
+	AP_Notify::diag_status.compass_failed[0] = 0;
+	AP_Notify::diag_status.compass_failed[1] = 0;
+	AP_Notify::diag_status.compass_failed[2] = 0;
+	AP_Notify::diag_status.pri_compass = 0;
+	AP_Notify::diag_status.baro_failed[0] = 0;
+	AP_Notify::diag_status.baro_failed[1] = 0;
+	AP_Notify::diag_status.pri_baro = 0;
+	AP_Notify::diag_status.gps_failed[0] = 0;
+	AP_Notify::diag_status.gps_failed[1] = 0;
+	AP_Notify::diag_status.gps_failed[2] = 0;
+	AP_Notify::diag_status.pri_gps = 0;
+	AP_Notify::diag_status.lidar_failed[0] = 0;
+	AP_Notify::diag_status.lidar_failed[1] = 0;
+	AP_Notify::diag_status.pri_lidar = 0;
+	AP_Notify::diag_status.lte_link_failed[0] = 0;
+	AP_Notify::diag_status.lte_link_failed[1] = 0;
+	AP_Notify::diag_status.pri_lte = 0;
+	AP_Notify::diag_status.rf_link_failed = 0;
+	AP_Notify::diag_status.storage_failed[0] = 0;
+	AP_Notify::diag_status.storage_failed[1] = 0; // not used :  FC#2에 동시 저장됨
+	AP_Notify::diag_status.pri_storage = 0; // not used
+    AP_Notify::diag_status.watchdog_on = 0;
+    fc_switch_over = false;
+
+    diagnosis_enabled = true;
+}
+
+bool Copter::check_diagnosis()
+{
+	if(!diagnosis_enabled) return false;
+
+    if(AP_Notify::diag_status.ov || AP_Notify::diag_status.oc ||
+	   AP_Notify::diag_status.ot || AP_Notify::diag_status.deadlock)
+		fc_switch_over = true;
+
+	else if(AP_Notify::diag_status.gyro_failed[0] && AP_Notify::diag_status.gyro_failed[1] && AP_Notify::diag_status.gyro_failed[2])
+		fc_switch_over = true;
+
+	else if(AP_Notify::diag_status.accel_failed[0] && AP_Notify::diag_status.accel_failed[1] && AP_Notify::diag_status.accel_failed[2])
+		fc_switch_over = true;
+
+	else if(AP_Notify::diag_status.baro_failed[0] && AP_Notify::diag_status.baro_failed[1])
+		fc_switch_over = true;
+
+	else if(AP_Notify::diag_status.compass_failed[0] && AP_Notify::diag_status.compass_failed[1] && AP_Notify::diag_status.compass_failed[2])
+		fc_switch_over = true;
+
+	else if(AP_Notify::diag_status.gps_failed[0] && AP_Notify::diag_status.gps_failed[1] && AP_Notify::diag_status.gps_failed[2])
+		fc_switch_over = true;
+
+	if(fc_switch_over) // 이중화 절체 (to F/C #2)
+		printf("fc_switch_over\n\r");
+
+	return true;
+}
+
+bool Copter::redundancy_transfer()
+{
+	if(!diagnosis_enabled) return false;
+
+    if(fc_switch_over)
+    {
+	    transfer_redundancy(1);
+        diagnosis_enabled = false;
+    }
+
+	return true;
+}
+#endif
 
 #if ADVANCED_FAILSAFE == ENABLED
 /*

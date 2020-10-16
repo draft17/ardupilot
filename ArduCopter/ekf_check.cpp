@@ -119,6 +119,7 @@ bool Copter::ekf_over_threshold()
         over_thresh_count++;
     }
 
+	// 2개 이상 variance가 발생하였다면
     if (over_thresh_count >= 2) {
         return true;
     }
@@ -144,12 +145,14 @@ void Copter::failsafe_ekf_event()
     AP::logger().Write_Error(LogErrorSubsystem::FAILSAFE_EKFINAV, LogErrorCode::FAILSAFE_OCCURRED);
 
     // sometimes LAND *does* require GPS so ensure we are in non-GPS land
+	// 착륙중이면 계속 착륙하도록 함. 단, GPS 이용하고 있으면 non-GPS 모드로 셋업
     if (control_mode == Mode::Number::LAND && landing_with_GPS()) {
         mode_land.do_not_use_GPS();
         return;
     }
 
     // does this mode require position?
+	// non-GPS 비행모드이고, Failsafe 꺼져있으면 그래도 비행 진행 
     if (!copter.flightmode->requires_GPS() && (g.fs_ekf_action != FS_EKF_ACTION_LAND_EVEN_STABILIZE)) {
         return;
     }
@@ -162,6 +165,14 @@ void Copter::failsafe_ekf_event()
                 set_mode_land_with_pause(ModeReason::EKF_FAILSAFE);
             }
             break;
+
+		// YIG-ADD : REDUNDANCY
+        case FS_EKF_ACTION_SWITCH_OVER:
+			fc_switch_over = true;
+			redundancy_transfer();
+			break;
+		//
+
         case FS_EKF_ACTION_LAND:
         case FS_EKF_ACTION_LAND_EVEN_STABILIZE:
         default:
@@ -214,6 +225,7 @@ void Copter::check_vibration()
     bool checks_succeeded = true;
 
     // check if vertical velocity and position innovations are positive (NKF3.IVD & NKF3.IPD are both positive)
+	// 진동을 체크하므로 z 축(DOWN)을 대상으로 점검한다 (IVD, IPD)
     Vector3f vel_innovation;
     Vector3f pos_innovation;
     Vector3f mag_innovation;
@@ -224,7 +236,7 @@ void Copter::check_vibration()
     }
     const bool innov_velD_posD_positive = is_positive(vel_innovation.z) && is_positive(pos_innovation.z);
 
-    // check if EKF's NKF4.SH and NK4.SV > 1.0
+    // check if EKF's NKF4.SH and NK4.SV > 1.0 (SH : Barometer Test Ratio, SV : Velocity Test Ratio)
     float position_variance, vel_variance, height_variance, tas_variance;
     Vector3f mag_variance;
     Vector2f offset;
@@ -234,6 +246,8 @@ void Copter::check_vibration()
 
     // if no failure
     if ((g2.fs_vibe_enabled == 0) || !checks_succeeded || !motors->armed() || !innov_velD_posD_positive || (vel_variance < 1.0f)) {
+		// 다시 정상으로 돌아온 상태에서 기존에 high value로 체크되었을때, 15초이상 정상일때 compensation을 중지한다
+		// 아니면 계속 compensation 을 수행한다
         if (vibration_check.high_vibes) {
             // start clear time
             if (vibration_check.clear_ms == 0) {

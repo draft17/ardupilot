@@ -413,12 +413,12 @@ void Mode::get_pilot_desired_lean_angles(float &roll_out, float &pitch_out, floa
     angle_limit = constrain_float(angle_limit, 1000.0f, angle_max);
 
     // scale roll and pitch inputs to ANGLE_MAX parameter range
-    float scaler = angle_max/(float)ROLL_PITCH_YAW_INPUT_MAX;
+    float scaler = angle_max/(float)ROLL_PITCH_YAW_INPUT_MAX; // ROLL_PITCH_YAW_INPUT_MAX : 4500
     roll_out *= scaler;
     pitch_out *= scaler;
 
     // do circular limit
-    float total_in = norm(pitch_out, roll_out);
+    float total_in = norm(pitch_out, roll_out); // pitch와 roll 벡터 길이
     if (total_in > angle_limit) {
         float ratio = angle_limit / total_in;
         roll_out *= ratio;

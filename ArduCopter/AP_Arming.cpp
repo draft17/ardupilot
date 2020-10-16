@@ -12,6 +12,9 @@ void AP_Arming_Copter::update(void)
         pre_arm_display_counter = 0;
     }
 
+	// YIG-DIAG
+    display_fail = true; // always true : 지속적으로 고장진단 결과를 GCS로 전송하기 위함
+
     pre_arm_checks(display_fail);
 }
 
@@ -27,24 +30,8 @@ bool AP_Arming_Copter::pre_arm_checks(bool display_failure)
 bool AP_Arming_Copter::run_pre_arm_checks(bool display_failure)
 {
     // exit immediately if already armed
-    if (copter.motors->armed()) {
+    if (copter.motors->armed()) { // arm 되었다면 In-Flight 고장진단으로 전환
         return true;
-    }
-
-    // check if motor interlock and Emergency Stop aux switches are used
-    // at the same time.  This cannot be allowed.
-    if (rc().find_channel_for_option(RC_Channel::AUX_FUNC::MOTOR_INTERLOCK) &&
-        rc().find_channel_for_option(RC_Channel::AUX_FUNC::MOTOR_ESTOP)){
-        check_failed(display_failure, "Interlock/E-Stop Conflict");
-        return false;
-    }
-
-    // check if motor interlock aux switch is in use
-    // if it is, switch needs to be in disabled position to arm
-    // otherwise exit immediately.  This check to be repeated,
-    // as state can change at any time.
-    if (copter.ap.using_interlock && copter.ap.motor_interlock_switch) {
-        check_failed(display_failure, "Motor Interlock Enabled");
     }
 
     // if pre arm checks are disabled run only the mandatory checks
@@ -52,7 +39,9 @@ bool AP_Arming_Copter::run_pre_arm_checks(bool display_failure)
         return mandatory_checks(display_failure);
     }
 
-    return fence_checks(display_failure)
+    return 
+		interlock_estop_checks(display_failure) // YIG-ADD
+        & fence_checks(display_failure)
         & parameter_checks(display_failure)
         & motor_checks(display_failure)
         & pilot_throttle_checks(display_failure)
@@ -61,13 +50,42 @@ bool AP_Arming_Copter::run_pre_arm_checks(bool display_failure)
         AP_Arming::pre_arm_checks(display_failure);
 }
 
+// YIG-ADD
+bool AP_Arming_Copter::interlock_estop_checks(bool display_failure)
+{
+	bool passed = true;
+
+    // check if motor interlock and Emergency Stop aux switches are used
+    // at the same time.  This cannot be allowed.
+    if (rc().find_channel_for_option(RC_Channel::AUX_FUNC::MOTOR_INTERLOCK) &&
+        rc().find_channel_for_option(RC_Channel::AUX_FUNC::MOTOR_ESTOP)){
+        check_failed(display_failure, "ILOCKESTOP	:: Interlock/E-Stop Conflict");
+        passed = false;
+    }
+	else
+	{
+    	// check if motor interlock aux switch is in use
+    	// if it is, switch needs to be in disabled position to arm
+    	// otherwise exit immediately.  This check to be repeated,
+    	// as state can change at any time.
+    	if (copter.ap.using_interlock && copter.ap.motor_interlock_switch) {
+        	check_failed(display_failure, "INTERLOCSW	:: Motor Interlock need to Disable");
+        	passed = false;
+    	}
+	}
+
+	return passed;
+}
+
 bool AP_Arming_Copter::barometer_checks(bool display_failure)
 {
+	bool passed = true;
+
     if (!AP_Arming::barometer_checks(display_failure)) {
-        return false;
+        passed = false;
     }
 
-    bool ret = true;
+    //bool ret = true;
     // check Baro
     if ((checks_to_perform == ARMING_CHECK_ALL) || (checks_to_perform & ARMING_CHECK_BARO)) {
         // Check baro & inav alt are within 1m if EKF is operating in an absolute position mode.
@@ -77,12 +95,12 @@ bool AP_Arming_Copter::barometer_checks(bool display_failure)
         bool using_baro_ref = (!filt_status.flags.pred_horiz_pos_rel && filt_status.flags.pred_horiz_pos_abs);
         if (using_baro_ref) {
             if (fabsf(copter.inertial_nav.get_altitude() - copter.baro_alt) > PREARM_MAX_ALT_DISPARITY_CM) {
-                check_failed(ARMING_CHECK_BARO, display_failure, "Altitude disparity");
-                ret = false;
+                check_failed(ARMING_CHECK_BARO, display_failure, "BARO-METER DIF	= Altitude disparity");
+                passed = false;
             }
         }
     }
-    return ret;
+    return passed;
 }
 
 bool AP_Arming_Copter::compass_checks(bool display_failure)
@@ -109,7 +127,7 @@ bool AP_Arming_Copter::ins_checks(bool display_failure)
 
         // get ekf attitude (if bad, it's usually the gyro biases)
         if (!pre_arm_ekf_attitude_check()) {
-            check_failed(ARMING_CHECK_INS, display_failure, "EKF attitude is bad");
+            check_failed(ARMING_CHECK_INS, display_failure, "AHRS-CHECK EKF	= attitude is bad");
             ret = false;
         }
     }
@@ -141,28 +159,30 @@ bool AP_Arming_Copter::board_voltage_checks(bool display_failure)
 
 bool AP_Arming_Copter::parameter_checks(bool display_failure)
 {
+	bool passed = true;
+
     // check various parameter values
     if ((checks_to_perform == ARMING_CHECK_ALL) || (checks_to_perform & ARMING_CHECK_PARAMETERS)) {
 
         // ensure all rc channels have different functions
         if (rc().duplicate_options_exist()) {
-            check_failed(ARMING_CHECK_PARAMETERS, display_failure, "Duplicate Aux Switch Options");
-            return false;
+            check_failed(ARMING_CHECK_PARAMETERS, display_failure, "REMOTEFUNC DUP	:: Duplicate Remote Function Options");
+            passed = false;
         }
 
         // failsafe parameter checks
         if (copter.g.failsafe_throttle) {
             // check throttle min is above throttle failsafe trigger and that the trigger is above ppm encoder's loss-of-signal value of 900
             if (copter.channel_throttle->get_radio_min() <= copter.g.failsafe_throttle_value+10 || copter.g.failsafe_throttle_value < 910) {
-                check_failed(ARMING_CHECK_PARAMETERS, display_failure, "Check FS_THR_VALUE");
-                return false;
+                check_failed(ARMING_CHECK_PARAMETERS, display_failure, "PARAMETERS THR	:: Check FS_THR_VALUE");
+                passed = false;
             }
         }
 
         // lean angle parameter check
         if (copter.aparm.angle_max < 1000 || copter.aparm.angle_max > 8000) {
-            check_failed(ARMING_CHECK_PARAMETERS, display_failure, "Check ANGLE_MAX");
-            return false;
+            check_failed(ARMING_CHECK_PARAMETERS, display_failure, "PARAMETERS ANG	:: Check ANGLE_MAX");
+            passed = false;
         }
 
         // acro balance parameter check
@@ -175,8 +195,8 @@ bool AP_Arming_Copter::parameter_checks(bool display_failure)
 
         // pilot-speed-up parameter check
         if (copter.g.pilot_speed_up <= 0) {
-            check_failed(ARMING_CHECK_PARAMETERS, display_failure, "Check PILOT_SPEED_UP");
-            return false;
+            check_failed(ARMING_CHECK_PARAMETERS, display_failure, "PARAMETERS PSU	:: Check PILOT_SPEED_UP");
+            passed = false;
         }
 
         #if FRAME_CONFIG == HELI_FRAME
@@ -223,40 +243,53 @@ bool AP_Arming_Copter::parameter_checks(bool display_failure)
 
         // check for missing terrain data
         if (!pre_arm_terrain_check(display_failure)) {
-            return false;
+            check_failed(ARMING_CHECK_PARAMETERS, display_failure, "TERRAINDAT MIS	:: missing terrain data");
+            passed = false;
         }
 
         // check adsb avoidance failsafe
 #if ADSB_ENABLED == ENABLE
         if (copter.failsafe.adsb) {
-            check_failed(ARMING_CHECK_PARAMETERS, display_failure, "ADSB threat detected");
-            return false;
+            check_failed(ARMING_CHECK_PARAMETERS, display_failure, "AVOID-ADSB FIS	:: threat detected");
+            passed = false;
         }
 #endif
 
         // ensure controllers are OK with us arming:
         char failure_msg[50];
         if (!copter.pos_control->pre_arm_checks("PSC", failure_msg, ARRAY_SIZE(failure_msg))) {
-            check_failed(ARMING_CHECK_PARAMETERS, display_failure, "Bad parameter: %s", failure_msg);
-            return false;
+            check_failed(ARMING_CHECK_PARAMETERS, display_failure, "PARAMETERS PSC	:: %s", failure_msg);
+            passed = false;
         }
         if (!copter.attitude_control->pre_arm_checks("ATC", failure_msg, ARRAY_SIZE(failure_msg))) {
-            check_failed(ARMING_CHECK_PARAMETERS, display_failure, "Bad parameter: %s", failure_msg);
-            return false;
+            check_failed(ARMING_CHECK_PARAMETERS, display_failure, "PARAMETERS ATC	:: %s", failure_msg);
+            passed = false;
         }
     }
 
-    return true;
+    return passed;
 }
 
 // check motor setup was successful
 bool AP_Arming_Copter::motor_checks(bool display_failure)
 {
+	bool passed = true;
+
     // check motors initialised  correctly
     if (!copter.motors->initialised_ok()) {
-        check_failed(display_failure, "check firmware or FRAME_CLASS");
-        return false;
+        check_failed(display_failure, "MOTORSCHEK INIT	:: motor configuration problem");
+        passed = false;
     }
+
+	// YIG-DIAG
+	uint32_t error_code;
+    for (uint8_t i = 0; i < 8; i++) {
+    	if (!copter.msc.motor_status_check(i, error_code)) {
+        	check_failed(display_failure, "MOTORSCHEK STAT %d	:: motor #%d error code %d", i, i, (int)error_code);
+        	passed = false;
+		}
+	}
+	//
 
     // if this is a multicopter using ToshibaCAN ESCs ensure MOT_PMW_MIN = 1000, MOT_PWM_MAX = 2000
 #if HAL_WITH_UAVCAN && (FRAME_CONFIG != HELI_FRAME)
@@ -279,11 +312,13 @@ bool AP_Arming_Copter::motor_checks(bool display_failure)
     }
 #endif
 
-    return true;
+    return passed;
 }
 
 bool AP_Arming_Copter::pilot_throttle_checks(bool display_failure)
 {
+	bool passed = true;
+
     // check throttle is above failsafe throttle
     // this is near the bottom to allow other failures to be displayed before checking pilot throttle
     if ((checks_to_perform == ARMING_CHECK_ALL) || (checks_to_perform & ARMING_CHECK_RC)) {
@@ -293,12 +328,12 @@ bool AP_Arming_Copter::pilot_throttle_checks(bool display_failure)
             #else
             const char *failmsg = "Throttle below Failsafe";
             #endif
-            check_failed(ARMING_CHECK_RC, display_failure, "%s", failmsg);
-            return false;
+            check_failed(ARMING_CHECK_RC, display_failure, "REMOTECTRL THR	:: %s", failmsg);
+            passed = false;
         }
     }
 
-    return true;
+    return passed;
 }
 
 bool AP_Arming_Copter::oa_checks(bool display_failure)
@@ -338,22 +373,25 @@ bool AP_Arming_Copter::rc_calibration_checks(bool display_failure)
 // performs pre_arm gps related checks and returns true if passed
 bool AP_Arming_Copter::gps_checks(bool display_failure)
 {
+	bool passed = true;
+
     // run mandatory gps checks first
     if (!mandatory_gps_checks(display_failure)) {
         AP_Notify::flags.pre_arm_gps_check = false;
-        return false;
+        passed = false;
     }
 
     // check if flight mode requires GPS
-    bool mode_requires_gps = copter.flightmode->requires_GPS();
+    //bool mode_requires_gps = copter.flightmode->requires_GPS();
 
     // check if fence requires GPS
-    bool fence_requires_gps = false;
+    //bool fence_requires_gps = false;
     #if AC_FENCE == ENABLED
     // if circular or polygon fence is enabled we need GPS
-    fence_requires_gps = (copter.fence.get_enabled_fences() & (AC_FENCE_TYPE_CIRCLE | AC_FENCE_TYPE_POLYGON)) > 0;
+    //fence_requires_gps = (copter.fence.get_enabled_fences() & (AC_FENCE_TYPE_CIRCLE | AC_FENCE_TYPE_POLYGON)) > 0;
     #endif
 
+#if 0 // YIG-CHG : 모드에 관계없이 항상 GPS 체크
     // return true if GPS is not required
     if (!mode_requires_gps && !fence_requires_gps) {
         AP_Notify::flags.pre_arm_gps_check = true;
@@ -365,23 +403,24 @@ bool AP_Arming_Copter::gps_checks(bool display_failure)
         AP_Notify::flags.pre_arm_gps_check = true;
         return true;
     }
+#endif
 
     // warn about hdop separately - to prevent user confusion with no gps lock
     if (copter.gps.get_hdop() > copter.g.gps_hdop_good) {
-        check_failed(ARMING_CHECK_GPS, display_failure, "High GPS HDOP");
+        check_failed(ARMING_CHECK_GPS, display_failure, "GPS-SYSTEM HDP	= High GPS HDOP");
         AP_Notify::flags.pre_arm_gps_check = false;
-        return false;
+        passed = false;
     }
 
     // call parent gps checks
     if (!AP_Arming::gps_checks(display_failure)) {
         AP_Notify::flags.pre_arm_gps_check = false;
-        return false;
+        passed = false;
     }
 
     // if we got here all must be ok
     AP_Notify::flags.pre_arm_gps_check = true;
-    return true;
+    return passed;
 }
 
 // check ekf attitude is acceptable
@@ -456,6 +495,8 @@ bool AP_Arming_Copter::proximity_checks(bool display_failure) const
 // performs mandatory gps checks.  returns true if passed
 bool AP_Arming_Copter::mandatory_gps_checks(bool display_failure)
 {
+	bool passed = true;
+
     // always check if inertial nav has started and is ready
     const AP_AHRS_NavEKF &ahrs = AP::ahrs_navekf();
     if (!ahrs.prearm_healthy()) {
@@ -463,8 +504,8 @@ bool AP_Arming_Copter::mandatory_gps_checks(bool display_failure)
         if (reason == nullptr) {
             reason = "AHRS not healthy";
         }
-        check_failed(display_failure, "%s", reason);
-        return false;
+        check_failed(display_failure, "AHRS-CHECK HTY	= %s", reason);
+        passed = false;
     }
 
     // check if flight mode requires GPS
@@ -477,10 +518,12 @@ bool AP_Arming_Copter::mandatory_gps_checks(bool display_failure)
     fence_requires_gps = (copter.fence.get_enabled_fences() & (AC_FENCE_TYPE_CIRCLE | AC_FENCE_TYPE_POLYGON)) > 0;
     #endif
 
+#if 0 // YIG-CHG : 모드에 관계없이 항상 GPS 체크
     // return true if GPS is not required
     if (!mode_requires_gps && !fence_requires_gps) {
         return true;
     }
+#endif
 
     // ensure GPS is ok
     if (!copter.position_ok()) {
@@ -493,16 +536,16 @@ bool AP_Arming_Copter::mandatory_gps_checks(bool display_failure)
                 reason = "Need 3D Fix";
             }
         }
-        check_failed(display_failure, "%s", reason);
-        return false;
+        check_failed(display_failure, "GPS-SYSTEM FIX	= %s", reason);
+        passed = false;
     }
 
     // check for GPS glitch (as reported by EKF)
     nav_filter_status filt_status;
     if (ahrs.get_filter_status(filt_status)) {
         if (filt_status.flags.gps_glitching) {
-            check_failed(display_failure, "GPS glitching");
-            return false;
+            check_failed(display_failure, "GPS-SYSTEM GLI	= GPS glitching");
+            passed = false;
         }
     }
 
@@ -512,18 +555,18 @@ bool AP_Arming_Copter::mandatory_gps_checks(bool display_failure)
     Vector2f offset;
     ahrs.get_variances(vel_variance, pos_variance, hgt_variance, mag_variance, tas_variance, offset);
     if (copter.g.fs_ekf_thresh > 0 && mag_variance.length() >= copter.g.fs_ekf_thresh) {
-        check_failed(display_failure, "EKF compass variance");
-        return false;
+        check_failed(display_failure, "COMPASSDEV VAR	= EKF compass variance");
+        passed = false;
     }
 
     // check home and EKF origin are not too far
     if (copter.far_from_EKF_origin(ahrs.get_home())) {
-        check_failed(display_failure, "EKF-home variance");
-        return false;
+        check_failed(display_failure, "AHRS-CHECK HOM	= EKF-home variance");
+        passed = false;
     }
 
     // if we got here all must be ok
-    return true;
+    return passed;
 }
 
 // Check GCS failsafe

@@ -96,48 +96,25 @@ void Copter::read_rangefinder(void)
         }
 
 
-#if 1 // YIG-ADD : AVOID
+// YIG-ADD : AVOID_AUTO
+#if 1 // 회피하지 못하고 장애물에 근접할경우 BRAKE mode로 진입
 
-		if(copter.avoid.get_margin() >= 10)
+		if(copter.avoid.fence_margin() >= 1500.0f)
 		{
         	if (rf_orient == ROTATION_NONE) 
 			{
-				if(copter.control_mode == Mode::Number::AUTO) {
-					if(mode_auto.mission.get_current_nav_id() == MAV_CMD_NAV_WAYPOINT || 
-					   mode_auto.mission.get_current_nav_id() == MAV_CMD_NAV_RETURN_TO_LAUNCH) {
-						if(rf_state.alt_cm > 200 && rf_state.alt_cm < (copter.avoid.get_margin() * 100)) {
-			    			copter.set_mode(Mode::Number::BRAKE, ModeReason::FAILSAFE);
-							gcs().send_text(MAV_SEVERITY_WARNING, "Failsafe OBS-F BRAKE");
-						}
-					}
-				}
-				else if(copter.control_mode == Mode::Number::LOITER ||
-						copter.control_mode == Mode::Number::ALT_HOLD) {
-					if(rf_state.alt_cm > 100 && rf_state.alt_cm < 1500) {
-			    		//copter.set_mode(Mode::Number::BRAKE, ModeReason::FAILSAFE);
-						gcs().send_text(MAV_SEVERITY_WARNING, "Failsafe OBS-F BRAKE");
-					}
-				}
-			}
-
-			if(((unsigned int)copter.avoid.get_margin() % 10) == 1)
-			{
-        		if (rf_orient == ROTATION_PITCH_270)
+				if(copter.control_mode == Mode::Number::AUTO) 
 				{
-					if(copter.control_mode != Mode::Number::LAND) {
-        				if(inertial_nav.get_altitude() > 1000) { // 10m
-        					if(rf_state.alt_cm > 100 && rf_state.alt_cm < 700) {
-			    				copter.set_mode(Mode::Number::BRAKE, ModeReason::FAILSAFE);
-								gcs().send_text(MAV_SEVERITY_WARNING, "Failsafe OBS-D BRAKE");
-							}
-						}
-					}
-					else if(copter.control_mode == Mode::Number::LAND) {
-        				if(inertial_nav.get_altitude() > 1000) {
-							if(rf_state.alt_cm > 100 && rf_state.alt_cm < 700) {
-			    				copter.set_mode(Mode::Number::BRAKE, ModeReason::FAILSAFE);
-								gcs().send_text(MAV_SEVERITY_WARNING, "Failsafe OBS-D BRAKE");
-							}
+					if(mode_auto.mission.get_current_nav_id() == MAV_CMD_NAV_WAYPOINT 
+					  	//|| mode_auto.mission.get_current_nav_id() == MAV_CMD_NAV_RETURN_TO_LAUNCH
+					)
+					{
+						float stop_dist;
+						pos_control->get_stopping_dist_xy(stop_dist);
+						if(rf_state.alt_cm <= (int16_t)(stop_dist * 2))
+						{
+			    			copter.set_mode(Mode::Number::BRAKE, ModeReason::FAILSAFE);
+							gcs().send_text(MAV_SEVERITY_CRITICAL, "Obstacle (%d) : BRAKE !!", rf_state.alt_cm);
 						}
 					}
 				}

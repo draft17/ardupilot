@@ -185,7 +185,8 @@ void ModeLoiter::run()
         // get avoidance adjusted climb rate
         target_climb_rate = get_avoidance_adjusted_climbrate(target_climb_rate);
 
-#if 1 // YIG-ADD : 투하시, 3.0m 이하 내려가지 않도록
+// YIG-ADD : 투하시, 3.0m 이하 내려가지 않도록
+#if 0 // 지뢰탐지, 육군에서는 사용하지 않음
 
 #if 0
 		bool healthy = ((copter.rangefinder.status_orient(ROTATION_NONE) == RangeFinder::Status::Good) &&

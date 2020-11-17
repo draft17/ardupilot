@@ -453,6 +453,8 @@ private:
     // Current location of the vehicle (altitude is relative to home)
     Location current_loc;
 
+	autopilot_yaw_mode save_auto_yaw_mode; // AVOID_AUTO
+
     // Inertial Navigation
     AP_InertialNav_NavEKF inertial_nav;
 

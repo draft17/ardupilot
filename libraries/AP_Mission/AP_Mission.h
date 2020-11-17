@@ -358,7 +358,7 @@ public:
     void resume();
 
 	// YIG-ADD : AVOID_AUTO
-	void assert_for_avoid(uint8_t& arrow, float yaw_head, float avoid_len, bool avoid_opt);
+	void assert_for_avoid(uint8_t& arrow, float yaw_head, float avoid_len, float avoid_alt, bool avoid_opt);
 	uint16_t curr_nav_idx();
 	float nav_loc_alt();
 	bool mode_for_avoid();
@@ -529,6 +529,7 @@ private:
 	// YIG-ADD : AVOID_AUTO
 	uint8_t direction_avoid;
 	float length_avoid;
+	float alt_avoid;
 	float yaw_avoid;
 	bool opt_avoid;
 	Location _prev_nav_cmd_location;

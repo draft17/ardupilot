@@ -56,6 +56,24 @@ public:
 
     static const struct AP_Param::GroupInfo var_info[];
 
+	// YIG-ADD, AVOID_LOITER
+	bool processing_avoidance_loiter = false;
+	uint32_t    loiter_avoidance_time = 0;
+	uint32_t    loiter_loop_time = 0;
+	uint32_t    _start_time = 0;
+	bool        _need_avoid = false;
+	Vector2f    avoid_desired_vel;
+	float       avoid_desired_vel_z;
+	bool    on_avoid_loiter = false;
+	void on_avoidance_loiter() {
+		on_avoid_loiter = true;
+	}
+	void off_avoidance_loiter() {
+		on_avoid_loiter = false;
+	}
+	void loiter_set_rangefinder(RangeFinder* rangefinder_ptr) {loiter_rangefinder = rangefinder_ptr; } // YIG-CHANGE, AVOID_AUTO_USE_RANGEFINDER
+	//
+
 protected:
 
     // sanity check parameters
@@ -70,6 +88,10 @@ protected:
     const AP_AHRS_View&     _ahrs;
     AC_PosControl&          _pos_control;
     const AC_AttitudeControl& _attitude_control;
+
+	// YIG-ADD, AVOID_AUTO
+	AC_Avoid                *_avoid = nullptr;
+	RangeFinder             *loiter_rangefinder = nullptr;
 
     // parameters
     AP_Float    _angle_max;             // maximum pilot commanded angle in degrees. Set to zero for 2/3 Angle Max

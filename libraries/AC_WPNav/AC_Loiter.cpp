@@ -1,6 +1,15 @@
 #include <AP_HAL/AP_HAL.h>
 #include "AC_Loiter.h"
 
+// YIG-ADD
+#include <GCS_MAVLink/GCS.h>
+#include <AP_Mission/AP_Mission.h>
+#include <AP_RangeFinder/AP_RangeFinder_Backend.h>
+#include <AP_Notify/AP_Notify.h>
+
+#define Traffic_PRJ
+//
+
 extern const AP_HAL::HAL& hal;
 
 #define LOITER_SPEED_DEFAULT                1250.0f // default loiter speed in cm/s
@@ -140,6 +149,12 @@ void AC_Loiter::init_target()
 
     // initialise position controller
     _pos_control.init_xy_controller();
+
+	// YIG-ADD, AVOID_LOITER
+	on_avoid_loiter = false;
+	loiter_loop_time = AP_HAL::millis();
+	_need_avoid = false;
+	//
 }
 
 /// reduce response for landing
@@ -303,12 +318,99 @@ void AC_Loiter::calc_desired_velocity(float nav_dt)
         desired_vel.y = desired_vel.y * gnd_speed_limit_cms / horizSpdDem;
     }
 
+#if 0
     // Limit the velocity to prevent fence violations
     // TODO: We need to also limit the _desired_accel
     AC_Avoid *_avoid = AP::ac_avoid();
     if (_avoid != nullptr) {
         _avoid->adjust_velocity(_pos_control.get_pos_xy_p().kP(), _accel_cmss, desired_vel, nav_dt);
     }
+#endif
+
+#ifdef Traffic_PRJ
+
+    AP_RangeFinder_Backend *sens = loiter_rangefinder->get_backend(0);
+    //if(sens->has_data())
+    {
+        uint16_t distance_cm = sens->distance_cm();
+
+        if(AP_HAL::millis() - loiter_loop_time > 1000)
+        {
+            gcs().send_text(MAV_SEVERITY_INFO, "Lidar (%u)", (unsigned)distance_cm);
+            loiter_loop_time = AP_HAL::millis();
+        }
+    }
+
+
+    if(on_avoid_loiter)
+    {
+        float fence_distance = 1000.0f; // 10m
+
+        if (_avoid != nullptr)
+        {
+            fence_distance = _avoid->fence_margin();
+            if(fence_distance < 1000.0f) fence_distance = 1000.0f;
+            else if(fence_distance > 1500.0f) fence_distance = 1500.0f;
+        }
+
+
+        //for (uint8_t i = 0; i < RANGEFINDER_MAX_INSTANCES; i++)
+        {
+            uint16_t distance_cm = 0;
+
+            AP_RangeFinder_Backend *sensor = loiter_rangefinder->get_backend(0);
+
+            if (!sensor->has_data())
+            {
+                if(AP_HAL::millis() - loiter_loop_time > 5000)
+                {
+                    gcs().send_text(MAV_SEVERITY_INFO, "[Lidar] no data");
+                    loiter_loop_time = AP_HAL::millis();
+                }
+            }
+            else
+            {
+                distance_cm = sensor->distance_cm();
+
+                if(AP_HAL::millis() - loiter_loop_time > 3000)
+                {
+                    gcs().send_text(MAV_SEVERITY_INFO, "[Lidar] distance (%u) (%u)", (unsigned)distance_cm, (unsigned)fence_distance);
+                    loiter_loop_time = AP_HAL::millis();
+                }
+            }
+
+            if( sensor->orientation() == ROTATION_NONE )
+            {
+                if( distance_cm < fence_distance && distance_cm > 400.0f) // 4m over
+                {
+                    if(!_need_avoid)
+                    {
+                        _need_avoid = true;
+                        _start_time = AP_HAL::millis();
+
+                        gcs().send_text(MAV_SEVERITY_INFO, "[avoid] Action !! (%u)", (unsigned)distance_cm);
+                    }
+                }
+
+                if(_need_avoid)
+                {
+                    if(AP_HAL::millis() - _start_time > 3000)
+                    {
+                        _need_avoid = false;
+                    }
+                    else
+                    {
+                        float ne_x = -1 * _ahrs.cos_yaw() - 0 * _ahrs.sin_yaw();
+                        float ne_y = -1 * _ahrs.sin_yaw() + 0 * _ahrs.cos_yaw();
+
+                        desired_vel.x = ne_x;
+                        desired_vel.y = ne_y;
+                    }
+                }
+            }
+        }
+    }
+#endif
 
     // send adjusted feed forward acceleration and velocity back to the Position Controller
     _pos_control.set_desired_accel_xy(_desired_accel.x, _desired_accel.y);

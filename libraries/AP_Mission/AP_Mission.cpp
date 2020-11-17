@@ -97,21 +97,22 @@ bool AP_Mission::mode_for_avoid()
 {
     if(_nav_cmd.id == MAV_CMD_NAV_WAYPOINT)
 	{
-	    gcs().send_text(MAV_SEVERITY_INFO, "WP mode");
+	    //gcs().send_text(MAV_SEVERITY_INFO, "WP mode");
         return true;
     }
     else
     {
-	    gcs().send_text(MAV_SEVERITY_INFO, "Nav_%d", _nav_cmd.id);
+	    //gcs().send_text(MAV_SEVERITY_INFO, "Nav_%d", _nav_cmd.id);
         return false;
     }
 }
 
-void AP_Mission::assert_for_avoid(uint8_t& arrow, float yaw_head, float avoid_len, bool avoid_opt)
+void AP_Mission::assert_for_avoid(uint8_t& arrow, float yaw_head, float avoid_len, float avoid_alt, bool avoid_opt)
 {
 	_flags.need_avoid = true;
     direction_avoid = arrow;
     yaw_avoid = yaw_head;
+	alt_avoid = avoid_alt;
     length_avoid = avoid_len;
     opt_avoid = avoid_opt;
 
@@ -131,7 +132,8 @@ void AP_Mission::get_origin(Vector3f& Origin)
 void AP_Mission::location_for_avoid(Location& Loc)
 {
 	if (direction_avoid == 3) { // Upward
-	    Loc.alt += length_avoid * 100;
+		Loc.offset_bearing(yaw_avoid, length_avoid);
+	    Loc.alt += (alt_avoid * 100);
 	}
 	else // Left, Right
 	{

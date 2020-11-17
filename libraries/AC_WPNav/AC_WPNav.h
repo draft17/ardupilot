@@ -342,6 +342,7 @@ protected:
     float       _track_desired;         // our desired distance along the track in cm
 	// YIG-ADD
     float       _avoid_track_desired;   // our desired distance along the track in cm
+	float		_avoid_slow_down_dist = 0;
 	//
     float       _limited_speed_xy_cms;  // horizontal speed in cm/s used to advance the intermediate target towards the destination.  used to limit extreme acceleration after passing a waypoint
     float       _track_accel;           // acceleration along track
@@ -368,6 +369,7 @@ protected:
 	// YIG-ADD
 	uint8_t     do_avoid = 0;
 	uint8_t     _obs_far_cnt = 0;
+	bool     	_speed_down_leash = 0;
 	uint32_t    slowing_down_avoidance_time = 0;
 	uint32_t    auto_loop_time = 0;
 	uint32_t    avoid_loop_time = 0;

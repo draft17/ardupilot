@@ -38,6 +38,7 @@ bool ModeAuto::init(bool ignore_checks)
         }
 
 		 // YIG-ADD : AVOID_AUTO
+		 copter.save_auto_yaw_mode = AUTO_YAW_NONE; // clear
 		 wp_nav->processing_avoidance_clear();
 		 gcs().send_text(MAV_SEVERITY_INFO, "Processing_avoidance_clear");
 		 //
@@ -726,6 +727,28 @@ void ModeAuto::takeoff_run()
 //      called by auto_run at 100hz or more
 void ModeAuto::wp_run()
 {
+
+#if 0 // AVOID_AUTO yaw hold
+    if (wp_nav->is_processing_avoidance()) 
+	{
+	   	if (auto_yaw.mode() != AUTO_YAW_HOLD) 
+		{
+		    copter.save_auto_yaw_mode = auto_yaw.mode();
+		    auto_yaw.set_mode(AUTO_YAW_HOLD);
+		    gcs().send_text(MAV_SEVERITY_INFO, "YAW_HOLD");
+		}
+	}
+	else 
+	{
+		if (copter.save_auto_yaw_mode != AUTO_YAW_NONE) 
+		{
+		    auto_yaw.set_mode(copter.save_auto_yaw_mode);
+	        copter.save_auto_yaw_mode = AUTO_YAW_NONE; // clear
+	        gcs().send_text(MAV_SEVERITY_INFO, "YAW_HOLD_CLEAR");
+	    }
+	}
+#endif
+
     // process pilot's yaw input
     float target_yaw_rate = 0;
     if (!copter.failsafe.radio) {

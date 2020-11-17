@@ -165,6 +165,7 @@ void Copter::init_ardupilot()
 
 	// YIG-ADD : AVOID_AUTO
 	wp_nav->wp_set_rangefinder(&rangefinder);
+	loiter_nav->loiter_set_rangefinder(&rangefinder);
 
     // init proximity sensor
     init_proximity();

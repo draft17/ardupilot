@@ -244,7 +244,12 @@ void AP_Notify::add_backends(void)
                 ADD_BACKEND(new ToshibaLED_I2C(TOSHIBA_LED_I2C_BUS_INTERNAL));
                 break;
             case Notify_LED_ToshibaLED_I2C_External:
-                ADD_BACKEND(new ToshibaLED_I2C(TOSHIBA_LED_I2C_BUS_EXTERNAL));
+                FOREACH_I2C_EXTERNAL(b) {
+					// jhkang
+                	//ADD_BACKEND(new ToshibaLED_I2C(TOSHIBA_LED_I2C_BUS_EXTERNAL));
+                	ADD_BACKEND(new ToshibaLED_I2C(b));
+					//::printf("jhkang - Notify_LED_ToshibaLED_I2C_External\n\r");	//jhkang
+				}
                 break;
 #if !HAL_MINIMIZE_FEATURES
             case Notify_LED_NCP5623_I2C_External:

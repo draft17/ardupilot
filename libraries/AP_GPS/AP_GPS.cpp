@@ -86,6 +86,14 @@ const AP_Param::GroupInfo AP_GPS::var_info[] = {
     // @RebootRequired: True
     // @User: Advanced
     AP_GROUPINFO("TYPE2",   1, AP_GPS, _type[1], 0),
+
+    // @Param: TYPE3
+    // @DisplayName: 3rd GPS type
+    // @Description: GPS type of 3rd GPS
+    // @Values: 0:None,1:AUTO,2:uBlox,3:MTK,4:MTK19,5:NMEA,6:SiRF,7:HIL,8:SwiftNav,9:UAVCAN,10:SBF,11:GSOF,13:ERB,14:MAV,15:NOVA,16:HemisphereNMEA
+    // @RebootRequired: True
+    // @User: Advanced
+    AP_GROUPINFO("TYPE3",   2, AP_GPS, _type[2], 0),
 #endif
 
     // @Param: NAVFILTER
@@ -93,7 +101,7 @@ const AP_Param::GroupInfo AP_GPS::var_info[] = {
     // @Description: Navigation filter engine setting
     // @Values: 0:Portable,2:Stationary,3:Pedestrian,4:Automotive,5:Sea,6:Airborne1G,7:Airborne2G,8:Airborne4G
     // @User: Advanced
-    AP_GROUPINFO("NAVFILTER", 2, AP_GPS, _navfilter, GPS_ENGINE_AIRBORNE_4G),
+    AP_GROUPINFO("NAVFILTER", 3, AP_GPS, _navfilter, GPS_ENGINE_AIRBORNE_4G),
 
 #if GPS_MAX_RECEIVERS > 1
     // @Param: AUTO_SWITCH
@@ -101,7 +109,7 @@ const AP_Param::GroupInfo AP_GPS::var_info[] = {
     // @Description: Automatic switchover to GPS reporting best lock
     // @Values: 0:Disabled,1:UseBest,2:Blend,3:UseSecond
     // @User: Advanced
-    AP_GROUPINFO("AUTO_SWITCH", 3, AP_GPS, _auto_switch, 1),
+    AP_GROUPINFO("AUTO_SWITCH", 4, AP_GPS, _auto_switch, 1),
 #endif
 
     // @Param: MIN_DGPS
@@ -110,14 +118,14 @@ const AP_Param::GroupInfo AP_GPS::var_info[] = {
     // @Values: 0:Any,50:FloatRTK,100:IntegerRTK
     // @User: Advanced
     // @RebootRequired: True
-    AP_GROUPINFO("MIN_DGPS", 4, AP_GPS, _min_dgps, 100),
+    AP_GROUPINFO("MIN_DGPS", 5, AP_GPS, _min_dgps, 100),
 
     // @Param: SBAS_MODE
     // @DisplayName: SBAS Mode
     // @Description: This sets the SBAS (satellite based augmentation system) mode if available on this GPS. If set to 2 then the SBAS mode is not changed in the GPS. Otherwise the GPS will be reconfigured to enable/disable SBAS. Disabling SBAS may be worthwhile in some parts of the world where an SBAS signal is available but the baseline is too long to be useful.
     // @Values: 0:Disabled,1:Enabled,2:NoChange
     // @User: Advanced
-    AP_GROUPINFO("SBAS_MODE", 5, AP_GPS, _sbas_mode, 2),
+    AP_GROUPINFO("SBAS_MODE", 6, AP_GPS, _sbas_mode, 2),
 
     // @Param: MIN_ELEV
     // @DisplayName: Minimum elevation
@@ -125,21 +133,21 @@ const AP_Param::GroupInfo AP_GPS::var_info[] = {
     // @Range: -100 90
     // @Units: deg
     // @User: Advanced
-    AP_GROUPINFO("MIN_ELEV", 6, AP_GPS, _min_elevation, -100),
+    AP_GROUPINFO("MIN_ELEV", 7, AP_GPS, _min_elevation, -100),
 
     // @Param: INJECT_TO
     // @DisplayName: Destination for GPS_INJECT_DATA MAVLink packets
     // @Description: The GGS can send raw serial packets to inject data to multiple GPSes.
     // @Values: 0:send to first GPS,1:send to 2nd GPS,127:send to all
     // @User: Advanced
-    AP_GROUPINFO("INJECT_TO",   7, AP_GPS, _inject_to, GPS_RTK_INJECT_TO_ALL),
+    AP_GROUPINFO("INJECT_TO",   8, AP_GPS, _inject_to, GPS_RTK_INJECT_TO_ALL),
 
     // @Param: SBP_LOGMASK
     // @DisplayName: Swift Binary Protocol Logging Mask
     // @Description: Masked with the SBP msg_type field to determine whether SBR1/SBR2 data is logged
     // @Values: 0:None (0x0000),-1:All (0xFFFF),-256:External only (0xFF00)
     // @User: Advanced
-    AP_GROUPINFO("SBP_LOGMASK", 8, AP_GPS, _sbp_logmask, -256),
+    AP_GROUPINFO("SBP_LOGMASK", 9, AP_GPS, _sbp_logmask, -256),
 
     // @Param: RAW_DATA
     // @DisplayName: Raw data logging
@@ -147,7 +155,7 @@ const AP_Param::GroupInfo AP_GPS::var_info[] = {
     // @Values: 0:Ignore,1:Always log,2:Stop logging when disarmed (SBF only),5:Only log every five samples (uBlox only)
     // @RebootRequired: True
     // @User: Advanced
-    AP_GROUPINFO("RAW_DATA", 9, AP_GPS, _raw_data, 0),
+    AP_GROUPINFO("RAW_DATA", 10, AP_GPS, _raw_data, 0),
 
     // @Param: GNSS_MODE
     // @DisplayName: GNSS system configuration
@@ -155,14 +163,14 @@ const AP_Param::GroupInfo AP_GPS::var_info[] = {
     // @Values: 0:Leave as currently configured, 1:GPS-NoSBAS, 3:GPS+SBAS, 4:Galileo-NoSBAS, 6:Galileo+SBAS, 8:Beidou, 51:GPS+IMES+QZSS+SBAS (Japan Only), 64:GLONASS, 66:GLONASS+SBAS, 67:GPS+GLONASS+SBAS
     // @Bitmask: 0:GPS,1:SBAS,2:Galileo,3:Beidou,4:IMES,5:QZSS,6:GLOSNASS
     // @User: Advanced
-    AP_GROUPINFO("GNSS_MODE", 10, AP_GPS, _gnss_mode[0], 0),
+    AP_GROUPINFO("GNSS_MODE", 11, AP_GPS, _gnss_mode[0], 0),
 
     // @Param: SAVE_CFG
     // @DisplayName: Save GPS configuration
     // @Description: Determines whether the configuration for this GPS should be written to non-volatile memory on the GPS. Currently working for UBlox 6 series and above.
     // @Values: 0:Do not save config,1:Save config,2:Save only when needed
     // @User: Advanced
-    AP_GROUPINFO("SAVE_CFG", 11, AP_GPS, _save_config, 2),
+    AP_GROUPINFO("SAVE_CFG", 12, AP_GPS, _save_config, 2),
 
 #if GPS_MAX_RECEIVERS > 1
     // @Param: GNSS_MODE2
@@ -171,7 +179,7 @@ const AP_Param::GroupInfo AP_GPS::var_info[] = {
     // @Values: 0:Leave as currently configured, 1:GPS-NoSBAS, 3:GPS+SBAS, 4:Galileo-NoSBAS, 6:Galileo+SBAS, 8:Beidou, 51:GPS+IMES+QZSS+SBAS (Japan Only), 64:GLONASS, 66:GLONASS+SBAS, 67:GPS+GLONASS+SBAS
     // @Bitmask: 0:GPS,1:SBAS,2:Galileo,3:Beidou,4:IMES,5:QZSS,6:GLOSNASS
     // @User: Advanced
-    AP_GROUPINFO("GNSS_MODE2", 12, AP_GPS, _gnss_mode[1], 0),
+    AP_GROUPINFO("GNSS_MODE2", 13, AP_GPS, _gnss_mode[1], 0),
 #endif
 
     // @Param: AUTO_CONFIG
@@ -179,7 +187,7 @@ const AP_Param::GroupInfo AP_GPS::var_info[] = {
     // @Description: Controls if the autopilot should automatically configure the GPS based on the parameters and default settings
     // @Values: 0:Disables automatic configuration,1:Enable automatic configuration
     // @User: Advanced
-    AP_GROUPINFO("AUTO_CONFIG", 13, AP_GPS, _auto_config, 1),
+    AP_GROUPINFO("AUTO_CONFIG", 14, AP_GPS, _auto_config, 1),
 
     // @Param: RATE_MS
     // @DisplayName: GPS update rate in milliseconds
@@ -188,7 +196,7 @@ const AP_Param::GroupInfo AP_GPS::var_info[] = {
     // @Values: 100:10Hz,125:8Hz,200:5Hz
     // @Range: 50 200
     // @User: Advanced
-    AP_GROUPINFO("RATE_MS", 14, AP_GPS, _rate_ms[0], 200),
+    AP_GROUPINFO("RATE_MS", 15, AP_GPS, _rate_ms[0], 200),
 
 #if GPS_MAX_RECEIVERS > 1
     // @Param: RATE_MS2
@@ -198,7 +206,7 @@ const AP_Param::GroupInfo AP_GPS::var_info[] = {
     // @Values: 100:10Hz,125:8Hz,200:5Hz
     // @Range: 50 200
     // @User: Advanced
-    AP_GROUPINFO("RATE_MS2", 15, AP_GPS, _rate_ms[1], 200),
+    AP_GROUPINFO("RATE_MS2", 16, AP_GPS, _rate_ms[1], 200),
 #endif
 
     // @Param: POS1_X
@@ -221,7 +229,7 @@ const AP_Param::GroupInfo AP_GPS::var_info[] = {
     // @Units: m
     // @Range: -10 10
     // @User: Advanced
-    AP_GROUPINFO("POS1", 16, AP_GPS, _antenna_offset[0], 0.0f),
+    AP_GROUPINFO("POS1", 17, AP_GPS, _antenna_offset[0], 0.0f),
 
     // @Param: POS2_X
     // @DisplayName: Antenna X position offset
@@ -244,7 +252,7 @@ const AP_Param::GroupInfo AP_GPS::var_info[] = {
     // @Units: m
     // @Range: -10 10
     // @User: Advanced
-    AP_GROUPINFO("POS2", 17, AP_GPS, _antenna_offset[1], 0.0f),
+    AP_GROUPINFO("POS2", 18, AP_GPS, _antenna_offset[1], 0.0f),
 #endif
 
     // @Param: DELAY_MS
@@ -254,7 +262,7 @@ const AP_Param::GroupInfo AP_GPS::var_info[] = {
     // @Range: 0 250
     // @User: Advanced
     // @RebootRequired: True
-    AP_GROUPINFO("DELAY_MS", 18, AP_GPS, _delay_ms[0], 0),
+    AP_GROUPINFO("DELAY_MS", 19, AP_GPS, _delay_ms[0], 0),
 
 #if GPS_MAX_RECEIVERS > 1
     // @Param: DELAY_MS2
@@ -264,7 +272,7 @@ const AP_Param::GroupInfo AP_GPS::var_info[] = {
     // @Range: 0 250
     // @User: Advanced
     // @RebootRequired: True
-    AP_GROUPINFO("DELAY_MS2", 19, AP_GPS, _delay_ms[1], 0),
+    AP_GROUPINFO("DELAY_MS2", 20, AP_GPS, _delay_ms[1], 0),
 #endif
 
 #if defined(GPS_BLENDED_INSTANCE)
@@ -273,7 +281,7 @@ const AP_Param::GroupInfo AP_GPS::var_info[] = {
     // @Description: Determines which of the accuracy measures Horizontal position, Vertical Position and Speed are used to calculate the weighting on each GPS receiver when soft switching has been selected by setting GPS_AUTO_SWITCH to 2
     // @Bitmask: 0:Horiz Pos,1:Vert Pos,2:Speed
     // @User: Advanced
-    AP_GROUPINFO("BLEND_MASK", 20, AP_GPS, _blend_mask, 5),
+    AP_GROUPINFO("BLEND_MASK", 21, AP_GPS, _blend_mask, 5),
 
     // @Param: BLEND_TC
     // @DisplayName: Blending time constant
@@ -281,7 +289,7 @@ const AP_Param::GroupInfo AP_GPS::var_info[] = {
     // @Units: s
     // @Range: 5.0 30.0
     // @User: Advanced
-    AP_GROUPINFO("BLEND_TC", 21, AP_GPS, _blend_tc, 10.0f),
+    AP_GROUPINFO("BLEND_TC", 22, AP_GPS, _blend_tc, 10.0f),
 #endif
 
     AP_GROUPEND
@@ -965,6 +973,10 @@ void AP_GPS::inject_data(uint8_t instance, const uint8_t *data, uint16_t len)
 void AP_GPS::send_mavlink_gps_raw(mavlink_channel_t chan)
 {
     static uint32_t last_send_time_ms[MAVLINK_COMM_NUM_BUFFERS];
+
+	// YIG-ADD
+	if(primary_instance == 0) 
+	{
     if (status(0) > AP_GPS::NO_GPS) {
         // when we have a GPS then only send new data
         if (last_send_time_ms[chan] == last_message_time_ms(0)) {
@@ -988,7 +1000,8 @@ void AP_GPS::send_mavlink_gps_raw(mavlink_channel_t chan)
     speed_accuracy(0, sacc);
     mavlink_msg_gps_raw_int_send(
         chan,
-        last_fix_time_ms(0)*(uint64_t)1000,
+        //last_fix_time_ms(0)*(uint64_t)1000,	//YIG-CHECK
+		time_epoch_usec(0),
         status(0),
         loc.lat,        // in 1E7 degrees
         loc.lng,        // in 1E7 degrees
@@ -1003,6 +1016,52 @@ void AP_GPS::send_mavlink_gps_raw(mavlink_channel_t chan)
         vacc * 1000,          // one-sigma standard deviation in mm
         sacc * 1000,          // one-sigma standard deviation in mm/s
         0);                   // TODO one-sigma heading accuracy standard deviation
+
+
+	}
+	else if(primary_instance == 2)
+	{
+    if (status(2) > AP_GPS::NO_GPS) {
+        // when we have a GPS then only send new data
+        if (last_send_time_ms[chan] == last_message_time_ms(2)) {
+            return;
+        }
+        last_send_time_ms[chan] = last_message_time_ms(2);
+    } else {
+        // when we don't have a GPS then send at 1Hz
+        uint32_t now = AP_HAL::millis();
+        if (now - last_send_time_ms[chan] < 1000) {
+            return;
+        }
+        last_send_time_ms[chan] = now;
+    }
+    const Location &loc = location(2);
+    float hacc = 0.0f;
+    float vacc = 0.0f;
+    float sacc = 0.0f;
+    horizontal_accuracy(2, hacc);
+    vertical_accuracy(2, vacc);
+    speed_accuracy(2, sacc);
+    mavlink_msg_gps_raw_int_send(
+        chan,
+        last_fix_time_ms(2)*(uint64_t)1000,	//YIG-CHECK
+        status(2),
+        loc.lat,        // in 1E7 degrees
+        loc.lng,        // in 1E7 degrees
+        loc.alt * 10UL, // in mm
+        get_hdop(2),
+        get_vdop(2),
+        ground_speed(2)*100,  // cm/s
+        ground_course(2)*100, // 1/100 degrees,
+        num_sats(2),
+        0,                    // TODO: Elipsoid height in mm
+        hacc * 1000,          // one-sigma standard deviation in mm
+        vacc * 1000,          // one-sigma standard deviation in mm
+        sacc * 1000,          // one-sigma standard deviation in mm/s
+        0);                   // TODO one-sigma heading accuracy standard deviation
+
+	}
+		
 }
 
 #if GPS_MAX_RECEIVERS > 1

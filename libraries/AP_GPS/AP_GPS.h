@@ -27,7 +27,8 @@
    than 1 then redundant sensors may be available
  */
 #ifndef GPS_MAX_RECEIVERS
-#define GPS_MAX_RECEIVERS 2 // maximum number of physical GPS sensors allowed - does not include virtual GPS created by blending receiver data
+// YIG-CHG
+#define GPS_MAX_RECEIVERS 3 // maximum number of physical GPS sensors allowed - does not include virtual GPS created by blending receiver data
 #endif
 #ifndef GPS_MAX_INSTANCES
 #define GPS_MAX_INSTANCES  (GPS_MAX_RECEIVERS + 1) // maximum number of GPS instances including the 'virtual' GPS created by blending receiver data
@@ -390,6 +391,8 @@ public:
     //MAVLink Status Sending
     void send_mavlink_gps_raw(mavlink_channel_t chan);
     void send_mavlink_gps2_raw(mavlink_channel_t chan);
+	// YIG-ADD
+    void send_mavlink_gps3_raw(mavlink_channel_t chan);
 
     void send_mavlink_gps_rtk(mavlink_channel_t chan, uint8_t inst);
 

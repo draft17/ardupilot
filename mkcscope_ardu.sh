@@ -1,7 +1,8 @@
 #!/bin/sh   
 
 #SDIR=/home/jhkang/Project/33_ardupilot_latest
-SDIR=$PWD
+#SDIR=$PWD
+SDIR=./
 
 rm -rf cscope.out cscope.files   
 #find . \( -name '*.c' -o -name '*.cpp' -o -name '*.cc' -o -name '*.h' -o -name '*.s' -o -name '*.S' -o -name '*.java' \) -type f -print > cscope.files   

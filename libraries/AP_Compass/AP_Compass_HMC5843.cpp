@@ -204,7 +204,7 @@ bool AP_Compass_HMC5843::init()
         set_external(_compass_instance, true);
     }
 
-    // read from sensor at 75Hz
+    // read from sensor at 75Hz (13ms)
     _bus->register_periodic_callback(13333,
                                      FUNCTOR_BIND_MEMBER(&AP_Compass_HMC5843::_timer, void));
 

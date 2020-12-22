@@ -141,11 +141,13 @@ void Mode::_TakeOff::get_climb_rates(float& pilot_climb_rate,
 void Mode::auto_takeoff_set_start_alt(void)
 {
     // start with our current altitude
-    auto_takeoff_no_nav_alt_cm = inertial_nav.get_altitude();
+    auto_takeoff_no_nav_alt_cm = inertial_nav.get_altitude(); 
+	// 수동모드에서 고도 상승 후 자동모드로 전환 경우, Takeoff은 현재고도에서 시작함
     
     if (is_disarmed_or_landed() || !motors->get_interlock()) {
         // we are not flying, add the wp_navalt_min
-        auto_takeoff_no_nav_alt_cm += g2.wp_navalt_min * 100;
+        auto_takeoff_no_nav_alt_cm += g2.wp_navalt_min * 100; 
+		// 최소 고도 설정하여, 지상에서 이륙할 경우 이 고도까지는 급작스런 상승 막고(i term 누적제한), 상승이후에 본격적인 제어 수행하도록 유도함
     }
 }
 
@@ -158,7 +160,7 @@ void Mode::auto_takeoff_attitude_run(float target_yaw_rate)
 {
     float nav_roll, nav_pitch;
     
-    if (g2.wp_navalt_min > 0 && inertial_nav.get_altitude() < auto_takeoff_no_nav_alt_cm) {
+    if (g2.wp_navalt_min > 0 && inertial_nav.get_altitude() < auto_takeoff_no_nav_alt_cm) { // 최소 설정 고도에 도달하지 않았으면
         // we haven't reached the takeoff navigation altitude yet
         nav_roll = 0;
         nav_pitch = 0;

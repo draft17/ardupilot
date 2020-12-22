@@ -348,6 +348,10 @@ void Copter::fourhundred_hz_logging()
 // should be run at 10hz
 void Copter::ten_hz_logging_loop()
 {
+	// YIG-ADD : For In-Flight 고장진단
+    arming.diagnosis_update();
+	//
+
     // log attitude data if we're not already logging at the higher rate
     if (should_log(MASK_LOG_ATTITUDE_MED) && !should_log(MASK_LOG_ATTITUDE_FAST) && !copter.flightmode->logs_attitude()) {
         Log_Write_Attitude();

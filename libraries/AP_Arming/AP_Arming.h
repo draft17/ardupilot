@@ -63,6 +63,9 @@ public:
     // pre_arm_checks() is virtual so it can be modified in a vehicle specific subclass
     virtual bool pre_arm_checks(bool report);
 
+	// YIG-ADD : For In-Flight diagnosis
+    virtual bool diagnosis_checks(bool report);
+
     // some arming checks have side-effects, or require some form of state
     // change to have occurred, and thus should not be done as pre-arm
     // checks.  Those go here:

@@ -17,6 +17,7 @@
 #include <AP_HAL/AP_HAL.h>
 #include "ch.h"
 #include "hal.h"
+#include <AP_Notify/AP_Notify.h>	// YIG-DIAG
 
 #if HAL_USE_ADC == TRUE && !defined(HAL_DISABLE_ADC_DRIVER)
 
@@ -393,15 +394,28 @@ void AnalogIn::update_power_flags(void)
     }
 #endif
 
+	if(_board_voltage < 4.3f || _board_voltage > 5.6f)
+	{
+		if (_board_voltage < 4.3f)  //jhkang
+			::printf(">>> MAIN_5V  VOLTAGE ERROR! UNDER VOLTAGE! (VOL = %.2f)\n\r", _board_voltage);
+		if (_board_voltage > 5.6f)  //jhkang
+			::printf(">>> MAIN_5V  VOLTAGE ERROR! OVER  VOLTAGE! (VOL = %.2f)\n\r", _board_voltage);
+		AP_Notify::diag_status.ov = 1; //YIG-ADD
+	}
+
 #ifdef HAL_GPIO_PIN_VDD_5V_HIPOWER_OC
     if (!palReadLine(HAL_GPIO_PIN_VDD_5V_HIPOWER_OC)) {
         flags |= MAV_POWER_STATUS_PERIPH_HIPOWER_OVERCURRENT;
+		AP_Notify::diag_status.oc = 1; //YIG-ADD
+		::printf(">>> HIPOWER VCC - OVER CURRNT! \n\r");	//jhkang
     }
 #endif
 
 #ifdef HAL_GPIO_PIN_VDD_5V_PERIPH_OC
     if (!palReadLine(HAL_GPIO_PIN_VDD_5V_PERIPH_OC)) {
         flags |= MAV_POWER_STATUS_PERIPH_OVERCURRENT;
+		AP_Notify::diag_status.oc = 1; //YIG-ADD
+		::printf(">>> PERIPH VCC - OVER CURRNT! \n\r");	//jhkang
     }
 #endif
     if (_power_flags != 0 &&

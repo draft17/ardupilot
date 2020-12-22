@@ -157,6 +157,11 @@ thread_t* get_main_thread()
     return daemon_task;
 }
 
+#if 0	// SOFTWARE DEADLOCK
+static bool d_pause = false; // YIG-ADD 
+uint32_t _pat_time; // YIG-ADD
+#endif
+
 static AP_HAL::HAL::Callbacks* g_callbacks;
 
 static AP_HAL::Util::PersistentData last_persistent_data;
@@ -265,7 +270,25 @@ static void main_loop()
         }
 #endif
         schedulerInstance.watchdog_pat();
+		//YIG-ADD
+		AP_Notify::diag_status.watchdog_pat_time = AP_HAL::millis();
+		//END
     }
+
+#if 0 // SW-DEADLOCK TEST
+	//simple method to rest watchdog functionality
+	if (!d_pause) {
+		_pat_time = AP_HAL::millis();
+		d_pause = true;
+	}
+
+	static bool done_pause;
+	if (!done_pause && (AP_HAL::millis() - _pat_time > 60000)) {
+		done_pause = true;
+		while ((AP_HAL::millis() - _pat_time) < 65000);
+	}
+#endif
+
     thread_running = false;
 }
 

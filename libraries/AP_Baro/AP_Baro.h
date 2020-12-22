@@ -48,6 +48,9 @@ public:
     // the frontend
     void update(void);
 
+	// YIG-ADD
+	uint8_t get_primary(void) const { return _primary; }
+
     // healthy - returns true if sensor and derived altitude are good
     bool healthy(void) const { return healthy(_primary); }
     bool healthy(uint8_t instance) const { return sensors[instance].healthy && sensors[instance].alt_ok && sensors[instance].calibrated; }

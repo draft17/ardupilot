@@ -446,7 +446,7 @@ bool AC_WPNav::advance_wp_target_along_track(float dt)
             // "fast" waypoints are complete once the intermediate point reaches the destination
             if (_flags.fast_waypoint) {
                 _flags.reached_destination = true;
-            }else{
+            }else{ // 고도까지 확인
                 // regular waypoints also require the copter to be within the waypoint radius
                 Vector3f dist_to_dest = (curr_pos - Vector3f(0,0,terr_offset)) - _destination;
                 if( dist_to_dest.length() <= _wp_radius_cm ) {

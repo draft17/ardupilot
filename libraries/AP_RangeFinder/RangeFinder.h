@@ -117,7 +117,7 @@ public:
     }
 
     // prearm checks
-    bool prearm_healthy(char *failure_msg, const uint8_t failure_msg_len) const;
+    bool prearm_healthy(uint8_t i, char *failure_msg, const uint8_t failure_msg_len) const; // YIG-CHG
 
     // detect and initialise any available rangefinders
     void init(enum Rotation orientation_default);

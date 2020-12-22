@@ -276,7 +276,7 @@ bool AP_Mission::verify_command(const Mission_Command& cmd)
     case MAV_CMD_DO_PARACHUTE:
         return true;
     default:
-        return _cmd_verify_fn(cmd);
+        return _cmd_verify_fn(cmd); // YIG : called  mode_auto.cpp, ModeAuto::verify_command()
     }
 }
 

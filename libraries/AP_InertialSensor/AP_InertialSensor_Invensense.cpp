@@ -348,7 +348,7 @@ void AP_InertialSensor_Invensense::start()
         AP_HAL::panic("Invensense: Unable to allocate FIFO buffer");
     }
 
-    // start the timer process to read samples
+    // start the timer process to read samples (1ms)
     _dev->register_periodic_callback(1000000UL / _backend_rate_hz, FUNCTOR_BIND_MEMBER(&AP_InertialSensor_Invensense::_poll_data, void));
 }
 

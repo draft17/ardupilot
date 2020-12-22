@@ -155,7 +155,7 @@ void ModeAuto::takeoff_start(const Location& dest_loc)
 
     // get altitude target
     int32_t alt_target;
-    if (!dest.get_alt_cm(Location::AltFrame::ABOVE_HOME, alt_target)) {
+    if (!dest.get_alt_cm(Location::AltFrame::ABOVE_HOME, alt_target)) { // Takeoff 고도가 어떤 고도 형태이건 무조건 홈에서의 상대적인 고도" 로 변환하여 가져옴
         // this failure could only happen if take-off alt was specified as an alt-above terrain and we have no terrain data
         AP::logger().Write_Error(LogErrorSubsystem::TERRAIN, LogErrorCode::MISSING_TERRAIN_DATA);
         // fall back to altitude above current altitude
@@ -163,11 +163,11 @@ void ModeAuto::takeoff_start(const Location& dest_loc)
     }
 
     // sanity check target
-    if (alt_target < copter.current_loc.alt) {
+    if (alt_target < copter.current_loc.alt) { // Takeoff 설정 고도가 현재 고도보다 낮으면, 현재고도를 Takeoff 고도로 재 설정해버림 (즉, 일부러 고도 하강하지 않음)
         dest.set_alt_cm(copter.current_loc.alt, Location::AltFrame::ABOVE_HOME);
     }
     // Note: if taking off from below home this could cause a climb to an unexpectedly high altitude
-    if (alt_target < 100) {
+    if (alt_target < 100) { // Takeoff 고도가 1m 이하이면, 최소 1m 로 재 설정함
         dest.set_alt_cm(100, Location::AltFrame::ABOVE_HOME);
     }
 
@@ -179,10 +179,10 @@ void ModeAuto::takeoff_start(const Location& dest_loc)
     }
 
     // initialise yaw
-    auto_yaw.set_mode(AUTO_YAW_HOLD);
+    auto_yaw.set_mode(AUTO_YAW_HOLD); // Takeoff은 YAW 홀드로 유지시킴
 
     // clear i term when we're taking off
-    set_throttle_takeoff();
+    set_throttle_takeoff(); // reset, 누적된 i 값으로인하여 급작스런 상승 막기위함
 
     // get initial alt for WP_NAVALT_MIN
     auto_takeoff_set_start_alt();
@@ -398,6 +398,7 @@ void ModeAuto::payload_place_start()
 
 }
 
+// AP_Mission.cpp 에서 호출됨
 // start_command - this function will be called when the ap_mission lib wishes to start a new command
 bool ModeAuto::start_command(const AP_Mission::Mission_Command& cmd)
 {
@@ -753,7 +754,7 @@ void ModeAuto::wp_run()
         // get pilot's desired yaw rate
         target_yaw_rate = get_pilot_desired_yaw_rate(channel_yaw->get_control_in());
         if (!is_zero(target_yaw_rate)) {
-            auto_yaw.set_mode(AUTO_YAW_HOLD);
+            auto_yaw.set_mode(AUTO_YAW_HOLD); // 조종기로부터의 YAW 제어 위해 auto yaw holding
         }
     }
 
@@ -774,7 +775,7 @@ void ModeAuto::wp_run()
     pos_control->update_z_controller();
 
     // call attitude controller
-    if (auto_yaw.mode() == AUTO_YAW_HOLD) {
+    if (auto_yaw.mode() == AUTO_YAW_HOLD) { // 조종기로부터의 입력이 있을 경우, YAW 입력 제어
         // roll & pitch from waypoint controller, yaw rate from pilot
         attitude_control->input_euler_angle_roll_pitch_euler_rate_yaw(wp_nav->get_roll(), wp_nav->get_pitch(), target_yaw_rate);
     } else {
@@ -1526,6 +1527,7 @@ bool ModeAuto::verify_land()
                 // get destination so we can use it for loiter target
                 const Vector3f& dest = copter.wp_nav->get_wp_destination();
 
+				// 착륙 위치에 도착하였으면 하강하도록 준비, State를 Descending로 스위칭함
                 // initialise landing controller
                 land_start(dest);
 

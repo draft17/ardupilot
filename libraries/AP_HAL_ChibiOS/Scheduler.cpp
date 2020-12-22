@@ -27,6 +27,7 @@
 #include <AP_HAL_ChibiOS/RCInput.h>
 #include <AP_HAL_ChibiOS/CAN.h>
 #include <AP_InternalError/AP_InternalError.h>
+#include <AP_Notify/AP_Notify.h>	// YIG-ADD
 
 #if CH_CFG_USE_DYNAMIC == TRUE
 
@@ -321,12 +322,27 @@ void Scheduler::_timer_thread(void *arg)
         // process any pending RC output requests
         hal.rcout->timer_tick();
 
-        if (sched->expect_delay_start != 0) {
+        if (sched->expect_delay_start != 0) {	// long delay job (e.g compass calibration)
             uint32_t now = AP_HAL::millis();
             if (now - sched->expect_delay_start <= sched->expect_delay_length) {
-                sched->watchdog_pat();
+                sched->watchdog_pat();	//watchdog timer clear
+
+				// YIG-ADD : diagnosis (sw deadlock)
+				AP_Notify::diag_status.watchdog_pat_time = AP_HAL::millis();
+				// End
             }
         }
+
+		//YIG-ADD : diagnosis (sw deadlock)
+#if 1
+		uint32_t t_now = AP_HAL::millis();
+		if (AP_Notify::diag_status.watchdog_on && t_now - AP_Notify::diag_status.watchdog_pat_time > 1000) {
+			if(!AP_Notify::diag_status.deadlock) {
+				AP_Notify::diag_status.deadlock = 1;
+				::printf("SW DEADLOCK Occure !!!\n\r");
+			}
+		}
+#endif
     }
 }
 

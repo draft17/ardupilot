@@ -56,38 +56,29 @@ void AP_MSC::init()
         debug_msc(2, "MSC: init called more than once\n\r");
         return;
     }
-    //_dev = std::move(hal.spi->get_device("ms5611_spi5"));
-    _dev = std::move(hal.spi->get_device("ms5611_spi5"));
+    _dev = std::move(hal.spi->get_device("MSCmaster_spi5"));
     debug_msc(2, "MSC: SPI bus %d addr %d id %d\n\r", _dev->bus_num(), _dev->get_bus_address(), _dev->get_bus_id());
 
     spitxdata = (struct spitx *)msc_spidata;
     spirxdata = (struct spirx *)msc_spidata;
 
-    if (!hal.scheduler->thread_create(FUNCTOR_BIND_MEMBER(&AP_MSC::loop, void), _thread_name, 4096, AP_HAL::Scheduler::PRIORITY_SPI, 0)) {
-        // _node->setModeOfflineAndPublish();
-        debug_msc(1, "MSC: couldn't create thread\n\r");
-        return;
-    }
+//    if (!hal.scheduler->thread_create(FUNCTOR_BIND_MEMBER(&AP_MSC::loop, void), _thread_name, 4096, AP_HAL::Scheduler::PRIORITY_SPI, 0)) {
+//        debug_msc(1, "MSC: couldn't create thread\n\r");
+//        return;
+//    }
 
     _initialized = true;
     debug_msc(2, "MSC: init done\n\r");
-    ::printf("---------MSC: init done\n\r");
 }
 
 void AP_MSC::loop(void)
 {
-    while (true) {
+//    while (true) {
         if (!_initialized) {
-            hal.scheduler->delay_microseconds(1000);
-            continue;
+//            hal.scheduler->delay_microseconds(1000);
+//            continue;
+            return;
         }
-
-        // const int error = _node->spin(uavcan::MonotonicDuration::fromMSec(1));
-
-        // if (error < 0) {
-        //     hal.scheduler->delay_microseconds(100);
-        //     continue;
-        // }
 
         // if (_SRV_armed) {
         if (1) {
@@ -99,9 +90,9 @@ void AP_MSC::loop(void)
             for (uint8_t i = 0; i < MSC_SRV_NUMBER; i++) {
                 _SRV_conf[i].esc_pending = false;
             }
-            hal.scheduler->delay_microseconds(1000);
+//            hal.scheduler->delay_microseconds(2500);
         }
-    }
+//    }
 }
 
 
@@ -134,7 +125,7 @@ void AP_MSC::SRV_send_esc(void)
                 spitxdata->rpm = static_cast<uint16_t>((_SRV_conf[i].pulse - 1100) * 2.5);
                 spitxdata->reserved = 0;
                 spitxdata->spiCRC = crc_crc32(0xFFFFFFFF, msc_spidata, 4);
-                // debug_msc(1, "%02X%02X%02X%02X\r\n", msc_spidata[0], msc_spidata[1], msc_spidata[2], m
+
                 if (!_dev->get_semaphore()->take(HAL_SEMAPHORE_BLOCK_FOREVER)) {
                     AP_HAL::panic("PANIC: AP_Baro_MS56XX: failed to take serial semaphore for init");
                 }
@@ -142,7 +133,6 @@ void AP_MSC::SRV_send_esc(void)
                 _dev->get_semaphore()->give();
                 if(crc_crc32(0xFFFFFFFF, msc_spidata, 4) == spirxdata->spiCRC)
                     debug_msc(1, "%d %d %d\r\n", spirxdata->err, spirxdata->channel, spirxdata->rpm);
-                //hal.scheduler->delay(4);
             } else {
                 // esc_msg.cmd.push_back(static_cast<unsigned>(0));
             }

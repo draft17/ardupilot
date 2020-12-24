@@ -244,6 +244,88 @@ void Copter::fast_loop()
     // send outputs to the motors library immediately
     motors_output();
 
+	msc.loop();
+
+	struct spitxpara
+	{
+		uint8_t sync1;
+		uint8_t sync2;
+		uint8_t active;
+		uint8_t type;
+		float roll_in;
+		float roll_in_ff;
+		float pitch_in;
+		float pitch_in_ff;
+		float yaw_in;
+		float yaw_in_ff;
+		float throttle_in;
+		float throttle_avg_max;
+		uint8_t gyro_healthy;
+		uint8_t accel_healthy;
+		uint8_t compass_healthy;
+		uint8_t barometer_healthy;
+		uint8_t gps_healthy;
+		uint8_t motor_healthy;
+		uint8_t over_temperature;
+		uint8_t over_voltage;
+		uint8_t over_current;
+		uint8_t sw_deadlock;
+		uint8_t flight_mode;
+		uint8_t flight_status;
+		uint32_t spiCRC;
+	}*spitxparadata;
+
+	uint8_t fc_spidata[52];
+	spitxparadata = (struct spitxpara *)fc_spidata;
+	spitxparadata->sync1 = 'S';
+	spitxparadata->sync2 = 'V';
+	spitxparadata->type = 0;
+
+	spitxparadata->roll_in = motors->get_roll();
+	spitxparadata->pitch_in = motors->get_pitch();
+	spitxparadata->yaw_in = motors->get_yaw();
+//	spitxparadata->roll_in_ff = attitude_control->get_rate_roll_pid().get_ff(); //no matching function in FC2 version
+//	spitxparadata->pitch_in_ff = attitude_control->get_rate_pitch_pid().get_ff(); //no matching function in FC2 version
+//	spitxparadata->yaw_in_ff = attitude_control->get_rate_yaw_pid().get_ff(); //no matching function in FC2 version
+//	spitxparadata->throttle_in = 32;
+//	spitxparadata->throttle_avg_max = 32;
+	spitxparadata->gyro_healthy = (AP_Notify::diag_status.gyro_failed[0] && AP_Notify::diag_status.gyro_failed[1] && AP_Notify::diag_status.gyro_failed[2])?1:0;
+	spitxparadata->accel_healthy = (AP_Notify::diag_status.accel_failed[0] && AP_Notify::diag_status.accel_failed[1] && AP_Notify::diag_status.accel_failed[2])?1:0;
+	spitxparadata->compass_healthy = (AP_Notify::diag_status.compass_failed[0] && AP_Notify::diag_status.compass_failed[1] && AP_Notify::diag_status.compass_failed[2])?1:0;
+	spitxparadata->barometer_healthy = (AP_Notify::diag_status.baro_failed[0] && AP_Notify::diag_status.baro_failed[1])?1:0;
+	spitxparadata->gps_healthy = (AP_Notify::diag_status.gps_failed[0] && AP_Notify::diag_status.gps_failed[1] && AP_Notify::diag_status.gps_failed[2])?1:0;
+	spitxparadata->motor_healthy = motors->get_lost_motor();
+	spitxparadata->over_temperature = AP_Notify::diag_status.ot;
+	spitxparadata->over_voltage = AP_Notify::diag_status.ov;
+	spitxparadata->over_current = AP_Notify::diag_status.oc;
+	spitxparadata->sw_deadlock = AP_Notify::diag_status.deadlock;
+
+	if(spitxparadata->gyro_healthy || spitxparadata->accel_healthy || spitxparadata->compass_healthy || spitxparadata->barometer_healthy || spitxparadata->gps_healthy || spitxparadata->over_temperature || spitxparadata->over_voltage || spitxparadata->over_current || spitxparadata->sw_deadlock)
+		spitxparadata->active = 0;
+	else
+		spitxparadata->active = 1;
+
+	if(motors->armed())
+		spitxparadata->flight_status = 0x80;
+	else
+		spitxparadata->flight_status = 0x00;
+	if(strcmp(flightmode->name4(),"AUTO"))
+	{
+		spitxparadata->flight_mode = 1;
+		if(mode_auto.mode() == Auto_TakeOff)
+			spitxparadata->flight_status |= 0x01;
+		else if(mode_auto.mode() == Auto_Land)
+			spitxparadata->flight_status |= 0x02;
+		else if(mode_auto.mode() == Auto_RTL)
+			spitxparadata->flight_status |= 0x03;
+		else if(mode_auto.mode() == Auto_WP)
+			spitxparadata->flight_status |= 0x04;
+	}
+	else
+		spitxparadata->flight_mode = 2;
+	spitxparadata->spiCRC = crc_crc32(0xFFFFFFFF, fc_spidata, 48);
+	//TODO:spi send
+
     // run EKF state estimator (expensive)
     // --------------------
     read_AHRS();

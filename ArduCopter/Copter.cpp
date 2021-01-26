@@ -244,7 +244,7 @@ void Copter::fast_loop()
     // send outputs to the motors library immediately
     motors_output();
 
-	msc.loop();
+
 
 	struct spitxpara
 	{

@@ -60,7 +60,7 @@ void AP_RangeFinder_MAVLink::handle_msg(const mavlink_message_t &msg)
         state.last_reading_ms = AP_HAL::millis();
         //distance_cm = packet.current_distance;
 
-		// 3D-LiDAR ¿¡¼­ ¿¬¼ÓÀ¸·Î Àü¼ÛµÊ
+		// 3D-LiDAR ì—ì„œ ì—°ì†ìœ¼ë¡œ ì „ì†¡ë¨
 		if(packet.current_distance == 1) // Front
 		{
     		distance_cm = ((packet.max_distance/100)*100); //Upper

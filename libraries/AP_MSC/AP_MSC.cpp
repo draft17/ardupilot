@@ -72,7 +72,6 @@ void AP_MSC::init()
     return;
 }
 
-
     _initialized = true;
     debug_msc(2, "MSC: init done\n\r");
 }

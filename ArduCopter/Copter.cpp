@@ -244,7 +244,6 @@ void Copter::fast_loop()
     // send outputs to the motors library immediately
     motors_output();
 
-
 	struct spitxpara
 	{
 		uint8_t sync1;

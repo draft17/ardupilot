@@ -18,6 +18,7 @@
 
 #include "GCS.h"
 #include <AP_Logger/AP_Logger.h>
+#include <AP_Notify/AP_Notify.h> // YIG
 
 extern const AP_HAL::HAL& hal;
 
@@ -283,6 +284,14 @@ void GCS_MAVLINK::handle_param_set(const mavlink_message_t &msg)
         send_parameter_value(key, var_type, old_value);
         return;
     }
+
+	// YIG-IMSI for Switch-Over from GCS
+	if(strcmp(key, "PRX_IGN_ANG3") == 0 && (old_value != 4 && packet.param_value == 4))
+	{
+		AP_Notify::diag_status.deadlock = true;
+    	gcs().send_text(MAV_SEVERITY_INFO, "Param (%s,  %4.2f / %4.2f)", key, old_value, packet.param_value);
+	}
+	//
 
     // set the value
     vp->set_float(packet.param_value, var_type);

@@ -131,8 +131,15 @@ I2CDeviceManager::I2CDeviceManager(void)
             businfo[i].i2ccfg.timingr = HAL_I2C_F7_100_TIMINGR;
             businfo[i].busclock = 100000;
         } else {
-            businfo[i].i2ccfg.timingr = HAL_I2C_F7_400_TIMINGR;
-            businfo[i].busclock = 400000;
+			// jhkang+++
+			if (businfo[i].busnum == 2) {	// sf11 lidar - reduce noise
+            	businfo[i].i2ccfg.timingr = HAL_I2C_F7_100_TIMINGR;
+            	businfo[i].busclock = 100000;
+			// +++jhkang
+			} else {
+            	businfo[i].i2ccfg.timingr = HAL_I2C_F7_400_TIMINGR;
+            	businfo[i].busclock = 400000;
+			}
         }
 #elif defined(STM32H7)
         if (businfo[i].busclock <= 100000) {

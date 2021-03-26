@@ -442,6 +442,12 @@ float AP_Proximity::distance_min() const
     return drivers[primary_instance]->distance_min();
 }
 
+// YIG
+AP_Int16 AP_Proximity::fc_fail_from_gcs() const
+{
+    return _ignore_angle_deg[2];
+}
+
 // get distance in meters upwards, returns true on success
 bool AP_Proximity::get_upward_distance(uint8_t instance, float &distance) const
 {

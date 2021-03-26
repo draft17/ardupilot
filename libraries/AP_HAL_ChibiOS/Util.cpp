@@ -222,18 +222,21 @@ bool Util::flash_bootloader()
 bool Util::get_system_id(char buf[40])
 {
     uint8_t serialid[12];
-    char board_name[14];
+    char board_name[20];
 
     memcpy(serialid, (const void *)UDID_START, 12);
-    strncpy(board_name, CHIBIOS_SHORT_BOARD_NAME, 13);
-    board_name[13] = 0;
+    //strncpy(board_name, CHIBIOS_SHORT_BOARD_NAME, 13);
+    strncpy(board_name, "F/C : Genesis3-H", 19);
 
+#if 0
     // this format is chosen to match the format used by HAL_PX4
     snprintf(buf, 40, "%s %02X%02X%02X%02X %02X%02X%02X%02X %02X%02X%02X%02X",
              board_name,
              (unsigned)serialid[3], (unsigned)serialid[2], (unsigned)serialid[1], (unsigned)serialid[0],
              (unsigned)serialid[7], (unsigned)serialid[6], (unsigned)serialid[5], (unsigned)serialid[4],
              (unsigned)serialid[11], (unsigned)serialid[10], (unsigned)serialid[9],(unsigned)serialid[8]);
+#endif
+    snprintf(buf, 40, "%s", board_name);
     buf[39] = 0;
     return true;
 }

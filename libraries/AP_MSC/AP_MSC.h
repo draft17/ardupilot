@@ -38,6 +38,7 @@ public:
     ///// SRV output /////
     void SRV_push_servos(void);
 	bool motor_status_check(uint8_t num, uint32_t &error_code);
+	void switch_over();
 
     void loop(void);
 
@@ -52,6 +53,7 @@ public:
 
     char _thread_name[13] = "msc_01";
     bool _initialized;
+	char activeflag;
     static AP_MSC *msc_singleton;
     ///// SRV output /////
     struct {

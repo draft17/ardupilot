@@ -40,7 +40,7 @@ void Copter::read_rangefinder(void)
     struct {
         RangeFinderState &state;
         enum Rotation orientation;
-    } rngfnd[2] = { {rangefinder_state, ROTATION_PITCH_270}, {rangefinder_up_state, ROTATION_PITCH_90}};
+    } rngfnd[2] = { {rangefinder_state, ROTATION_NONE}, {rangefinder_up_state, ROTATION_YAW_45}};
 
     for (uint8_t i=0; i < ARRAY_SIZE(rngfnd); i++) {
         // local variables to make accessing simpler
@@ -86,6 +86,29 @@ void Copter::read_rangefinder(void)
             }
             rf_state.last_healthy_ms = now;
         }
+
+
+		// YIG-IMSI for GTB
+		if(copter.control_mode == Mode::Number::STABILIZE && copter.fence.get_margin() >= 3)
+		{
+			if (rf_orient == ROTATION_NONE && rf_state.alt_healthy) // 3D-LiDAR
+		    {
+			    if(rf_state.alt_cm > 300 && rf_state.alt_cm < copter.fence.get_margin() * 100) 
+			    {
+				    copter.set_mode(Mode::Number::LAND, ModeReason::FAILSAFE);
+			        gcs().send_text(MAV_SEVERITY_CRITICAL, "Obstacle from 3D-LiDAR (%d  %d  %d) : LAND !!", rf_state.alt_cm, tilt_correction * rangefinder.left_distance_cm_orient(rf_orient), tilt_correction * rangefinder.right_distance_cm_orient(rf_orient));
+			    }
+			}
+			else if(rf_orient == ROTATION_YAW_45 && rf_state.alt_healthy) // SP-LiDAR
+			{
+			    if(rf_state.alt_cm > 300 && rf_state.alt_cm < copter.fence.get_margin() * 100) 
+			    {
+				    copter.set_mode(Mode::Number::LAND, ModeReason::FAILSAFE);
+			        gcs().send_text(MAV_SEVERITY_CRITICAL, "Obstacle from SP_LiDAR (%d) : LAND !!", rf_state.alt_cm);
+			    }
+			}
+	    }
+		//
 
         // send downward facing lidar altitude and health to waypoint navigation library
         if (rf_orient == ROTATION_PITCH_270) {

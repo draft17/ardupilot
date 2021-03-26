@@ -11,6 +11,11 @@ bool ModeLand::init(bool ignore_checks)
 {
     // check if we have GPS and decide which LAND we're going to do
     land_with_gps = copter.position_ok();
+
+	// YIG-IMSI for GTB LAND
+	land_with_gps = false;
+	//
+
     if (land_with_gps) {
         // set target to stopping point
         Vector3f stopping_point;
@@ -148,6 +153,7 @@ void ModeLand::do_not_use_GPS()
 void Copter::set_mode_land_with_pause(ModeReason reason)
 {
     set_mode(Mode::Number::LAND, reason);
+
     land_pause = true;
 
     // alert pilot to mode change

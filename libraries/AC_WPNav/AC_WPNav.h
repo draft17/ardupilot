@@ -20,6 +20,8 @@
 #define WPNAV_WP_RADIUS                 200.0f      // default waypoint radius in cm
 #define WPNAV_WP_RADIUS_MIN               5.0f      // minimum waypoint radius in cm
 
+//jhkang - ADD
+//#define WPNAV_WP_SPEED_UP               50.0f      // default maximum climb velocity
 #define WPNAV_WP_SPEED_UP               250.0f      // default maximum climb velocity
 #define WPNAV_WP_SPEED_DOWN             150.0f      // default maximum descent velocity
 

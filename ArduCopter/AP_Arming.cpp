@@ -369,16 +369,16 @@ bool AP_Arming_Copter::gps_checks(bool display_failure)
     }
 
     // check if flight mode requires GPS
-    //bool mode_requires_gps = copter.flightmode->requires_GPS();
+    bool mode_requires_gps = copter.flightmode->requires_GPS();
 
     // check if fence requires GPS
-    //bool fence_requires_gps = false;
+    bool fence_requires_gps = false;
     #if AC_FENCE == ENABLED
     // if circular or polygon fence is enabled we need GPS
     //fence_requires_gps = (copter.fence.get_enabled_fences() & (AC_FENCE_TYPE_CIRCLE | AC_FENCE_TYPE_POLYGON)) > 0;
     #endif
 
-#if 0 // YIG-CHG : 모드에 관계없이 항상 GPS 체크
+#if 1 // YIG-CHG : 모드에 관계없이 항상 GPS 체크
     // return true if GPS is not required
     if (!mode_requires_gps && !fence_requires_gps) {
         AP_Notify::flags.pre_arm_gps_check = true;
@@ -394,7 +394,7 @@ bool AP_Arming_Copter::gps_checks(bool display_failure)
 
     // warn about hdop separately - to prevent user confusion with no gps lock
     if (copter.gps.get_hdop() > copter.g.gps_hdop_good) {
-        check_failed(ARMING_CHECK_GPS, display_failure, "GPS :: High GPS HDOP");
+        //check_failed(ARMING_CHECK_GPS, display_failure, "GPS :: High GPS HDOP");
         AP_Notify::flags.pre_arm_gps_check = false;
         passed = false;
     }
@@ -505,7 +505,7 @@ bool AP_Arming_Copter::mandatory_gps_checks(bool display_failure)
     fence_requires_gps = (copter.fence.get_enabled_fences() & (AC_FENCE_TYPE_CIRCLE | AC_FENCE_TYPE_POLYGON)) > 0;
     #endif
 
-#if 0 // YIG-CHG : 모드에 관계없이 항상 GPS 체크
+#if 1 // YIG-CHG : 모드에 관계없이 항상 GPS 체크
     // return true if GPS is not required
     if (!mode_requires_gps && !fence_requires_gps) {
         return true;

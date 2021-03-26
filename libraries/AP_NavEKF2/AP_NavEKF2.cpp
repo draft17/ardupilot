@@ -651,6 +651,7 @@ bool NavEKF2::InitialiseFilter(void)
         for (uint8_t i=0; i<7; i++) {
             if (_imuMask & (1U<<i)) {
                 num_cores++;
+            	gcs().send_text(MAV_SEVERITY_INFO, "NavEKF2: EKF2 core on %d", num_cores);
             }
         }
 
@@ -665,7 +666,6 @@ bool NavEKF2::InitialiseFilter(void)
         core = (NavEKF2_core*)hal.util->malloc_type(sizeof(NavEKF2_core)*num_cores, AP_HAL::Util::MEM_FAST);
         if (core == nullptr) {
             _enable.set(0);
-            gcs().send_text(MAV_SEVERITY_CRITICAL, "NavEKF2: allocation failed");
             return false;
         }
 
@@ -682,6 +682,7 @@ bool NavEKF2::InitialiseFilter(void)
                     return false;
                 }
                 num_cores++;
+            	gcs().send_text(MAV_SEVERITY_INFO, "NavEKF2: EKF2 core setup %d", num_cores);
             }
         }
 
@@ -834,6 +835,7 @@ void NavEKF2::checkLaneSwitch(void)
 bool NavEKF2::healthy(void) const
 {
     if (!core) {
+        gcs().send_text(MAV_SEVERITY_CRITICAL, "NavEKF2: no core %d", num_cores);
         return false;
     }
     return core[primary].healthy();
@@ -842,10 +844,12 @@ bool NavEKF2::healthy(void) const
 bool NavEKF2::all_cores_healthy(void) const
 {
     if (!core) {
+        gcs().send_text(MAV_SEVERITY_CRITICAL, "NavEKF2: No EKF2 Core %d", num_cores);
         return false;
     }
     for (uint8_t i = 0; i < num_cores; i++) {
         if (!core[i].healthy()) {
+            gcs().send_text(MAV_SEVERITY_CRITICAL, "NavEKF2: Not healthy (%d) %d", i, num_cores);
             return false;
         }
     }

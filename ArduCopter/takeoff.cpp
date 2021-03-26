@@ -9,6 +9,7 @@ Mode::_TakeOff Mode::takeoff;
 
 bool Mode::do_user_takeoff_start(float takeoff_alt_cm)
 {
+	gcs().send_text(MAV_SEVERITY_INFO,"do_user_takeoff_start %4.2f", takeoff_alt_cm);
     copter.flightmode->takeoff.start(takeoff_alt_cm);
     return true;
 }
@@ -23,19 +24,22 @@ bool Mode::do_user_takeoff(float takeoff_alt_cm, bool must_navigate)
         // can't takeoff again!
         return false;
     }
+	/*
     if (!has_user_takeoff(must_navigate)) {
         // this mode doesn't support user takeoff
         return false;
     }
+	*/
     if (takeoff_alt_cm <= copter.current_loc.alt) {
         // can't takeoff downwards...
         return false;
     }
-
     // Helicopters should return false if MAVlink takeoff command is received while the rotor is not spinning
     if (motors->get_spool_state() != AP_Motors::SpoolState::THROTTLE_UNLIMITED && copter.ap.using_interlock) {
         return false;
     }
+
+	takeoff_alt_cm = 110.0f; // YIG : imsi
 
     if (!do_user_takeoff_start(takeoff_alt_cm)) {
         return false;
@@ -89,8 +93,8 @@ void Mode::_TakeOff::get_climb_rates(float& pilot_climb_rate,
     }
 
     // acceleration of 50cm/s/s
-    static constexpr float TAKEOFF_ACCEL = 50.0f;
-    const float takeoff_minspeed = MIN(50.0f, max_speed);
+    static constexpr float TAKEOFF_ACCEL = 20.0f;
+    const float takeoff_minspeed = MIN(20.0f, max_speed);
     const float time_elapsed = (millis() - start_ms) * 1.0e-3f;
     const float speed = MIN(time_elapsed * TAKEOFF_ACCEL + takeoff_minspeed, max_speed);
 
@@ -103,10 +107,17 @@ void Mode::_TakeOff::get_climb_rates(float& pilot_climb_rate,
                         (time_elapsed - time_to_max_speed) * max_speed;
     }
 
+#if 0 // YIG-CHG
     // check if the takeoff is over
     if (height_gained >= alt_delta) {
         stop();
     }
+#else
+    height_gained = height_gained; // imsi
+    if (copter.current_loc.alt >= alt_delta) {
+		stop();
+	}
+#endif
 
     // if takeoff climb rate is zero return
     if (speed <= 0.0f) {

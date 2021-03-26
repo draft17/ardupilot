@@ -93,7 +93,10 @@ const AP_ToneAlarm::Tone AP_ToneAlarm::_tones[] {
 #define AP_NOTIFY_TONE_QUIET_NOT_READY_OR_NOT_FINISHED 28
     { "MFT200L4<B#4A#6G#6", false },
 #define AP_NOTIFY_TONE_STARTUP 29
-    { "MFT240L8O4aO5dcO4aO5dcO4aO5dcL16dcdcdcdc", false },
+    //{ "MFT240L8O4aO5dcO4aO5dcO4aO5dcL16dcdcdcdc", false }, // jhkang-org
+    { "L32 C D E F G A B L32 B A G F E D C", false },		// jhkang
+    //{ "MS O3  L4 g p8 d8 g p8 L8 dgdgb>d4 p4", false },		// jhkang
+
 #define AP_NOTIFY_TONE_NO_SDCARD 30
     { "MNBGG", false },
 };
@@ -118,7 +121,7 @@ bool AP_ToneAlarm::init()
 #if HAVE_FILESYSTEM_SUPPORT && CONFIG_HAL_BOARD != HAL_BOARD_LINUX
     // if we don't have a SDcard then play a failure tone instead of
     // normal startup tone. This gives the user a chance to fix it
-    // before they try to arm. We don't do this on Linux as Linux
+    // before they try to arm. We do D E F G A B L32 B A G F E D C
     // flight controllers don't usually have removable storage
     struct stat st;
     if (AP::FS().stat(HAL_BOARD_STORAGE_DIRECTORY, &st) != 0) {

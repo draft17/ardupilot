@@ -37,6 +37,7 @@ AP_MSC::AP_MSC()
         _SRV_conf[i].esc_pending = false;
         _SRV_conf[i].servo_pending = false;
     }
+	activeflag = 1;
     msc_singleton = this;
     debug_msc(2, "AP_MSC constructed\n\r");
 }
@@ -66,6 +67,11 @@ void AP_MSC::init()
 //        debug_msc(1, "MSC: couldn't create thread\n\r");
 //        return;
 //    }
+	if (!hal.scheduler->thread_create(FUNCTOR_BIND_MEMBER(&AP_MSC::loop, void), _thread_name, 4096, AP_HAL::Scheduler::PRIORITY_SPI, 0)) {
+    debug_msc(1, "MSC: couldn't create thread\n\r");
+    return;
+}
+
 
     _initialized = true;
     debug_msc(2, "MSC: init done\n\r");
@@ -73,10 +79,10 @@ void AP_MSC::init()
 
 void AP_MSC::loop(void)
 {
-//    while (true) {
+    while (true) {
         if (!_initialized) {
-//            hal.scheduler->delay_microseconds(1000);
-//            continue;
+            hal.scheduler->delay_microseconds(1000);
+            continue;
             return;
         }
 
@@ -90,9 +96,9 @@ void AP_MSC::loop(void)
             for (uint8_t i = 0; i < MSC_SRV_NUMBER; i++) {
                 _SRV_conf[i].esc_pending = false;
             }
-//            hal.scheduler->delay_microseconds(2500);
+            hal.scheduler->delay_microseconds(1000);
         }
-//    }
+    }
 }
 
 
@@ -108,6 +114,7 @@ void AP_MSC::SRV_send_esc(void)
     for (uint8_t i = 0; i < MSC_SRV_NUMBER; i++) {
         if ((((uint32_t) 1) << i) & MSC_ESC_BM) {
             max_esc_num = i + 1;
+			if (_SRV_conf[i].pulse == 500) _SRV_conf[i].pulse = 0;
             if (_SRV_conf[i].esc_pending) {
                 active_esc_num++;
             }
@@ -120,9 +127,10 @@ void AP_MSC::SRV_send_esc(void)
             if ((((uint32_t) 1) << i) & MSC_ESC_BM) {
                 // TODO: ESC negative scaling for reverse thrust and reverse rotation
 
-                spitxdata->active = 1;
+                spitxdata->active = activeflag;
                 spitxdata->channel = i;
-                spitxdata->rpm = static_cast<uint16_t>((_SRV_conf[i].pulse - 1100) * 2.5);
+                //spitxdata->rpm = static_cast<uint16_t>((_SRV_conf[i].pulse - 1100) * 2.5);
+				spitxdata->rpm = _SRV_conf[i].pulse;
                 spitxdata->reserved = 0;
                 spitxdata->spiCRC = crc_crc32(0xFFFFFFFF, msc_spidata, 4);
 
@@ -131,8 +139,8 @@ void AP_MSC::SRV_send_esc(void)
                 }
                 _dev->transfer(msc_spidata, 8, msc_spidata, 8);
                 _dev->get_semaphore()->give();
-                if(crc_crc32(0xFFFFFFFF, msc_spidata, 4) == spirxdata->spiCRC)
-                    debug_msc(1, "%d %d %d\r\n", spirxdata->err, spirxdata->channel, spirxdata->rpm);
+                //if(crc_crc32(0xFFFFFFFF, msc_spidata, 4) == spirxdata->spiCRC)
+                //    debug_msc(1, "%d %d %d\r\n", spirxdata->err, spirxdata->channel, spirxdata->rpm);
             } else {
                 // esc_msg.cmd.push_back(static_cast<unsigned>(0));
             }
@@ -164,6 +172,10 @@ bool AP_MSC::motor_status_check(uint8_t num, uint32_t &error_code)
 	}
 
 	return true;
+}
+void AP_MSC::switch_over()
+{
+	activeflag = 0;
 }
 
 AP_MSC *AP_MSC::msc_singleton;

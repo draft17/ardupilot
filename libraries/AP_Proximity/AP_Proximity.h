@@ -109,6 +109,7 @@ public:
     // get maximum and minimum distances (in meters) of primary sensor
     float distance_max() const;
     float distance_min() const;
+    AP_Int16 fc_fail_from_gcs() const;
 
     // handle mavlink DISTANCE_SENSOR messages
     void handle_msg(const mavlink_message_t &msg);

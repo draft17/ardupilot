@@ -44,6 +44,13 @@ void ModeAltHold::run()
     // Alt Hold State Machine Determination
     AltHoldModeState althold_state = get_alt_hold_state(target_climb_rate);
 
+    if(AP_HAL::millis() - althold_debug_timer2 > 2000)
+    {
+		if(althold_state > 0)
+      		gcs().send_text(MAV_SEVERITY_INFO,"althold state %d", althold_state);
+       	althold_debug_timer2 = AP_HAL::millis();
+    }
+
     // Alt Hold State Machine
     switch (althold_state) {
 
@@ -73,6 +80,12 @@ void ModeAltHold::run()
 
         // get avoidance adjusted climb rate
         target_climb_rate = get_avoidance_adjusted_climbrate(target_climb_rate);
+
+        if(AP_HAL::millis() - althold_debug_timer1 > 5000)
+        {
+        	gcs().send_text(MAV_SEVERITY_INFO,"althold  tar_cl (%4.2f) take_cl (%4.2f)", target_climb_rate, takeoff_climb_rate);
+        	althold_debug_timer1 = AP_HAL::millis();
+    	}
 
         // set position controller targets
         pos_control->set_alt_target_from_climb_rate_ff(target_climb_rate, G_Dt, false);

@@ -413,7 +413,7 @@ void Mode::get_pilot_desired_lean_angles(float &roll_out, float &pitch_out, floa
     angle_limit = constrain_float(angle_limit, 1000.0f, angle_max);
 
     // scale roll and pitch inputs to ANGLE_MAX parameter range
-    float scaler = angle_max/(float)ROLL_PITCH_YAW_INPUT_MAX; // ROLL_PITCH_YAW_INPUT_MAX : 4500
+    float scaler = angle_max/(float)ROLL_PITCH_YAW_INPUT_MAX;
     roll_out *= scaler;
     pitch_out *= scaler;
 
@@ -726,6 +726,16 @@ Mode::AltHoldModeState Mode::get_alt_hold_state(float target_climb_rate_cms)
         return AltHold_Takeoff;
 
     } else if (!copter.ap.auto_armed || copter.ap.land_complete) {
+		
+		/*
+		   if(AP_HAL::millis() - althold_debug_timer2 > 300)
+		   {
+		   gcs().send_text(MAV_SEVERITY_INFO,"althold %d", motors->get_spool_sta
+		   e());
+		   althold_debug_timer2 = AP_HAL::millis();
+		   }
+		 */
+
         // the aircraft is armed and landed
         if (target_climb_rate_cms < 0.0f && !copter.ap.using_interlock) {
             // the aircraft should move to a ground idle state
@@ -734,6 +744,13 @@ Mode::AltHoldModeState Mode::get_alt_hold_state(float target_climb_rate_cms)
         } else {
             // the aircraft should prepare for imminent take off
             motors->set_desired_spool_state(AP_Motors::DesiredSpoolState::THROTTLE_UNLIMITED);
+			/*
+			   if(AP_HAL::millis() - althold_debug_timer1 > 300)
+			   {
+			   gcs().send_text(MAV_SEVERITY_INFO,"throttle unlimited");
+			   althold_debug_timer1 = AP_HAL::millis();
+			   }
+			 */
         }
 
         if (motors->get_spool_state() == AP_Motors::SpoolState::GROUND_IDLE) {

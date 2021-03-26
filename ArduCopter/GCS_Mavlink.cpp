@@ -522,7 +522,7 @@ bool GCS_MAVLINK_Copter::params_ready() const
 void GCS_MAVLINK_Copter::send_banner()
 {
     GCS_MAVLINK::send_banner();
-    send_text(MAV_SEVERITY_INFO, "Frame: %s", copter.get_frame_string());
+    send_text(MAV_SEVERITY_INFO, "PAV Frame: %s", copter.get_frame_string());
 }
 
 // a RC override message is considered to be a 'heartbeat' from the ground station for failsafe purposes
@@ -631,6 +631,7 @@ MAV_RESULT GCS_MAVLINK_Copter::handle_command_long_packet(const mavlink_command_
         // param6 : longitude   (not supported)
         // param7 : altitude [metres]
 
+		gcs().send_text(MAV_SEVERITY_INFO, "MAV Takeoff");
         float takeoff_alt = packet.param7 * 100;      // Convert m to cm
 
         if (!copter.flightmode->do_user_takeoff(takeoff_alt, is_zero(packet.param3))) {
@@ -1283,7 +1284,7 @@ void Copter::mavlink_delay_cb()
     }
     if (tnow - last_5s > 5000) {
         last_5s = tnow;
-        gcs().send_text(MAV_SEVERITY_INFO, "Initialising APM");
+        gcs().send_text(MAV_SEVERITY_INFO, "Initialising PAV SW");
     }
 
     logger.EnableWrites(true);

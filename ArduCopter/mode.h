@@ -119,6 +119,9 @@ protected:
     };
     AltHoldModeState get_alt_hold_state(float target_climb_rate_cms);
 
+	uint32_t althold_debug_timer1 = 0;
+	uint32_t althold_debug_timer2 = 0;
+
     // convenience references to avoid code churn in conversion:
     Parameters &g;
     ParametersG2 &g2;
@@ -1469,3 +1472,4 @@ private:
 
 };
 #endif
+

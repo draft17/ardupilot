@@ -22,6 +22,7 @@
 #include "AP_MotorsMulticopter.h"
 #include <AP_HAL/AP_HAL.h>
 #include <AP_BattMonitor/AP_BattMonitor.h>
+#include <GCS_MAVLink/GCS.h>
 
 extern const AP_HAL::HAL& hal;
 
@@ -148,7 +149,7 @@ const AP_Param::GroupInfo AP_MotorsMulticopter::var_info[] = {
     // @Description: Disables motor PWM output when disarmed
     // @Values: 0:PWM enabled while disarmed, 1:PWM disabled while disarmed
     // @User: Advanced
-    AP_GROUPINFO("SAFE_DISARM", 23, AP_MotorsMulticopter, _disarm_disable_pwm, 0),
+    AP_GROUPINFO("SAFE_DISARM", 23, AP_MotorsMulticopter, _disarm_disable_pwm, 1), // YIG-CHG
 
     // @Param: YAW_SV_ANGLE
     // @DisplayName: Yaw Servo Max Lean Angle
@@ -405,6 +406,10 @@ int16_t AP_MotorsMulticopter::output_to_pwm(float actuator)
         pwm_output = get_pwm_output_min() + (get_pwm_output_max() - get_pwm_output_min()) * actuator;
     }
 
+#if 1 // YIG-IMSI : For GTB
+	if(pwm_output > 1490) pwm_output = 1490;
+#endif
+
     return pwm_output;
 }
 
@@ -540,6 +545,7 @@ void AP_MotorsMulticopter::output_logic()
         // make sure the motors are spooling in the correct direction
         if (_spool_desired != DesiredSpoolState::SHUT_DOWN && _disarm_safe_timer >= _safe_time.get()) {
             _spool_state = SpoolState::GROUND_IDLE;
+			gcs().send_text(MAV_SEVERITY_INFO,"to GROUND_IDLE");
             break;
         }
 
@@ -581,6 +587,7 @@ void AP_MotorsMulticopter::output_logic()
             if (_spin_up_ratio >= 1.0f) {
                 _spin_up_ratio = 1.0f;
                 _spool_state = SpoolState::SPOOLING_UP;
+				gcs().send_text(MAV_SEVERITY_INFO,"to SPOOLING UP");
             }
             break;
 
@@ -624,6 +631,7 @@ void AP_MotorsMulticopter::output_logic()
         if (_throttle_thrust_max >= MIN(get_throttle(), get_current_limit_max_throttle())) {
             _throttle_thrust_max = get_current_limit_max_throttle();
             _spool_state = SpoolState::THROTTLE_UNLIMITED;
+			gcs().send_text(MAV_SEVERITY_INFO,"to THROTTLE_UNLIMITED");
         } else if (_throttle_thrust_max < 0.0f) {
             _throttle_thrust_max = 0.0f;
         }

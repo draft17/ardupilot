@@ -434,6 +434,7 @@ private:
 
      // YIG-ADD
      bool fc_switch_over;
+     bool fc_switch_over_from_gcs;
      bool diagnosis_enabled;
 
     // Motor Output

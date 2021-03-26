@@ -53,11 +53,30 @@ void AP_RangeFinder_MAVLink::handle_msg(const mavlink_message_t &msg)
     mavlink_msg_distance_sensor_decode(&msg, &packet);
 
     // only accept distances for downward facing sensors
-    if (packet.orientation == MAV_SENSOR_ROTATION_PITCH_270) {
+    //if (packet.orientation == MAV_SENSOR_ROTATION_PITCH_270) 
+
+	// YIG-ADD
+	{
         state.last_reading_ms = AP_HAL::millis();
-        distance_cm = packet.current_distance;
-    }
-    sensor_type = (MAV_DISTANCE_SENSOR)packet.type;
+        //distance_cm = packet.current_distance;
+
+		// 3D-LiDAR 에서 연속으로 전송됨
+		if(packet.current_distance == 1) // Front
+		{
+    		distance_cm = ((packet.max_distance/100)*100); //Upper
+	    	distance_cm += packet.min_distance/100; //Lower= (MAV_DISTANCE_SENSOR)packet.type;
+		}
+		else if(packet.current_distance == 2) // Left
+		{
+    		left_distance_cm = ((packet.max_distance/100)*100); //Upper
+	    	left_distance_cm += packet.min_distance/100; //Lower= (MAV_DISTANCE_SENSOR)packet.type;
+		}
+		else if(packet.current_distance == 3) // Right
+		{
+    		right_distance_cm = ((packet.max_distance/100)*100); //Upper
+	    	right_distance_cm += packet.min_distance/100; //Lower= (MAV_DISTANCE_SENSOR)packet.type;
+		}
+	}
 }
 
 /*
@@ -67,9 +86,12 @@ void AP_RangeFinder_MAVLink::update(void)
 {
     //Time out on incoming data; if we don't get new
     //data in 500ms, dump it
-    if (AP_HAL::millis() - state.last_reading_ms > AP_RANGEFINDER_MAVLINK_TIMEOUT_MS) {
+    if (AP_HAL::millis() - state.last_reading_ms > AP_RANGEFINDER_MAVLINK_TIMEOUT_MS) 
+	{
         set_status(RangeFinder::RangeFinder_NoData);
         state.distance_cm = 0;
+		state.right_distance_cm = 0;
+		state.left_distance_cm = 0;
 
 		// YIG-DIAG
 		AP_Notify::diag_status.lidar_failed[0] = 1;
@@ -77,6 +99,8 @@ void AP_RangeFinder_MAVLink::update(void)
 
     } else {
         state.distance_cm = distance_cm;
+		state.right_distance_cm = right_distance_cm;
+		state.left_distance_cm = left_distance_cm;
         update_status();
     }
 }

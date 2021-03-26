@@ -3324,11 +3324,13 @@ void GCS_MAVLINK::send_banner()
         send_text(MAV_SEVERITY_INFO, "%s", sysid);
     }
 
+#if 0
     // send RC output mode info if available
     char banner_msg[50];
     if (hal.rcout->get_output_mode_banner(banner_msg, sizeof(banner_msg))) {
         send_text(MAV_SEVERITY_INFO, "%s", banner_msg);
     }
+#endif
 }
 
 

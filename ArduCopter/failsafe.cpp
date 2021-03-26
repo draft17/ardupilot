@@ -115,17 +115,25 @@ void Copter::enable_diagnosis()
 	AP_Notify::diag_status.pri_storage = 0; // not used
     AP_Notify::diag_status.watchdog_on = 0;
     fc_switch_over = false;
+    fc_switch_over_from_gcs = false;
 
     diagnosis_enabled = true;
 }
 
 bool Copter::check_diagnosis()
 {
-	if(!diagnosis_enabled) return false;
+	//if(!diagnosis_enabled) return false;
 
     if(AP_Notify::diag_status.ov || AP_Notify::diag_status.oc ||
 	   AP_Notify::diag_status.ot || AP_Notify::diag_status.deadlock)
-		fc_switch_over = true;
+	{
+		//fc_switch_over = true; // YIG-IMSI
+		if(!fc_switch_over_from_gcs)
+		{
+			fc_switch_over_from_gcs = true;
+			AP_Notify::diag_status.deadlock = false;
+		}
+	}
 
 	else if(AP_Notify::diag_status.gyro_failed[0] && AP_Notify::diag_status.gyro_failed[1] && AP_Notify::diag_status.gyro_failed[2])
 		fc_switch_over = true;
@@ -142,8 +150,13 @@ bool Copter::check_diagnosis()
 	else if(AP_Notify::diag_status.gps_failed[0] && AP_Notify::diag_status.gps_failed[1] && AP_Notify::diag_status.gps_failed[2])
 		fc_switch_over = true;
 
-	if(fc_switch_over) // 이중화 절체 (to F/C #2)
-		printf("fc_switch_over\n\r");
+
+	if(fc_switch_over_from_gcs) // 이중화 절체 (to F/C #2)
+	{
+		gcs().send_text(MAV_SEVERITY_CRITICAL, "Switch-Over to FC #2");
+		msc.switch_over();
+		fc_switch_over_from_gcs = false;
+	}
 
 	return true;
 }

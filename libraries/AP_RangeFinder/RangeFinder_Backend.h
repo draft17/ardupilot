@@ -35,6 +35,10 @@ public:
 
     enum Rotation orientation() const { return (Rotation)params.orientation.get(); }
     uint16_t distance_cm() const { return state.distance_cm; }
+	// YIG-ADD
+    uint16_t left_distance_cm() const { return state.left_distance_cm; }
+    uint16_t right_distance_cm() const { return state.right_distance_cm; }
+	//
     uint16_t voltage_mv() const { return state.voltage_mv; }
     int16_t max_distance_cm() const { return params.max_distance_cm; }
     int16_t min_distance_cm() const { return params.min_distance_cm; }

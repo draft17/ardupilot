@@ -244,7 +244,6 @@ void Copter::fast_loop()
     // send outputs to the motors library immediately
     motors_output();
 
-	msc.loop();
 
 	struct spitxpara
 	{
@@ -430,7 +429,7 @@ void Copter::fourhundred_hz_logging()
 // should be run at 10hz
 void Copter::ten_hz_logging_loop()
 {
-	// YIG-ADD : For In-Flight ê³ ìž¥ì§„ë‹¨
+	// YIG-ADD : For In-Flight °íÀåÁø´Ü
     arming.diagnosis_update();
 	//
 

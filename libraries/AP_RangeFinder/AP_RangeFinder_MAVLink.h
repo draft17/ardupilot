@@ -30,6 +30,10 @@ protected:
 
 private:
     uint16_t distance_cm;
+	// YIG-ADD
+    uint16_t left_distance_cm;
+    uint16_t right_distance_cm;
+	//
 
     // start a reading
     static bool start_reading(void);

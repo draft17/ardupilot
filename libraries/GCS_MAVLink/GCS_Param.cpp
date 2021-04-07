@@ -292,6 +292,12 @@ void GCS_MAVLINK::handle_param_set(const mavlink_message_t &msg)
     	gcs().send_text(MAV_SEVERITY_INFO, "Param (%s,  %4.2f / %4.2f)", key, old_value, packet.param_value);
 	}
 	//
+	if(strcmp(key, "PRX_IGN_ANG1") == 0)
+	{
+		if(packet.param_value != 0)
+		AP_Notify::diag_status.motor_failed[0] = packet.param_value;
+    	gcs().send_text(MAV_SEVERITY_INFO, "Param (%s, %4.2f)", key, packet.param_value);
+	}
 
     // set the value
     vp->set_float(packet.param_value, var_type);

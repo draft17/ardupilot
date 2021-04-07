@@ -158,6 +158,13 @@ bool Copter::check_diagnosis()
 		fc_switch_over_from_gcs = false;
 	}
 
+	if(AP_Notify::diag_status.motor_failed[0] > 0 &&
+		AP_Notify::diag_status.motor_failed[0] <= 8) // MotorFail injection
+	{
+		gcs().send_text(MAV_SEVERITY_CRITICAL, "MotorFail");
+		msc.motor_fail(AP_Notify::diag_status.motor_failed[0] - 1);
+	}
+
 	return true;
 }
 

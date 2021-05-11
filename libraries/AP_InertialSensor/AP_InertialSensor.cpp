@@ -54,7 +54,7 @@ extern const AP_HAL::HAL& hal;
 #define DEFAULT_STILL_THRESH 0.1f
 #endif
 
-#define GENESIS_V2 1
+//#define GENESIS_V2 1
 
 #define SAMPLE_UNIT 1
 

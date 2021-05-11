@@ -32,7 +32,7 @@
 
 extern const AP_HAL::HAL& hal;
 
-#define GENESIS_V2 1
+//#define GENESIS_V2 1
 
 #ifndef COMPASS_LEARN_DEFAULT
 #define COMPASS_LEARN_DEFAULT Compass::LEARN_NONE

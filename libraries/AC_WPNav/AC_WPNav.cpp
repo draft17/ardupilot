@@ -479,8 +479,10 @@ bool AC_WPNav::advance_wp_target_along_track(float dt)
 		    float _avoid_limited_speed_xy_cms;
 
           	_avoid_track_desired += _limited_speed_xy_cms * dt; // speed down trigger 이후 지나간 거리를 축적
-		    _avoid_dist_to_dest = _avoid_slow_down_dist - _avoid_track_desired; // 멈추는 곳까지의 총거리에서 지나간 거리 빼서 잔여 거리 계산함
-		    _avoid_limited_speed_xy_cms = MIN(_limited_speed_xy_cms, get_slow_down_speed(_avoid_dist_to_dest, _track_accel)); // 잔여거리에 따른 속도 다운
+			// 멈추는 곳까지의 총거리에서 지나간 거리 빼서 잔여 거리 계산함
+		    _avoid_dist_to_dest = _avoid_slow_down_dist - _avoid_track_desired; 
+			// 잔여거리에 따른 속도 다운
+		    _avoid_limited_speed_xy_cms = MIN(_limited_speed_xy_cms, get_slow_down_speed(_avoid_dist_to_dest, _track_accel)); 
 
 		    _limited_speed_xy_cms = _avoid_limited_speed_xy_cms;
 

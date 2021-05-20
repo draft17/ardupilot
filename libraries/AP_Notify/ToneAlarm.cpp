@@ -49,11 +49,11 @@ const AP_ToneAlarm::Tone AP_ToneAlarm::_tones[] {
 #define AP_NOTIFY_TONE_LOUD_READY_OR_FINISHED 6
     { "MFT100L4>G#6A#6B#4", false },
 #define AP_NOTIFY_TONE_QUIET_READY_OR_FINISHED 7
-    { "MFT200L4<G#6A#6B#4", false },
+    { "MFT200 L1O4D L8DEF", false },
 #define AP_NOTIFY_TONE_LOUD_ATTENTION_NEEDED 8
     { "MFT100L4>A#A#A#A#", false },
 #define AP_NOTIFY_TONE_QUIET_ARMING_WARNING 9
-    { "MNT75L1O2G", false },
+    { "MFT200 L10AA L10AA L10AA L10AA L10AA ", false },
 #define AP_NOTIFY_TONE_LOUD_WP_COMPLETE 10
     { "MFT200L8G>C3", false },
 #define AP_NOTIFY_TONE_LOUD_LAND_WARNING_CTS 11
@@ -91,11 +91,15 @@ const AP_ToneAlarm::Tone AP_ToneAlarm::_tones[] {
 #define AP_NOTIFY_TONE_QUIET_SHUTDOWN 27
     { "MFMST200L32O3ceP32cdP32ceP32c<c>c<cccP8L32>c>c<P32<c<c", false },
 #define AP_NOTIFY_TONE_QUIET_NOT_READY_OR_NOT_FINISHED 28
-    { "MFT200L4<B#4A#6G#6", false },
+    { "MFT200L1O4DL8FED", false },
 #define AP_NOTIFY_TONE_STARTUP 29
-    { "MFT240L8O4aO5dcO4aO5dcO4aO5dcL16dcdcdcdc", false },
+	{ "MFT100L32CDEFGABL32BAGFEDC", false},
+    //{ "MFNT90L4O2A#O3DFN0N0N0", true},
+    //{ "MFT240L8O4aO5dcO4aO5dcO4aO5dcL16dcdcdcdc", false },	//origin
+	//스타워즈 { "T200L4O4FO4FO4FP16MNL2O4B-.O5F.L8O5E-O5DO5CL2O5B-.L4O5F.L8O5E-O5DO5CL2O5B-.L4O5F.L8O5E-O5DO5E-L1O5C", false},
+	// jhkang http://artscene.textfiles.com/ansimusic/songs/
 #define AP_NOTIFY_TONE_NO_SDCARD 30
-    { "MNBGG", false },
+    { "MFT200O3L1FL16CDFCDF", false },
 };
 
 bool AP_ToneAlarm::init()
@@ -128,6 +132,7 @@ bool AP_ToneAlarm::init()
 #endif
 
     play_tone(AP_NOTIFY_TONE_STARTUP);
+
     return true;
 }
 

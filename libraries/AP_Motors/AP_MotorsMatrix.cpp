@@ -20,6 +20,7 @@
  */
 #include <AP_HAL/AP_HAL.h>
 #include "AP_MotorsMatrix.h"
+#include <GCS_MAVLink/GCS.h> // YIG-ADD
 
 extern const AP_HAL::HAL& hal;
 
@@ -370,19 +371,19 @@ void AP_MotorsMatrix::check_for_failed_motor(float throttle_thrust_best_plus_adj
 
     float thrust_balance = 1.0f;
     if (rpyt_sum > 0.1f) {
-        thrust_balance = rpyt_high * number_motors / rpyt_sum;
+        thrust_balance = rpyt_high * number_motors / rpyt_sum; // 전체 sum 대비 특정 모터의 rpm값이 높을경우, balance가 필요함
     }
     // ensure thrust balance does not activate for multirotors with less than 6 motors
-    if (number_motors >= 6 && thrust_balance >= 1.5f && _thrust_balanced) {
+    if (number_motors >= 6 && thrust_balance >= 1.5f && _thrust_balanced) { // balance needed
         _thrust_balanced = false;
     }
-    if (thrust_balance <= 1.25f && !_thrust_balanced) {
+    if (thrust_balance <= 1.25f && !_thrust_balanced) { // balance OK
         _thrust_balanced = true;
     }
 
     // check to see if thrust boost is using more throttle than _throttle_thrust_max
     if ((_throttle_thrust_max * get_compensation_gain() > throttle_thrust_best_plus_adj) && (rpyt_high < 0.9f) && _thrust_balanced) {
-        _thrust_boost = false;
+        _thrust_boost = false; // boost가 불필요하다는 의미
     }
 }
 

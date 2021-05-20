@@ -160,6 +160,7 @@ bool AP_InertialSensor_BMI055::accel_init()
     }
 
     hal.console->printf("BMI055: found accel\n");
+    ::printf("BMI055: found accel\r\n");	//jhkang
 
     dev_accel->get_semaphore()->give();
     return true;
@@ -214,6 +215,7 @@ bool AP_InertialSensor_BMI055::gyro_init()
     }
 
     hal.console->printf("BMI055: found gyro\n");    
+    ::printf("BMI055: found gyro\r\n");    //jhkang
 
     dev_gyro->get_semaphore()->give();
     return true;

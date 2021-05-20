@@ -436,6 +436,7 @@ private:
      bool fc_switch_over;
      bool fc_switch_over_from_gcs;
      bool diagnosis_enabled;
+     uint8_t failed_motor;
 
     // Motor Output
     MOTOR_CLASS *motors;

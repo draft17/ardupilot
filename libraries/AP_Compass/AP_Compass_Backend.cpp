@@ -4,6 +4,7 @@
 #include "AP_Compass_Backend.h"
 
 #include <AP_BattMonitor/AP_BattMonitor.h>
+#include <AP_Notify/AP_Notify.h>
 
 extern const AP_HAL::HAL& hal;
 
@@ -108,6 +109,17 @@ void AP_Compass_Backend::correct_field(Vector3f &mag, uint8_t i)
 void AP_Compass_Backend::accumulate_sample(Vector3f &field, uint8_t instance,
                                            uint32_t max_samples)
 {
+
+#if 1 // YIG-ADD : For Diagnosis Test From GCS
+	if((AP_Notify::diag_status.compass_failed_insert[0] && instance == 0) ||
+	   (AP_Notify::diag_status.compass_failed_insert[1] && instance == 1) ||
+	   (AP_Notify::diag_status.compass_failed_insert[2] && instance == 2))
+	{
+		return;
+	}
+#endif
+	//::printf("accu instance %d\n", instance);
+
     /* rotate raw_field from sensor frame to body frame */
     rotate_field(field, instance);
 
@@ -188,6 +200,7 @@ uint8_t AP_Compass_Backend::register_compass(void) const
 */
 void AP_Compass_Backend::set_dev_id(uint8_t instance, uint32_t dev_id)
 {
+	::printf("compass %d 	dev id %10d\n", instance, dev_id);
     _compass._state[instance].dev_id.set_and_notify(dev_id);
     _compass._state[instance].detected_dev_id = dev_id;
 }

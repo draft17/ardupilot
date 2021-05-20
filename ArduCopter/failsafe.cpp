@@ -87,35 +87,59 @@ void Copter::enable_diagnosis()
 	AP_Notify::diag_status.gyro_failed[0] = 0;
 	AP_Notify::diag_status.gyro_failed[1] = 0;
 	AP_Notify::diag_status.gyro_failed[2] = 0;
-	AP_Notify::diag_status.pri_gyro = 0;
 	AP_Notify::diag_status.accel_failed[0] = 0;
 	AP_Notify::diag_status.accel_failed[1] = 0;
 	AP_Notify::diag_status.accel_failed[2] = 0;
-	AP_Notify::diag_status.pri_accel = 0;
 	AP_Notify::diag_status.compass_failed[0] = 0;
 	AP_Notify::diag_status.compass_failed[1] = 0;
 	AP_Notify::diag_status.compass_failed[2] = 0;
-	AP_Notify::diag_status.pri_compass = 0;
 	AP_Notify::diag_status.baro_failed[0] = 0;
 	AP_Notify::diag_status.baro_failed[1] = 0;
-	AP_Notify::diag_status.pri_baro = 0;
 	AP_Notify::diag_status.gps_failed[0] = 0;
 	AP_Notify::diag_status.gps_failed[1] = 0;
 	AP_Notify::diag_status.gps_failed[2] = 0;
-	AP_Notify::diag_status.pri_gps = 0;
 	AP_Notify::diag_status.lidar_failed[0] = 0;
 	AP_Notify::diag_status.lidar_failed[1] = 0;
-	AP_Notify::diag_status.pri_lidar = 0;
 	AP_Notify::diag_status.lte_link_failed[0] = 0;
 	AP_Notify::diag_status.lte_link_failed[1] = 0;
-	AP_Notify::diag_status.pri_lte = 0;
 	AP_Notify::diag_status.rf_link_failed = 0;
 	AP_Notify::diag_status.storage_failed[0] = 0;
 	AP_Notify::diag_status.storage_failed[1] = 0; // not used :  FC#2에 동시 저장됨
-	AP_Notify::diag_status.pri_storage = 0; // not used
+	for(int i=0;i<8;i++) AP_Notify::diag_status.motor_failed[i] = 0;
+	AP_Notify::diag_status.motor_status_failed = 0;
     AP_Notify::diag_status.watchdog_on = 0;
+
+#if 1 // YIG : For Diagnosis SW Insert
+	AP_Notify::diag_status.ov_insert = 0;
+	AP_Notify::diag_status.oc_insert = 0;
+	AP_Notify::diag_status.ot_insert = 0;
+	AP_Notify::diag_status.deadlock_insert = 0;
+	AP_Notify::diag_status.gyro_failed_insert[0] = 0;
+	AP_Notify::diag_status.gyro_failed_insert[1] = 0;
+	AP_Notify::diag_status.gyro_failed_insert[2] = 0;
+	AP_Notify::diag_status.accel_failed_insert[0] = 0;
+	AP_Notify::diag_status.accel_failed_insert[1] = 0;
+	AP_Notify::diag_status.accel_failed_insert[2] = 0;
+	AP_Notify::diag_status.compass_failed_insert[0] = 0;
+	AP_Notify::diag_status.compass_failed_insert[1] = 0;
+	AP_Notify::diag_status.compass_failed_insert[2] = 0;
+	AP_Notify::diag_status.baro_failed_insert[0] = 0;
+	AP_Notify::diag_status.baro_failed_insert[1] = 0;
+	AP_Notify::diag_status.gps_failed_insert[0] = 0;
+	AP_Notify::diag_status.gps_failed_insert[1] = 0;
+	AP_Notify::diag_status.gps_failed_insert[2] = 0;
+	AP_Notify::diag_status.lidar_failed_insert[0] = 0;
+	AP_Notify::diag_status.lidar_failed_insert[1] = 0;
+	AP_Notify::diag_status.lte_link_failed_insert[0] = 0;
+	AP_Notify::diag_status.lte_link_failed_insert[1] = 0;
+	AP_Notify::diag_status.storage_failed_insert[0] = 0;
+	AP_Notify::diag_status.storage_failed_insert[1] = 0;
+	for(int i=0;i<8;i++) AP_Notify::diag_status.motor_failed_insert[i] = 0;
+#endif
+
     fc_switch_over = false;
     fc_switch_over_from_gcs = false;
+	failed_motor = 9;
 
     diagnosis_enabled = true;
 }
@@ -124,8 +148,10 @@ bool Copter::check_diagnosis()
 {
 	//if(!diagnosis_enabled) return false;
 
-    if(AP_Notify::diag_status.ov || AP_Notify::diag_status.oc ||
-	   AP_Notify::diag_status.ot || AP_Notify::diag_status.deadlock)
+    if(AP_Notify::diag_status.ov || 
+	   AP_Notify::diag_status.oc ||
+	   AP_Notify::diag_status.ot || 
+	   AP_Notify::diag_status.deadlock)
 	{
 		//fc_switch_over = true; // YIG-IMSI
 		if(!fc_switch_over_from_gcs)
@@ -134,36 +160,47 @@ bool Copter::check_diagnosis()
 			AP_Notify::diag_status.deadlock = false;
 		}
 	}
-
 	else if(AP_Notify::diag_status.gyro_failed[0] && AP_Notify::diag_status.gyro_failed[1] && AP_Notify::diag_status.gyro_failed[2])
 		fc_switch_over = true;
-
 	else if(AP_Notify::diag_status.accel_failed[0] && AP_Notify::diag_status.accel_failed[1] && AP_Notify::diag_status.accel_failed[2])
 		fc_switch_over = true;
-
 	else if(AP_Notify::diag_status.baro_failed[0] && AP_Notify::diag_status.baro_failed[1])
 		fc_switch_over = true;
-
 	else if(AP_Notify::diag_status.compass_failed[0] && AP_Notify::diag_status.compass_failed[1] && AP_Notify::diag_status.compass_failed[2])
 		fc_switch_over = true;
-
 	else if(AP_Notify::diag_status.gps_failed[0] && AP_Notify::diag_status.gps_failed[1] && AP_Notify::diag_status.gps_failed[2])
 		fc_switch_over = true;
 
 
-	if(fc_switch_over_from_gcs) // 이중화 절체 (to F/C #2)
+	// YIG-ADD : for GTB
+	if(fc_switch_over_from_gcs)
 	{
 		gcs().send_text(MAV_SEVERITY_CRITICAL, "Switch-Over to FC #2");
 		msc.switch_over();
 		fc_switch_over_from_gcs = false;
 	}
 
-	if(AP_Notify::diag_status.motor_failed[0] > 0 &&
-		AP_Notify::diag_status.motor_failed[0] <= 8) // MotorFail injection
+	// Motor Fail
+	if(AP_Notify::diag_status.motor_failed[0] == true) failed_motor = 0;
+	else if(AP_Notify::diag_status.motor_failed[1] == true) failed_motor = 1;
+	else if(AP_Notify::diag_status.motor_failed[2] == true) failed_motor = 2;
+	else if(AP_Notify::diag_status.motor_failed[3] == true) failed_motor = 3;
+	else if(AP_Notify::diag_status.motor_failed[4] == true) failed_motor = 4;
+	else if(AP_Notify::diag_status.motor_failed[5] == true) failed_motor = 5;
+	else if(AP_Notify::diag_status.motor_failed[6] == true) failed_motor = 6;
+	else if(AP_Notify::diag_status.motor_failed[7] == true) failed_motor = 7;
+
+	if(failed_motor < 9)
 	{
-		gcs().send_text(MAV_SEVERITY_CRITICAL, "MotorFail");
-		msc.motor_fail(AP_Notify::diag_status.motor_failed[0] - 1);
+		motors->set_thrust_boost(true);
+	//	motors->set_lost_motor(failed_motor);
+		msc.motor_fail(failed_motor);
+		AP_Notify::diag_status.motor_status_failed = true;
+
+		//gcs().senu_text(MAV_SEVERITY_CRITICAL, "MotorFail (%d)", failed_motor);
+		//failed_motor = 9;
 	}
+	//
 
 	return true;
 }

@@ -708,7 +708,7 @@ bool RangeFinder::prearm_healthy(uint8_t i, char *failure_msg, const uint8_t fai
     //for (uint8_t i = 0; i < RANGEFINDER_MAX_INSTANCES; i++) {
         //if ((params[i].type != RangeFinder_TYPE_NONE) && (drivers[i] == nullptr)) {
         if ((params[i].type != RangeFinder_TYPE_NONE) && (drivers[i] == nullptr) && !drivers[i]->has_data()) {
-          hal.util->snprintf(failure_msg, failure_msg_len, "Rangefinder %d was not detected", i + 1);
+          hal.util->snprintf(failure_msg, failure_msg_len, "LIDAR %d not activated", i + 1);
           return false;
         }
     //}

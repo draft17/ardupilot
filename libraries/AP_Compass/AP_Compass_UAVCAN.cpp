@@ -97,12 +97,14 @@ AP_Compass_Backend* AP_Compass_UAVCAN::probe()
 void AP_Compass_UAVCAN::init()
 {
     _instance = register_compass();
+	::printf("UAVCAN Compass register compass (%d)\n", _instance);
 
     uint32_t devid = AP_HAL::Device::make_bus_id(AP_HAL::Device::BUS_TYPE_UAVCAN,
                                                  _ap_uavcan->get_driver_index(),
                                                  _node_id,
                                                  1); // the 1 is arbitrary
 
+	//::printf("#%d set dev id (%d)\n", _instance, devid);
     set_dev_id(_instance, devid);
     set_external(_instance, true);
 

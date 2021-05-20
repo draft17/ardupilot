@@ -197,11 +197,11 @@ bool AP_Arming::barometer_checks(bool report)
 
     if ((checks_to_perform & ARMING_CHECK_ALL) ||
         (checks_to_perform & ARMING_CHECK_BARO)) {
-        if (!AP::baro().all_healthy()) { // 모두 정상이 아니면
+        if (!AP::baro().all_healthy()) {
 			// YIG-DIAG
-        	for (uint8_t i=0; i<BARO_MAX_INSTANCES; i++) { // 정상이 아닌 Baro 정보 송신 (primary 정보 포함)
+        	for (uint8_t i=0; i<BARO_MAX_INSTANCES; i++) {
 				if(!AP::baro().healthy(i))
-            		check_failed(ARMING_CHECK_BARO, report, "BARO %d %d :: Barometer not healthy", i+1, AP::baro().get_primary());
+            		check_failed(ARMING_CHECK_BARO, report, "BARO %d %d :: Barometer not healthy", i+1, AP::baro().get_primary()+1);
 			}
             passed = false;
 			//
@@ -332,12 +332,12 @@ bool AP_Arming::ins_checks(bool report)
 
         const AP_InertialSensor &ins = AP::ins();
 
-        if (!ins.get_gyro_health_all()) { // 모든 gyro healthy 체크, 1개라도 문제이면 false 리턴
+        if (!ins.get_gyro_health_all()) {
 			// YIG-DIAG
     		const uint8_t gyro_count = ins.get_gyro_count();
     		for(uint8_t i=0; i<gyro_count; i++) {
 				if(!ins.get_gyro_health(i))
-            		check_failed(ARMING_CHECK_INS, report, "GYRO-H %d %d :: Gyro not healthy", i+1, ins.get_primary_gyro());
+            		check_failed(ARMING_CHECK_INS, report, "GYRO-H %d %d :: Gyro not healthy", i+1, ins.get_primary_gyro()+1);
 			}
             passed = false;
 			//
@@ -360,7 +360,7 @@ bool AP_Arming::ins_checks(bool report)
     		const uint8_t accel_count = ins.get_accel_count();
     		for(uint8_t i=0; i<accel_count; i++) {
 				if(!ins.get_accel_health(i))
-            		check_failed(ARMING_CHECK_INS, report, "ACCEL-H %d %d :: Accel not healthy", i+1, ins.get_primary_accel());
+            		check_failed(ARMING_CHECK_INS, report, "ACCEL-H %d %d :: Accel not healthy", i+1, ins.get_primary_accel()+1);
 			}
             passed = false;
 			//
@@ -432,9 +432,9 @@ bool AP_Arming::compass_checks(bool report)
         passed = false;
     }
 
-    if ((checks_to_perform) & ARMING_CHECK_ALL ||
-        (checks_to_perform) & ARMING_CHECK_COMPASS) {
-
+	// YIG-CHG
+    if ((checks_to_perform) & ARMING_CHECK_ALL || (checks_to_perform) & ARMING_CHECK_COMPASS) 
+	{
         // avoid Compass::use_for_yaw(void) as it implicitly calls healthy() which can
         // incorrectly skip the remaining checks, pass the primary instance directly
         if (!_compass.use_for_yaw(_compass.get_primary())) {
@@ -445,7 +445,8 @@ bool AP_Arming::compass_checks(bool report)
 		// YIG-DIAG
     	for(uint8_t i=0; i<compass_count; i++) {
         	if (!_compass.healthy(i)) {
-            	check_failed(ARMING_CHECK_COMPASS, report, "COM-H %d %d :: Compass not healthy", i+1, _compass.get_primary());
+            	check_failed(ARMING_CHECK_COMPASS, report, "COM-H %d %d :: Compass not healthy", i+1, _compass.get_primary()+1);
+				//::printf("compass not healthy %d pri=%d\n", i, _compass.get_primary());
             	passed = false;
         	}
 		}
@@ -455,7 +456,7 @@ bool AP_Arming::compass_checks(bool report)
         if (!_compass.learn_offsets_enabled() && !_compass.configured()) {
     		for(uint8_t i=0; i<compass_count; i++) {
         		if (!_compass.configured(i)) {
-            		check_failed(ARMING_CHECK_COMPASS, report, "COM-CN %d :: Compass not calibrated", i+1);
+            		check_failed(ARMING_CHECK_COMPASS, report, "COM-CN %d :: Compass not configured", i+1);
             		passed = false;
 				}
 			}
@@ -494,7 +495,8 @@ bool AP_Arming::gps_checks(bool report)
 	bool passed = true;
 
     const AP_GPS &gps = AP::gps();
-    if ((checks_to_perform & ARMING_CHECK_ALL) || (checks_to_perform & ARMING_CHECK_GPS)) {
+    if ((checks_to_perform & ARMING_CHECK_ALL) || (checks_to_perform & ARMING_CHECK_GPS))
+	{
 
         //GPS OK?
         if (!AP::ahrs().home_is_set() ||
@@ -506,7 +508,7 @@ bool AP_Arming::gps_checks(bool report)
         //GPS update rate acceptable
     	for(uint8_t i=0; i<GPS_MAX_RECEIVERS; i++) {
         	if (!gps.is_healthy(i)) {
-            	check_failed(ARMING_CHECK_GPS, report, "GPS %d %d :: GPS not healthy", i+1, gps.primary_sensor());
+            	check_failed(ARMING_CHECK_GPS, report, "GPS %d %d :: GPS not healthy", i+1, gps.primary_sensor()+1);
             	passed = false;
         	}
 		}
@@ -684,12 +686,12 @@ bool AP_Arming::mission_checks(bool report)
     return true;
 }
 
-// LiDAR (3D LiDAR, Rangefinder) 연동 체크 : 둘다 Mavlink 연동
 bool AP_Arming::rangefinder_checks(bool report)
 {
     bool check_passed = true;
 
-    if ((checks_to_perform & ARMING_CHECK_ALL) || (checks_to_perform & ARMING_CHECK_RANGEFINDER)) {
+    if ((checks_to_perform & ARMING_CHECK_ALL) || (checks_to_perform & ARMING_CHECK_RANGEFINDER)) 
+	{
         RangeFinder *range = RangeFinder::get_singleton();
         if (range == nullptr) {
             return check_passed;

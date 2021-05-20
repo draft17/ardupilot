@@ -434,6 +434,7 @@ bool AP_Baro::_add_backend(AP_Baro_Backend *backend)
         AP_HAL::panic("Too many barometer drivers");
     }
     drivers[_num_drivers++] = backend;
+	::printf("baro num %d\n", _num_drivers);
     return true;
 }
 
@@ -745,6 +746,7 @@ void AP_Baro::update(void)
     }
 
     for (uint8_t i=0; i<_num_sensors; i++) {
+		//::printf("#%d  healthy = %d\n", i, sensors[i].healthy);
         if (sensors[i].healthy) {
             // update altitude calculation
             float ground_pressure = sensors[i].ground_pressure;
@@ -782,32 +784,23 @@ void AP_Baro::update(void)
     // choose primary sensor
     if (_primary_baro >= 0 && _primary_baro < _num_sensors && healthy(_primary_baro)) {
         _primary = _primary_baro;
-
-		// YIG-ADD
-		AP_Notify::diag_status.pri_baro = _primary_baro;
-
     } else {
         _primary = 0;
         for (uint8_t i=0; i<_num_sensors; i++) {
             if (healthy(i)) {
                 _primary = i;
-
-				// YIG-ADD
-				AP_Notify::diag_status.pri_baro = _primary;
-				// End
-
                 break;
             }
         }
 
 		// YIG-ADD
-		for (uint8_t i=0; i<_num_sensors; i++) 
-		{
+		for (uint8_t i=0; i<_num_sensors; i++) {
 			if (healthy(i))
-				AP_Notify::diag_status.baro_failed[i] = true;
+				AP_Notify::diag_status.baro_failed[i] = false;
 			else
-			    AP_Notify::diag_status.baro_failed[i] = false;
+			    AP_Notify::diag_status.baro_failed[i] = true;
 	    }
+		//
 
     }
 

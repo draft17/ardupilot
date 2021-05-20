@@ -107,6 +107,11 @@ public:
     // motor failure handling
     void                set_thrust_boost(bool enable) { _thrust_boost = enable; }
     bool                get_thrust_boost() const { return _thrust_boost; }
+	// YIG-ADD
+    float               get_thrust_boost_ratio() const { return _thrust_boost_ratio; }
+    bool                get_thrust_balanced() const { return _thrust_balanced; }
+    virtual void        set_lost_motor(uint8_t idx) { }
+	//
     virtual uint8_t     get_lost_motor() const { return 0; }
 
     // desired spool states

@@ -558,6 +558,14 @@ void Copter::one_hz_loop()
 #endif
 
     AP_Notify::flags.flying = !ap.land_complete;
+
+
+	// YIG-IMSI
+	//if(motors->get_lost_motor() != 0)
+	{
+		//gcs().send_text(MAV_SEVERITY_WARNING, "Lost Motor (%d), tb=%d, tblanced=%d, tbr=%4.2f", motors->get_lost_motor(), motors->get_thrust_boost(), motors->get_thrust_balanced(), motors->get_thrust_boost_ratio());
+		//set_mode(Mode::Number::LAND, ModeReason::FAILSAFE);
+	}
 }
 
 // called at 50hz

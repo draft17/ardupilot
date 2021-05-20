@@ -683,6 +683,7 @@ bool AP_InertialSensor::_add_backend(AP_InertialSensor_Backend *backend)
         AP_HAL::panic("Too many INS backends");
     }
     _backends[_backend_count++] = backend;
+	::printf("imu backend count %d\n", _backend_count);
     return true;
 }
 
@@ -696,6 +697,7 @@ AP_InertialSensor::detect_backends(void)
         return;
     }
 
+    ::printf("Board %d\n", AP_BoardConfig::get_board_type());
     _backends_detected = true;
 
 #if defined(HAL_CHIBIOS_ARCH_CUBEBLACK)
@@ -776,13 +778,17 @@ AP_InertialSensor::detect_backends(void)
     case AP_BoardConfig::PX4_BOARD_FMUV5:
     case AP_BoardConfig::PX4_BOARD_FMUV6:
         _fast_sampling_mask.set_default(1);
+		::printf("11111\n");
         ADD_BACKEND(AP_InertialSensor_Invensense::probe(*this, hal.spi->get_device("icm20689"), ROTATION_NONE));
+		::printf("22222\n");
         ADD_BACKEND(AP_InertialSensor_Invensense::probe(*this, hal.spi->get_device("icm20602"), ROTATION_NONE));
         // allow for either BMI055 or BMI088
+		::printf("33333\n");
         ADD_BACKEND(AP_InertialSensor_BMI055::probe(*this,
                                                     hal.spi->get_device("bmi055_a"),
                                                     hal.spi->get_device("bmi055_g"),
                                                     ROTATION_ROLL_180_YAW_90));
+		::printf("44444\n");
         ADD_BACKEND(AP_InertialSensor_BMI088::probe(*this,
                                                     hal.spi->get_device("bmi055_a"),
                                                     hal.spi->get_device("bmi055_g"),
@@ -1344,40 +1350,27 @@ void AP_InertialSensor::update(void)
         for (uint8_t i=0; i<INS_MAX_INSTANCES; i++) {
             if (_gyro_healthy[i] && _use[i]) {
                 _primary_gyro = i;
-
-				// YIG-ADD
-				AP_Notify::diag_status.pri_gyro = i;
-
                 break;
             }
         }
-
-		// YIG-ADD
-		for (uint8_t i=0; i<INS_MAX_INSTANCES; i++) {
-			if (_gyro_healthy[i] && _use[i])
-				AP_Notify::diag_status.gyro_failed[i] = true;
-			else
-			    AP_Notify::diag_status.gyro_failed[i] = false;
-	    }
 
         for (uint8_t i=0; i<INS_MAX_INSTANCES; i++) {
             if (_accel_healthy[i] && _use[i]) {
                 _primary_accel = i;
-
-				// YIG-ADD
-				AP_Notify::diag_status.pri_accel = i;
-
                 break;
             }
         }
 
 		// YIG-ADD
 		for (uint8_t i=0; i<INS_MAX_INSTANCES; i++) {
-			if (_accel_healthy[i] && _use[i])
-				AP_Notify::diag_status.accel_failed[i] = true;
-			else
-			    AP_Notify::diag_status.accel_failed[i] = false;
+			if (_gyro_healthy[i] && _use[i]) AP_Notify::diag_status.gyro_failed[i] = false;
+			else AP_Notify::diag_status.gyro_failed[i] = true;
 	    }
+		for (uint8_t i=0; i<INS_MAX_INSTANCES; i++) {
+			if (_accel_healthy[i] && _use[i]) AP_Notify::diag_status.accel_failed[i] = false;
+			else AP_Notify::diag_status.accel_failed[i] = true;
+	    }
+		//
 
     }
 

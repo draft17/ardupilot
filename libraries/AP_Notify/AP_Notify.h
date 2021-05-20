@@ -140,17 +140,27 @@ public:
 		bool lte_link_failed[3];
 		bool rf_link_failed;
 		bool motor_failed[8];
+		bool motor_status_failed;
 		bool storage_failed[2];
 		bool watchdog_on;
-		uint8_t pri_gyro;
-		uint8_t pri_accel;
-		uint8_t pri_baro;
-		uint8_t pri_compass;
-		uint8_t pri_gps;
-		uint8_t pri_lidar;
-		uint8_t pri_lte;
 		uint8_t pri_storage;
 		uint32_t watchdog_pat_time;
+
+		// For Diagnosis Test from GCS
+		bool ov_insert;
+		bool oc_insert;
+		bool ot_insert;
+		bool deadlock_insert;
+		bool gyro_failed_insert[3];
+		bool accel_failed_insert[3];
+		bool baro_failed_insert[2];
+		bool compass_failed_insert[3];
+		bool gps_failed_insert[3];
+		bool lidar_failed_insert[2];
+		bool lte_link_failed_insert[3];
+		bool rf_link_failed_insert;
+		bool motor_failed_insert[8];
+		bool storage_failed_insert[2];
 	};
 	// End
 

@@ -52,6 +52,8 @@ void AP_RangeFinder_MAVLink::handle_msg(const mavlink_message_t &msg)
     mavlink_distance_sensor_t packet;
     mavlink_msg_distance_sensor_decode(&msg, &packet);
 
+	//gcs().send_text(MAV_SEVERITY_WARNING, "distance_cm = %d", packet.current_distance);	//jhkang
+
     // only accept distances for downward facing sensors
     //if (packet.orientation == MAV_SENSOR_ROTATION_PITCH_270) 
 
@@ -61,20 +63,23 @@ void AP_RangeFinder_MAVLink::handle_msg(const mavlink_message_t &msg)
         //distance_cm = packet.current_distance;
 
 		// 3D-LiDAR 에서 연속으로 전송됨
-		if(packet.current_distance == 1) // Front
+		if(packet.current_distance == 100) // Front
 		{
     		distance_cm = ((packet.max_distance/100)*100); //Upper
 	    	distance_cm += packet.min_distance/100; //Lower= (MAV_DISTANCE_SENSOR)packet.type;
+			gcs().send_text(MAV_SEVERITY_WARNING, "Front distance_cm = %d", distance_cm);	//jhkang
 		}
-		else if(packet.current_distance == 2) // Left
+		else if(packet.current_distance == 200) // Left
 		{
     		left_distance_cm = ((packet.max_distance/100)*100); //Upper
 	    	left_distance_cm += packet.min_distance/100; //Lower= (MAV_DISTANCE_SENSOR)packet.type;
+			gcs().send_text(MAV_SEVERITY_WARNING, "Left distance_cm = %d", distance_cm);	//jhkang
 		}
-		else if(packet.current_distance == 3) // Right
+		else if(packet.current_distance == 300) // Right
 		{
     		right_distance_cm = ((packet.max_distance/100)*100); //Upper
 	    	right_distance_cm += packet.min_distance/100; //Lower= (MAV_DISTANCE_SENSOR)packet.type;
+			gcs().send_text(MAV_SEVERITY_WARNING, "Right distance_cm = %d", distance_cm);	//jhkang
 		}
 	}
 }
@@ -93,14 +98,14 @@ void AP_RangeFinder_MAVLink::update(void)
 		state.right_distance_cm = 0;
 		state.left_distance_cm = 0;
 
-		// YIG-DIAG
-		AP_Notify::diag_status.lidar_failed[0] = 1;
-		AP_Notify::diag_status.pri_lidar = 2;
+		AP_Notify::diag_status.lidar_failed[0] = true; // YIG-DIAG
 
     } else {
         state.distance_cm = distance_cm;
 		state.right_distance_cm = right_distance_cm;
 		state.left_distance_cm = left_distance_cm;
         update_status();
+
+		AP_Notify::diag_status.lidar_failed[0] = false; // YIG-DIAG
     }
 }

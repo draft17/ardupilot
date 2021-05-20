@@ -6,6 +6,7 @@
 #include <AP_BoardConfig/AP_BoardConfig.h>
 #include <AP_Logger/AP_Logger.h>
 #include <AP_Notify/AP_Notify.h> // YIG-ADD
+#include <GCS_MAVLink/GCS.h>
 
 #include "AP_Compass_SITL.h"
 #include "AP_Compass_AK8963.h"
@@ -50,6 +51,7 @@ extern const AP_HAL::HAL& hal;
 #ifndef HAL_COMPASS_MAX_SENSORS
 #define HAL_COMPASS_MAX_SENSORS 3
 #endif
+
 
 const AP_Param::GroupInfo Compass::var_info[] = {
     // index 0 was used for the old orientation matrix
@@ -573,6 +575,9 @@ void Compass::init()
         // detect available backends. Only called once
         _detect_backends();
     }
+
+    ::printf("Compass count %d\n", _compass_count);
+
     if (_compass_count != 0) {
         // get initial health status
         hal.scheduler->delay(100);
@@ -612,6 +617,7 @@ uint8_t Compass::register_compass(void)
     if (_compass_count == COMPASS_MAX_INSTANCES) {
         AP_HAL::panic("Too many compass instances");
     }
+
     return _compass_count++;
 }
 
@@ -767,6 +773,7 @@ void Compass::_probe_external_i2c_compasses(void)
         const uint8_t ist8310_addr[] = { 0x0C, 0x0D, 0x0E, 0x0F };
 
         for (uint8_t a=0; a<ARRAY_SIZE(ist8310_addr); a++) {
+			::printf("ist8310 probe\n\r");	//jhkang
             FOREACH_I2C_EXTERNAL(i) {
                 ADD_BACKEND(DRIVER_IST8310, AP_Compass_IST8310::probe(GET_I2C_DEVICE(i, ist8310_addr[a]),
                                                                       true, default_rotation));
@@ -986,13 +993,15 @@ Compass::read(void)
     }
 
 	// YIG-ADD
-	uint8_t j;
-	for (j=0; j < COMPASS_MAX_INSTANCES; j++) {
+	for (uint8_t j=0; j < COMPASS_MAX_INSTANCES; j++) {
 		if(_state[j].healthy)
-			AP_Notify::diag_status.compass_failed[j] = true;
+			AP_Notify::diag_status.compass_failed[j] = false;
 		else
-		    AP_Notify::diag_status.compass_failed[j] = false;
+		{
+		    AP_Notify::diag_status.compass_failed[j] = true;
+		}
     }
+	//
 
 #if COMPASS_LEARN_ENABLED
     if (_learn == LEARN_INFLIGHT && !learn_allocated) {
@@ -1203,11 +1212,13 @@ bool Compass::configured(uint8_t i)
 
     // exit immediately if all offsets are zero
     if (is_zero(get_offsets(i).length())) {
+		::printf("1111111\n");
         return false;
     }
 
     // exit immediately if dev_id hasn't been detected
     if (_state[i].detected_dev_id == 0) {
+		::printf("222222\n");
         return false;
     }
 
@@ -1222,11 +1233,13 @@ bool Compass::configured(uint8_t i)
         // restore cached value
         _state[i].dev_id = dev_id_cache_value;
         // return failure
+		::printf("3333333\n");
         return false;
     }
 
     // if expected_dev_id is configured and the detected dev_id is different, return false
     if (_state[i].expected_dev_id != -1 && _state[i].expected_dev_id != _state[i].dev_id) {
+		::printf("4444444\n");
         return false;
     }
 
@@ -1240,6 +1253,7 @@ bool Compass::configured(void)
     for(uint8_t i=0; i<get_count(); i++) {
         all_configured = all_configured && (!use_for_yaw(i) || configured(i));
     }
+	::printf("configured %d\n", all_configured);
     return all_configured;
 }
 

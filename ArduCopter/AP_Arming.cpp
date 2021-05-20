@@ -5,7 +5,8 @@ void AP_Arming_Copter::diagnosis_update(void) // 100ms 수행
 {
     bool display_fail = true;
 
-    if (copter.motors->armed()) { // In-Flight 고장진단
+    //if (copter.motors->armed()) // In-Flight 고장진단
+	{
         mandatory_checks(display_fail);
         motor_checks(display_fail);
         pilot_throttle_checks(display_fail);
@@ -378,7 +379,13 @@ bool AP_Arming_Copter::gps_checks(bool display_failure)
     //fence_requires_gps = (copter.fence.get_enabled_fences() & (AC_FENCE_TYPE_CIRCLE | AC_FENCE_TYPE_POLYGON)) > 0;
     #endif
 
-#if 1 // YIG-CHG : 모드에 관계없이 항상 GPS 체크
+    // call parent gps checks
+    if (!AP_Arming::gps_checks(display_failure)) {
+        AP_Notify::flags.pre_arm_gps_check = false;
+        passed = false;
+    }
+
+#if 1
     // return true if GPS is not required
     if (!mode_requires_gps && !fence_requires_gps) {
         AP_Notify::flags.pre_arm_gps_check = true;
@@ -399,11 +406,13 @@ bool AP_Arming_Copter::gps_checks(bool display_failure)
         passed = false;
     }
 
+#if 0
     // call parent gps checks
     if (!AP_Arming::gps_checks(display_failure)) {
         AP_Notify::flags.pre_arm_gps_check = false;
         passed = false;
     }
+#endif
 
     // if we got here all must be ok
     AP_Notify::flags.pre_arm_gps_check = true;

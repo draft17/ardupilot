@@ -1,5 +1,7 @@
 #include "AP_Baro_Backend.h"
 #include <stdio.h>
+#include <AP_Notify/AP_Notify.h>
+#include <GCS_MAVLink/GCS.h>
 
 extern const AP_HAL::HAL& hal;
 
@@ -32,6 +34,7 @@ void AP_Baro_Backend::update_healthy_flag(uint8_t instance)
         // mark a sensor unhealthy
         _frontend.sensors[instance].healthy = false;
     }
+	//gcs().send_text(MAV_SEVERITY_INFO, "Baro healthy #%d [%d]", instance, _frontend.sensors[instance].healthy);
 }
 
 void AP_Baro_Backend::backend_update(uint8_t instance)
@@ -46,6 +49,16 @@ void AP_Baro_Backend::backend_update(uint8_t instance)
  */
 void AP_Baro_Backend::_copy_to_frontend(uint8_t instance, float pressure, float temperature)
 {
+
+#if 1 // YIG-ADD : For Diagnosis Test From GCS
+	if((AP_Notify::diag_status.baro_failed_insert[0] && instance == 0) ||
+	   (AP_Notify::diag_status.baro_failed_insert[1] && instance == 1))
+	{
+		//gcs().send_text(MAV_SEVERITY_INFO, "Baro #%d no con", instance);
+		return;
+	}
+#endif
+
     if (instance >= _frontend._num_sensors) {
         return;
     }

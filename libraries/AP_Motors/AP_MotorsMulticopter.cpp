@@ -324,8 +324,13 @@ float AP_MotorsMulticopter::get_current_limit_max_throttle()
     // throttle limit drops to 20% between hover and full throttle
     _throttle_limit = constrain_float(_throttle_limit, 0.2f, 1.0f);
 
+#if 0 // YIG-CHG
     // limit max throttle
     return get_throttle_hover() + ((1.0 - get_throttle_hover()) * _throttle_limit);
+#else
+	_throttle_limit = 1.0f;
+	return 1.0f;
+#endif
 }
 
 // apply_thrust_curve_and_volt_scaling - returns throttle in the range 0 ~ 1
@@ -333,7 +338,11 @@ float AP_MotorsMulticopter::apply_thrust_curve_and_volt_scaling(float thrust) co
 {
     float throttle_ratio = thrust;
     // apply thrust curve - domain 0.0 to 1.0, range 0.0 to 1.0
+#if 0 // YIG-CHG
     float thrust_curve_expo = constrain_float(_thrust_curve_expo, -1.0f, 1.0f);
+#else
+    float thrust_curve_expo = 0.002f;
+#endif
     if (fabsf(thrust_curve_expo) < 0.001) {
         // zero expo means linear, avoid floating point exception for small values
         return thrust;
@@ -370,6 +379,8 @@ void AP_MotorsMulticopter::update_lift_max_from_batt_voltage()
     // calculate lift max
     float thrust_curve_expo = constrain_float(_thrust_curve_expo, -1.0f, 1.0f);
     _lift_max = batt_voltage_filt * (1 - thrust_curve_expo) + thrust_curve_expo * batt_voltage_filt * batt_voltage_filt;
+
+	_lift_max = 1.0f; // YIG-ADD
 }
 
 float AP_MotorsMulticopter::get_compensation_gain() const
@@ -667,6 +678,13 @@ void AP_MotorsMulticopter::output_logic()
         } else {
             _thrust_boost_ratio = MAX(0.0, _thrust_boost_ratio - 1.0f / (_spool_up_time * _loop_rate));
         }
+
+		// YIG-ADD :: for Motor boost
+        if (_thrust_boost && AP_Notify::diag_status.motor_status_failed) {
+            _thrust_boost_ratio = 1.0f;
+		}
+		//
+
         break;
 
     case SpoolState::SPOOLING_DOWN:

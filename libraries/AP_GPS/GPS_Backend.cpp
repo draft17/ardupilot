@@ -188,6 +188,7 @@ void AP_GPS_Backend::send_mavlink_gps_rtk(mavlink_channel_t chan)
     // send status
     switch (instance) {
         case 0:
+		//case 2: 	//jhkang
             mavlink_msg_gps_rtk_send(chan,
                                  0,  // Not implemented yet
                                  0,  // Not implemented yet

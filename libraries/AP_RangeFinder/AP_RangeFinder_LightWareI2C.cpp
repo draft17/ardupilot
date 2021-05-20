@@ -353,7 +353,7 @@ bool AP_RangeFinder_LightWareI2C::legacy_get_reading(uint16_t &reading_cm)
         reading_cm = be16toh(val);
 
 		// YIG-DIAG
-		if(!AP_Notify::diag_status.lidar_failed[1] && AP_Notify::diag_status.pri_lidar != SP_LIDAR) // SP_LIDAR : 2
+		if(!AP_Notify::diag_status.lidar_failed[1])
 			reading_cm = 10;
 
         return true;
@@ -458,9 +458,10 @@ void AP_RangeFinder_LightWareI2C::legacy_timer(void)
     if (legacy_get_reading(state.distance_cm)) {
         // update range_valid state based on distance measured
         update_status();
+		AP_Notify::diag_status.lidar_failed[1] = false; // YIG-DIAG
     } else {
         set_status(RangeFinder::RangeFinder_NoData);
-		AP_Notify::diag_status.lidar_failed[1] = 1; // YIG-DIAG
+		AP_Notify::diag_status.lidar_failed[1] = true; // YIG-DIAG
     }
 }
 

@@ -285,19 +285,85 @@ void GCS_MAVLINK::handle_param_set(const mavlink_message_t &msg)
         return;
     }
 
-	// YIG-IMSI for Switch-Over from GCS
-	if(strcmp(key, "PRX_IGN_ANG3") == 0 && (old_value != 4 && packet.param_value == 4))
+#if 1 // For Diagnosis Test
+
+	if(!strcmp(key, "PRX_IGN_ANG1") && old_value == 0)
 	{
-		AP_Notify::diag_status.deadlock = true;
-    	gcs().send_text(MAV_SEVERITY_INFO, "Param (%s,  %4.2f / %4.2f)", key, old_value, packet.param_value);
+		if(packet.param_value != 0 && packet.param_value < 9)
+		{
+			if(packet.param_value == 1) AP_Notify::diag_status.motor_failed[0] = true;
+			else if(packet.param_value == 2) AP_Notify::diag_status.motor_failed[1] = true;
+			else if(packet.param_value == 3) AP_Notify::diag_status.motor_failed[2] = true;
+			else if(packet.param_value == 4) AP_Notify::diag_status.motor_failed[3] = true;
+			else if(packet.param_value == 5) AP_Notify::diag_status.motor_failed[4] = true;
+			else if(packet.param_value == 6) AP_Notify::diag_status.motor_failed[5] = true;
+			else if(packet.param_value == 7) AP_Notify::diag_status.motor_failed[6] = true;
+			else if(packet.param_value == 8) AP_Notify::diag_status.motor_failed[7] = true;
+
+    		gcs().send_text(MAV_SEVERITY_INFO, "Motor #%d Error Insert", packet.param_value);
+		}
 	}
-	//
-	if(strcmp(key, "PRX_IGN_ANG1") == 0)
+
+	// Deadlock 
+	if(!strcmp(key, "PRX_IGN_ANG3") && (old_value == 0 && packet.param_value == 4))
 	{
-		if(packet.param_value != 0)
-		AP_Notify::diag_status.motor_failed[0] = packet.param_value;
-    	gcs().send_text(MAV_SEVERITY_INFO, "Param (%s, %4.2f)", key, packet.param_value);
+		AP_Notify::diag_status.deadlock_insert = true;
+    	gcs().send_text(MAV_SEVERITY_INFO, "Deadlock Error Insert");
 	}
+
+	// Gyro
+	if(!strcmp(key, "PRX_IGN_ANG4") && old_value == 0)
+	{
+		if(packet.param_value == 1) AP_Notify::diag_status.gyro_failed_insert[0] = true;
+		else if(packet.param_value == 2) AP_Notify::diag_status.gyro_failed_insert[1] = true;
+		else if(packet.param_value == 3) AP_Notify::diag_status.gyro_failed_insert[2] = true;
+
+    	gcs().send_text(MAV_SEVERITY_INFO, "Gyro #%d Error Insert", packet.param_value);
+	}
+	// Accel
+	if(!strcmp(key, "PRX_IGN_ANG5") && old_value == 0)
+	{
+		if(packet.param_value == 1) AP_Notify::diag_status.accel_failed_insert[0] = true;
+		else if(packet.param_value == 2) AP_Notify::diag_status.accel_failed_insert[1] = true;
+		else if(packet.param_value == 3) AP_Notify::diag_status.accel_failed_insert[2] = true;
+
+    	gcs().send_text(MAV_SEVERITY_INFO, "Accel #%d Error Insert", packet.param_value);
+	}
+	// Compass
+	if(!strcmp(key, "PRX_IGN_ANG6") && old_value == 0)
+	{
+		if(packet.param_value == 1) AP_Notify::diag_status.compass_failed_insert[0] = true;
+		else if(packet.param_value == 2) AP_Notify::diag_status.compass_failed_insert[1] = true;
+		else if(packet.param_value == 3) AP_Notify::diag_status.compass_failed_insert[2] = true;
+
+    	gcs().send_text(MAV_SEVERITY_INFO, "Compass #%d Error Insert", packet.param_value);
+	}
+	// Baro
+	if(!strcmp(key, "PRX_IGN_WID1") && old_value == 0)
+	{
+		if(packet.param_value == 1) AP_Notify::diag_status.baro_failed_insert[0] = true;
+		else if(packet.param_value == 2) AP_Notify::diag_status.baro_failed_insert[1] = true;
+
+    	gcs().send_text(MAV_SEVERITY_INFO, "Baro #%d Error Insert", packet.param_value);
+	}
+	// GPS
+	if(!strcmp(key, "PRX_IGN_WID2") && old_value == 0)
+	{
+		if(packet.param_value == 1) AP_Notify::diag_status.gps_failed_insert[0] = true;
+		else if(packet.param_value == 2) AP_Notify::diag_status.gps_failed_insert[1] = true;
+		else if(packet.param_value == 3) AP_Notify::diag_status.gps_failed_insert[2] = true;
+
+    	gcs().send_text(MAV_SEVERITY_INFO, "GPS #%d Error Insert", packet.param_value);
+	}
+	// LiDAR
+	if(!strcmp(key, "PRX_IGN_WID3") && old_value == 0)
+	{
+		if(packet.param_value == 1) AP_Notify::diag_status.lidar_failed_insert[0] = true;
+		else if(packet.param_value == 2) AP_Notify::diag_status.lidar_failed_insert[1] = true;
+
+    	gcs().send_text(MAV_SEVERITY_INFO, "LiDAR #%d Error Insert", packet.param_value);
+	}
+#endif
 
     // set the value
     vp->set_float(packet.param_value, var_type);

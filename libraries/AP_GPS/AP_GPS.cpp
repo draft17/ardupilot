@@ -677,12 +677,24 @@ void AP_GPS::update_instance(uint8_t instance)
     bool result = drivers[instance]->read();
     uint32_t tnow = AP_HAL::millis();
 
+#if 1 // YIG-DIAG
+	if((AP_Notify::diag_status.gps_failed_insert[0] && instance == 0) ||
+	   (AP_Notify::diag_status.gps_failed_insert[1] && instance == 1) ||
+	   (AP_Notify::diag_status.gps_failed_insert[2] && instance == 2))
+	{
+		result = 0;
+	}
+#endif
+
     // if we did not get a message, and the idle timer of 2 seconds
     // has expired, re-initialise the GPS. This will cause GPS
     // detection to run again
     bool data_should_be_logged = false;
     if (!result) {
         if (tnow - timing[instance].last_message_time_ms > GPS_TIMEOUT_MS) {
+
+			AP_Notify::diag_status.gps_failed[instance] = true; // YIG-DIAG
+
             memset((void *)&state[instance], 0, sizeof(state[instance]));
             state[instance].instance = instance;
             state[instance].hdop = GPS_UNKNOWN_DOP;
@@ -718,6 +730,8 @@ void AP_GPS::update_instance(uint8_t instance)
         }
 
         data_should_be_logged = true;
+
+		AP_Notify::diag_status.gps_failed[instance] = false; // YIG-DIAG
     }
 
 #ifndef HAL_BUILD_AP_PERIPH
@@ -973,10 +987,12 @@ void AP_GPS::inject_data(uint8_t instance, const uint8_t *data, uint16_t len)
 void AP_GPS::send_mavlink_gps_raw(mavlink_channel_t chan)
 {
     static uint32_t last_send_time_ms[MAVLINK_COMM_NUM_BUFFERS];
+	static uint32_t gps_3rd=0;
 
 	// YIG-ADD
-	if(primary_instance == 0) 
+	//if(primary_instance == 0) 
 	{
+	//gcs().send_text(MAV_SEVERITY_ERROR, "1st GPS send");	//jhkang
     if (status(0) > AP_GPS::NO_GPS) {
         // when we have a GPS then only send new data
         if (last_send_time_ms[chan] == last_message_time_ms(0)) {
@@ -1019,46 +1035,54 @@ void AP_GPS::send_mavlink_gps_raw(mavlink_channel_t chan)
 
 
 	}
-	else if(primary_instance == 2)
+	//else if(primary_instance == 2)
 	{
-    if (status(2) > AP_GPS::NO_GPS) {
-        // when we have a GPS then only send new data
-        if (last_send_time_ms[chan] == last_message_time_ms(2)) {
-            return;
-        }
-        last_send_time_ms[chan] = last_message_time_ms(2);
-    } else {
-        // when we don't have a GPS then send at 1Hz
-        uint32_t now = AP_HAL::millis();
-        if (now - last_send_time_ms[chan] < 1000) {
-            return;
-        }
-        last_send_time_ms[chan] = now;
-    }
-    const Location &loc = location(2);
-    float hacc = 0.0f;
-    float vacc = 0.0f;
-    float sacc = 0.0f;
-    horizontal_accuracy(2, hacc);
-    vertical_accuracy(2, vacc);
-    speed_accuracy(2, sacc);
-    mavlink_msg_gps_raw_int_send(
-        chan,
-        last_fix_time_ms(2)*(uint64_t)1000,	//YIG-CHECK
-        status(2),
-        loc.lat,        // in 1E7 degrees
-        loc.lng,        // in 1E7 degrees
-        loc.alt * 10UL, // in mm
-        get_hdop(2),
-        get_vdop(2),
-        ground_speed(2)*100,  // cm/s
-        ground_course(2)*100, // 1/100 degrees,
-        num_sats(2),
-        0,                    // TODO: Elipsoid height in mm
-        hacc * 1000,          // one-sigma standard deviation in mm
-        vacc * 1000,          // one-sigma standard deviation in mm
-        sacc * 1000,          // one-sigma standard deviation in mm/s
-        0);                   // TODO one-sigma heading accuracy standard deviation
+		//gcs().send_text(MAV_SEVERITY_ERROR, "3rd GPS send");	//jhkang
+		if (status(2) > AP_GPS::NO_GPS) {
+			//jhkang+++
+			gps_3rd = status(2);
+			gps_3rd += 10;		//jhkang 3rd GPS OFFSET = 10;
+			//gcs().send_text(MAV_SEVERITY_ERROR, "3rd GPS send data = %d", gps_3rd);	//jhkang
+			//+++jhkang
+			// when we have a GPS then only send new data
+			if (last_send_time_ms[chan] == last_message_time_ms(2)) {
+				return;
+			}
+			last_send_time_ms[chan] = last_message_time_ms(2);
+		} else {
+			gcs().send_text(MAV_SEVERITY_ERROR, "3rd GPS error");	//jhkang
+			// when we don't have a GPS then send at 1Hz
+			uint32_t now = AP_HAL::millis();
+			if (now - last_send_time_ms[chan] < 1000) {
+				return;
+			}
+			last_send_time_ms[chan] = now;
+		}
+		const Location &loc = location(2);
+		float hacc = 0.0f;
+		float vacc = 0.0f;
+		float sacc = 0.0f;
+		horizontal_accuracy(2, hacc);
+		vertical_accuracy(2, vacc);
+		speed_accuracy(2, sacc);
+		mavlink_msg_gps_raw_int_send(
+				chan,
+				last_fix_time_ms(2)*(uint64_t)1000,	//YIG-CHECK
+				//status(2),
+				gps_3rd,	//jhkang
+				loc.lat,        // in 1E7 degrees
+				loc.lng,        // in 1E7 degrees
+				loc.alt * 10UL, // in mm
+				get_hdop(2),
+				get_vdop(2),
+				ground_speed(2)*100,  // cm/s
+				ground_course(2)*100, // 1/100 degrees,
+				num_sats(2),
+				0,                    // TODO: Elipsoid height in mm
+				hacc * 1000,          // one-sigma standard deviation in mm
+				vacc * 1000,          // one-sigma standard deviation in mm
+				sacc * 1000,          // one-sigma standard deviation in mm/s
+				0);                   // TODO one-sigma heading accuracy standard deviation
 
 	}
 		

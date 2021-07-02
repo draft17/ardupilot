@@ -11,7 +11,9 @@ extern const AP_HAL::HAL& hal;
 void AP_Gripper_Servo::init_gripper()
 {
     // move the servo to the release position
+#if 0
     release();
+#endif
 }
 
 void AP_Gripper_Servo::grab()

@@ -37,6 +37,11 @@ bool ModeAuto::init(bool ignore_checks)
             auto_yaw.set_mode(AUTO_YAW_HOLD);
         }
 
+		// YIG-ADD
+		copter._mission_changed = false;
+		copter.save_alt_cm = 0;
+		//
+
         // initialise waypoint and spline controller
         wp_nav->wp_and_spline_init();
 

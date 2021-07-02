@@ -31,6 +31,8 @@ bool ModeLoiter::init(bool ignore_checks)
         pos_control->set_desired_velocity_z(inertial_nav.get_velocity_z());
     }
 
+	loiter_loop_time = AP_HAL::millis();
+
     return true;
 }
 
@@ -182,6 +184,40 @@ void ModeLoiter::run()
 
         // get avoidance adjusted climb rate
         target_climb_rate = get_avoidance_adjusted_climbrate(target_climb_rate);
+
+#if 1 // YIG-ADD : 투하시, 6.0m 이하 내려가지 않도록
+
+#if 0
+		bool healthy = ((copter.rangefinder.status_orient(ROTATION_NONE) == RangeFinder::Status::Good) &&
+		                (copter.rangefinder.range_valid_count_orient(ROTATION_NONE) >= RANGEFINDER_HEALTH_MAX));
+#endif
+		uint16_t down_dist = (uint16_t)copter.avoid.get_margin();
+
+		if(AP_HAL::millis() - loiter_loop_time > 1000)
+	    {
+			if(copter.rangefinder.distance_cm_orient(ROTATION_PITCH_270) < 3000) // 10m 이하에서만 메시지 출력
+				gcs().send_text(MAV_SEVERITY_INFO,"Ground dist %d", copter.rangefinder.distance_cm_orient(ROTATION_PITCH_270));
+			loiter_loop_time = AP_HAL::millis();
+		}
+
+		//if(healthy && (down_dist < 6 && down_dist > 2))
+		if(down_dist >= 5)
+		{
+			if(copter.rangefinder.distance_cm_orient(ROTATION_PITCH_270) <= (down_dist * 100))
+			{
+				//if(get_pilot_desired_throttle_below(channel_throttle->get_control_in()))
+
+				int16_t r_in = channel_throttle->get_radio_in();
+				int16_t r_trim = channel_throttle->get_radio_trim();
+
+				if(r_in <= (r_trim + 250)) // trim 설정값이 middle에 있어야 동작함
+				{
+					target_climb_rate = 0.0f;
+					AP_Notify::events.waypoint_complete = 1; // beep alarm
+				}
+			}
+		}
+#endif
 
         pos_control->set_alt_target_from_climb_rate_ff(target_climb_rate, G_Dt, false);
         pos_control->update_z_controller();

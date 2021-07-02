@@ -348,6 +348,7 @@ void AP_InertialSensor_Invensense::start()
 
     // start the timer process to read samples
     _dev->register_periodic_callback(1000000UL / _backend_rate_hz, FUNCTOR_BIND_MEMBER(&AP_InertialSensor_Invensense::_poll_data, void));
+	// 1ms 주기
 }
 
 

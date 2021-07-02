@@ -586,6 +586,15 @@ uint16_t RangeFinder::distance_cm_orient(enum Rotation orientation) const
     return backend->distance_cm();
 }
 
+// YIG-ADD
+void RangeFinder::distance_cm_set_orient(enum Rotation orientation, uint16_t dist) const
+{
+    AP_RangeFinder_Backend *backend = find_instance(orientation);
+    if (backend != nullptr) {
+    	backend->distance_cm_set(dist);
+	}
+}
+
 uint16_t RangeFinder::voltage_mv_orient(enum Rotation orientation) const
 {
     AP_RangeFinder_Backend *backend = find_instance(orientation);

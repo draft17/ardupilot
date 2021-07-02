@@ -231,6 +231,7 @@ bool Copter::set_mode(Mode::Number mode, ModeReason reason)
         user_throttle = true;
     }
 #endif
+	// 지면에 있을 때(land 상태) auto모드에서 manual모드로 전환시, 쓰로틀이 높아서 갑자기 튀어오르지 않도록 방지
     if (!ignore_checks &&
         ap.land_complete &&
         user_throttle &&
@@ -764,6 +765,11 @@ float Mode::get_pilot_desired_yaw_rate(int16_t stick_angle)
 float Mode::get_pilot_desired_climb_rate(float throttle_control)
 {
     return copter.get_pilot_desired_climb_rate(throttle_control);
+}
+
+bool Mode::get_pilot_desired_throttle_below(float throttle_control) // YIG-ADD
+{
+    return copter.get_pilot_desired_throttle_below(throttle_control);
 }
 
 float Mode::get_non_takeoff_throttle()

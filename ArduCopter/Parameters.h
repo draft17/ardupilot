@@ -388,7 +388,9 @@ public:
     AP_Int16        throttle_behavior;
     AP_Float        pilot_takeoff_alt;
 
-    AP_Int16        rtl_altitude;
+	// YIG-CHG
+    //AP_Int16        rtl_altitude;
+    AP_Int32        rtl_altitude;
     AP_Int16        rtl_speed_cms;
     AP_Float        rtl_cone_slope;
 #if RANGEFINDER_ENABLED == ENABLED

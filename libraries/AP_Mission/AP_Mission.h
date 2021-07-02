@@ -357,6 +357,11 @@ public:
     ///     previous running commands will be re-initialised
     void resume();
 
+	// YIG-ADD
+	uint16_t curr_nav_idx();
+	float nav_loc_alt();
+	//
+
     /// start_or_resume - if MIS_AUTORESTART=0 this will call resume(), otherwise it will call start()
     void start_or_resume();
 
@@ -509,6 +514,8 @@ public:
     // user settable parameters
     static const struct AP_Param::GroupInfo var_info[];
 
+    bool get_next_cmd(uint16_t start_index, Mission_Command& cmd, bool increment_jump_num_times_if_found, bool send_gcs_msg = true); // YIG-CHG
+
 private:
     static AP_Mission *_singleton;
 
@@ -554,7 +561,7 @@ private:
     ///     returns true if found, false if not found (i.e. mission complete)
     ///     accounts for do_jump commands
     ///     increment_jump_num_times_if_found should be set to true if advancing the active navigation command
-    bool get_next_cmd(uint16_t start_index, Mission_Command& cmd, bool increment_jump_num_times_if_found, bool send_gcs_msg = true);
+    //bool get_next_cmd(uint16_t start_index, Mission_Command& cmd, bool increment_jump_num_times_if_found, bool send_gcs_msg = true); // YIG-CHG
 
     /// get_next_do_cmd - gets next "do" or "conditional" command after start_index
     ///     returns true if found, false if not found

@@ -40,7 +40,7 @@ void AP_Proximity_RangeFinder::update(void)
         }
         if (sensor->has_data()) {
             // check for horizontal range finders
-            if (sensor->orientation() <= ROTATION_YAW_315) {
+            if (sensor->orientation() <= ROTATION_YAW_315) { // YAW_315 이하 모두 (0 - 7 sector)
                 uint8_t sector = (uint8_t)sensor->orientation();
                 _angle[sector] = sector * 45;
                 _distance[sector] = sensor->distance_cm() * 0.01f;

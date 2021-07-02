@@ -318,6 +318,7 @@ MAV_RESULT Compass::handle_mag_cal_command(const mavlink_command_long_t &packet)
             break;
         }
         if (packet.param1 < 0 || packet.param1 > 255) {
+            gcs().send_text(MAV_SEVERITY_NOTICE, "Param1 error");
             result = MAV_RESULT_FAILED;
             break;
         }
@@ -331,6 +332,7 @@ MAV_RESULT Compass::handle_mag_cal_command(const mavlink_command_long_t &packet)
         if (mag_mask == 0) { // 0 means all
             start_calibration_all(retry, autosave, delay, autoreboot);
         } else {
+            gcs().send_text(MAV_SEVERITY_NOTICE, "mag_mask %d", mag_mask);
             if (!_start_calibration_mask(mag_mask, retry, autosave, delay, autoreboot)) {
                 result = MAV_RESULT_FAILED;
             }

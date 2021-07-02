@@ -82,6 +82,18 @@ void AP_Mission::stop()
     _flags.state = MISSION_STOPPED;
 }
 
+// YIG-ADD
+uint16_t AP_Mission::curr_nav_idx()
+{
+    return _nav_cmd.index;
+}
+
+float AP_Mission::nav_loc_alt() 
+{
+	return _nav_cmd.content.location.alt;
+}
+//
+
 /// resume - continues the mission execution from where we last left off
 ///     previous running commands will be re-initialized
 void AP_Mission::resume()

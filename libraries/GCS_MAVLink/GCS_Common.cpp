@@ -312,7 +312,8 @@ void GCS_MAVLINK::send_distance_sensor() const
         }
         enum Rotation orient = sensor->orientation();
         if (!filter_possible_proximity_sensors ||
-            (orient > ROTATION_YAW_315 && orient != ROTATION_PITCH_90)) {
+            //(orient > ROTATION_YAW_315 && orient != ROTATION_PITCH_90)) {
+            (orient == ROTATION_NONE || orient == ROTATION_PITCH_270)) {
             send_distance_sensor(sensor, i);
         }
     }
@@ -2812,6 +2813,7 @@ MAV_RESULT GCS_MAVLINK::handle_command_camera(const mavlink_command_long_t &pack
         result = MAV_RESULT_ACCEPTED;
         break;
     case MAV_CMD_DO_DIGICAM_CONTROL:
+	{
         camera->control(packet.param1,
                         packet.param2,
                         packet.param3,
@@ -2819,7 +2821,17 @@ MAV_RESULT GCS_MAVLINK::handle_command_camera(const mavlink_command_long_t &pack
                         packet.param5,
                         packet.param6);
         result = MAV_RESULT_ACCEPTED;
-        break;
+
+#if 1 // YIG-ADD
+    	send_text(MAV_SEVERITY_INFO, "DIGICAM");
+		RangeFinder *rangefinder = AP::rangefinder();
+		if (rangefinder != nullptr) {
+			rangefinder->distance_cm_set_orient(ROTATION_NONE, 3000);
+    		send_text(MAV_SEVERITY_INFO, "GCS : Distance_set");
+		}
+#endif
+	}
+    break;
     case MAV_CMD_DO_SET_CAM_TRIGG_DIST:
         camera->set_trigger_distance(packet.param1);
         result = MAV_RESULT_ACCEPTED;
@@ -3134,6 +3146,16 @@ void GCS_MAVLINK::handle_common_message(const mavlink_message_t &msg)
                 return;
             }
             camera->handle_message(chan, msg);
+
+#if 1 // YIG-ADD
+    		send_text(MAV_SEVERITY_INFO, "digicam");
+			RangeFinder *rangefinder = AP::rangefinder();
+			if (rangefinder != nullptr) {
+				rangefinder->distance_cm_set_orient(ROTATION_NONE, 3000);
+    			send_text(MAV_SEVERITY_INFO, "GCS : distance_set");
+			}
+#endif
+
         }
         break;
 

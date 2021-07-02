@@ -262,7 +262,8 @@ private:
         int16_t alt_cm_glitch_protected;    // last glitch protected altitude
         int8_t glitch_count;    // non-zero number indicates rangefinder is glitching
         uint32_t glitch_cleared_ms; // system time glitch cleared
-    } rangefinder_state, rangefinder_up_state;
+    //} rangefinder_state, rangefinder_up_state;
+    } rangefinder_state, rangefinder_up_state, rangefinder_fw_state;
 
     /*
       return rangefinder height interpolated using inertial altitude
@@ -293,7 +294,11 @@ private:
         void set_surface(Surface new_surface);
 
     private:
+#if 0 // YIG-CHG
         Surface surface = Surface::GROUND;
+#else
+        Surface surface = Surface::NONE;
+#endif
         float target_dist_cm;       // desired distance in cm from ground or ceiling
         uint32_t last_update_ms;    // system time of last update to target_alt_cm
         uint32_t last_glitch_cleared_ms;    // system time of last handle glitch recovery
@@ -654,6 +659,7 @@ private:
     void update_throttle_hover();
     void set_throttle_takeoff();
     float get_pilot_desired_climb_rate(float throttle_control);
+    bool get_pilot_desired_throttle_below(float throttle_control); // YIG-ADD
     float get_non_takeoff_throttle();
     float get_avoidance_adjusted_climbrate(float target_rate);
     void set_accel_throttle_I_from_pilot_throttle();
@@ -965,6 +971,13 @@ private:
     // mode.cpp
     Mode *mode_from_mode_num(const Mode::Number mode);
     void exit_mode(Mode *&old_flightmode, Mode *&new_flightmode);
+
+	// YIG-ADD
+	uint32_t front_loop_time = AP_HAL::millis();
+	uint32_t down_loop_time = AP_HAL::millis();
+	bool _mission_changed = false;
+	uint16_t save_alt_cm = 0; 
+	//
 
 public:
     void failsafe_check();      // failsafe.cpp

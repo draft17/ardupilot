@@ -21,6 +21,10 @@ void Copter::init_rangefinder(void)
    // upward facing range finder
    rangefinder_up_state.alt_cm_filt.set_cutoff_frequency(RANGEFINDER_WPNAV_FILT_HZ);
    rangefinder_up_state.enabled = rangefinder.has_orientation(ROTATION_PITCH_90);
+
+   // YIG-ADD
+   rangefinder_fw_state.alt_cm_filt.set_cutoff_frequency(RANGEFINDER_WPNAV_FILT_HZ);
+   rangefinder_fw_state.enabled = rangefinder.has_orientation(ROTATION_NONE);
 #endif
 }
 
@@ -40,9 +44,11 @@ void Copter::read_rangefinder(void)
     struct {
         RangeFinderState &state;
         enum Rotation orientation;
-    } rngfnd[2] = {{rangefinder_state, ROTATION_PITCH_270}, {rangefinder_up_state, ROTATION_PITCH_90}};
+    //} rngfnd[2] = {{rangefinder_state, ROTATION_PITCH_270}, {rangefinder_up_state, ROTATION_PITCH_90}}; // YIG-ADD
+    } rngfnd[3] = {{rangefinder_state, ROTATION_PITCH_270}, {rangefinder_up_state, ROTATION_PITCH_90}, {rangefinder_fw_state, ROTATION_NONE}};
 
-    for (uint8_t i=0; i < ARRAY_SIZE(rngfnd); i++) {
+    for (uint8_t i=0; i < ARRAY_SIZE(rngfnd); i++) 
+	{
         // local variables to make accessing simpler
         RangeFinderState &rf_state = rngfnd[i].state;
         enum Rotation rf_orient = rngfnd[i].orientation;
@@ -90,6 +96,136 @@ void Copter::read_rangefinder(void)
             rf_state.last_healthy_ms = now;
         }
 
+#if 1 // YIG-ADD : AVOID
+
+		// 하방 LiDAR 관련 동작
+       	//if (rf_orient == ROTATION_PITCH_270 && rf_state.alt_healthy)
+       	if (rf_orient == ROTATION_PITCH_270)
+		{
+			// Auto 모드 일 경우, 하방 LiDAR를 통한 지상 충돌 방지 & Gripper & Return to Home
+			// Gripper 바로 전, 하강 미션에서만 동작
+			if(copter.control_mode == Mode::Number::AUTO && copter.mode_auto.mission.get_current_nav_id() == MAV_CMD_NAV_LAND && _mission_changed == false)
+			{
+				AP_Mission::Mission_Command grip1_cmd;
+				AP_Mission::Mission_Command grip2_cmd;
+				AP_Mission::Mission_Command wp_cmd;
+				uint16_t current_idx = copter.mode_auto.mission.get_current_nav_index();
+
+				copter.mode_auto.mission.get_next_cmd(current_idx + 1, grip1_cmd, false, false);
+				copter.mode_auto.mission.get_next_cmd(current_idx + 2, grip2_cmd, false, false);
+				copter.mode_auto.mission.get_next_cmd(current_idx + 3, wp_cmd, false, false);
+
+				//if(grip1_cmd.id == MAV_CMD_DO_GRIPPER && grip2_cmd.id == MAV_CMD_DO_GRIPPER && wp_cmd.id == MAV_CMD_NAV_WAYPOINT)
+				if(grip1_cmd.id == MAV_CMD_DO_GRIPPER && grip2_cmd.id == MAV_CMD_DO_GRIPPER)
+				{
+					if(AP_HAL::millis() - down_loop_time > 1000)
+					{
+						gcs().send_text(MAV_SEVERITY_INFO,"[%d  %d] : Distance from Ground = (%d)", current_idx, copter.mode_auto.mission.get_current_nav_id(), rf_state.alt_cm);
+						down_loop_time = AP_HAL::millis();
+					}
+
+					uint16_t down_dist = (uint16_t)copter.avoid.get_margin();
+
+					if(down_dist == 5) // 수동
+					{
+						if(rf_state.alt_cm <= 1000 && rf_state.alt_cm > 500)
+						{
+							gcs().send_text(MAV_SEVERITY_EMERGENCY, "Brake, For Loiter Gripper  (%d)", rf_state.alt_cm);
+	   						copter.set_mode(Mode::Number::BRAKE, ModeReason::GCS_COMMAND);
+
+							copter.mode_auto.mission.set_current_cmd(current_idx + 3);
+						}
+					}
+					else if(down_dist > 5) // 자동
+					{
+						if(rf_state.alt_cm < ((down_dist * 100) - 200))
+						{
+							_mission_changed = true;
+
+							gcs().send_text(MAV_SEVERITY_EMERGENCY, "Brake, For Auto Gripper (%d)", rf_state.alt_cm);
+	   						copter.set_mode(Mode::Number::BRAKE, ModeReason::GCS_COMMAND);
+
+							AP_Gripper *gripper = AP::gripper();
+							if (gripper == nullptr) gcs().send_text(MAV_SEVERITY_WARNING, "Gripper not setup");
+							if(!gripper->enabled()) gcs().send_text(MAV_SEVERITY_WARNING, "Gripper not enabled");
+							else {
+								gripper->release(); gripper->release(); gripper->release();
+								gcs().send_text(MAV_SEVERITY_EMERGENCY, "Gripper releasing");
+							}
+
+							AP_Mission::Mission_Command _cmd;
+							copter.mode_auto.mission.get_next_cmd(current_idx + 3, _cmd, false, false);
+							if(_cmd.id == MAV_CMD_NAV_WAYPOINT || _cmd.id == MAV_CMD_NAV_LAND)
+							{
+								gcs().send_text(MAV_SEVERITY_WARNING, "Good Next Mission %d", current_idx + 3);
+							}
+
+							copter.mode_auto.mission.set_current_cmd(current_idx + 3);
+							uint16_t curr_idx = copter.mode_auto.mission.get_current_nav_index();
+							gcs().send_text(MAV_SEVERITY_WARNING, "Mission Changed = %d", curr_idx);
+
+							if (copter.set_mode(Mode::Number::AUTO, ModeReason::GCS_COMMAND)) 
+							{
+						    	copter.set_auto_armed(true);
+						    	if (copter.mode_auto.mission.state() != AP_Mission::MISSION_RUNNING) 
+								{
+							    	copter.mode_auto.mission.start_or_resume();
+						    	}
+								gcs().send_text(MAV_SEVERITY_EMERGENCY, "AUTO, Return to Home");
+							}
+							else
+								gcs().send_text(MAV_SEVERITY_EMERGENCY, "Brake Holding");
+						}
+					}
+
+				}
+			}
+		}
+
+        //if (rf_orient == ROTATION_NONE && rf_state.alt_healthy)
+        if (rf_orient == ROTATION_NONE)
+		{
+			if(copter.avoid.fence_margin() >= 1500.0f && copter.inertial_nav.get_altitude() >= 250.0f)
+			{
+				if(AP_HAL::millis() - front_loop_time > 2000)
+				{
+					gcs().send_text(MAV_SEVERITY_INFO,"Front Obstacle %d", rf_state.alt_cm);
+					front_loop_time = AP_HAL::millis();
+				}
+
+				// Auto 모드일 경우, 전방 LiDAR를 통한 장애물 감지 시 Brake
+				if(copter.control_mode == Mode::Number::AUTO)
+				{
+					// WP 비행 중에만 동작하도록 : Takeoff/RTL 시, 전방장애물이 있는 좁은 지역의 경우 불필요한 감지 방지
+					if(mode_auto.mission.get_current_nav_id() == MAV_CMD_NAV_WAYPOINT 
+						&& mode_auto.mission.curr_nav_idx() > 2
+						//&& copter.fence.get_action() == 3 // 검수를 위한 방안
+		   				//|| mode_auto.mission.get_current_nav_id() == MAV_CMD_NAV_RETURN_TO_LAUNCH
+					)
+					{
+						if(rf_state.alt_cm < copter.avoid.fence_margin()) 
+						{
+							AP_Notify::flags.parachute_release = 1; // beep alarm
+	   						copter.set_mode(Mode::Number::BRAKE, ModeReason::GCS_COMMAND);
+							gcs().send_text(MAV_SEVERITY_CRITICAL, "Obstacle (%d) : AUTO to BRAKE !!", rf_state.alt_cm);
+						}
+					}
+				}
+
+				// Loiter 모드일 경우, 전방 LiDAR를 통한 장애물 감지 시 Brake
+				if(copter.control_mode == Mode::Number::LOITER)
+				{
+					if(rf_state.alt_cm < copter.avoid.fence_margin())
+					{
+						AP_Notify::flags.parachute_release = 1; // beep alarm
+			    		copter.set_mode(Mode::Number::BRAKE, ModeReason::GCS_COMMAND);
+						gcs().send_text(MAV_SEVERITY_CRITICAL, "Obstacle (%d) : LOITER to BRAKE !!", rf_state.alt_cm);
+					}
+				}
+			}
+		}
+#endif
+
         // send downward facing lidar altitude and health to waypoint and circle navigation libraries
         if (rf_orient == ROTATION_PITCH_270) {
             if (rangefinder_state.alt_healthy || timed_out) {
@@ -135,9 +271,19 @@ bool Copter::get_rangefinder_height_interpolated_cm(int32_t& ret)
     if (!rangefinder_alt_ok()) {
         return false;
     }
+
     ret = rangefinder_state.alt_cm_filt.get();
     float inertial_alt_cm = inertial_nav.get_altitude();
     ret += inertial_alt_cm - rangefinder_state.inertial_alt_cm;
+
+#if 1
+	if(AP_HAL::millis() - front_loop_time > 1000)
+	{
+		gcs().send_text(MAV_SEVERITY_INFO,"land rng cm %d", (uint16_t)ret);
+		front_loop_time = AP_HAL::millis();
+	}
+#endif
+
     return true;
 }
 

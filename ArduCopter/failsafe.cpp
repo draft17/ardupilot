@@ -151,34 +151,36 @@ bool Copter::check_diagnosis()
     if(AP_Notify::diag_status.ov || 
 	   AP_Notify::diag_status.oc ||
 	   AP_Notify::diag_status.ot || 
-	   AP_Notify::diag_status.deadlock)
+	   //AP_Notify::diag_status.deadlock)
+	   AP_Notify::diag_status.deadlock_insert)
 	{
 		//fc_switch_over = true; // YIG-IMSI
 		if(!fc_switch_over_from_gcs)
 		{
 			fc_switch_over_from_gcs = true;
 			AP_Notify::diag_status.deadlock = false;
+			AP_Notify::diag_status.deadlock_insert = false;
 		}
 	}
-	else if(AP_Notify::diag_status.gyro_failed[0] && AP_Notify::diag_status.gyro_failed[1] && AP_Notify::diag_status.gyro_failed[2])
-		fc_switch_over = true;
-	else if(AP_Notify::diag_status.accel_failed[0] && AP_Notify::diag_status.accel_failed[1] && AP_Notify::diag_status.accel_failed[2])
-		fc_switch_over = true;
-	else if(AP_Notify::diag_status.baro_failed[0] && AP_Notify::diag_status.baro_failed[1])
-		fc_switch_over = true;
-	else if(AP_Notify::diag_status.compass_failed[0] && AP_Notify::diag_status.compass_failed[1] && AP_Notify::diag_status.compass_failed[2])
-		fc_switch_over = true;
-	else if(AP_Notify::diag_status.gps_failed[0] && AP_Notify::diag_status.gps_failed[1] && AP_Notify::diag_status.gps_failed[2])
-		fc_switch_over = true;
+	else if((AP_Notify::diag_status.gyro_failed[0] && AP_Notify::diag_status.gyro_failed[1] && AP_Notify::diag_status.gyro_failed[2]) ||
+			(AP_Notify::diag_status.accel_failed[0] && AP_Notify::diag_status.accel_failed[1] && AP_Notify::diag_status.accel_failed[2]) ||
+			(AP_Notify::diag_status.compass_failed[0] && AP_Notify::diag_status.compass_failed[1] && AP_Notify::diag_status.compass_failed[2]) ||
+			(AP_Notify::diag_status.baro_failed[0] && AP_Notify::diag_status.baro_failed[1]) ||
+			(AP_Notify::diag_status.gps_failed[0] && AP_Notify::diag_status.gps_failed[1] && AP_Notify::diag_status.gps_failed[2]))
+	{
 
+		fc_switch_over = true;
+	}
 
 	// YIG-ADD : for GTB
 	if(fc_switch_over_from_gcs)
 	{
-		gcs().send_text(MAV_SEVERITY_CRITICAL, "Switch-Over to FC #2");
-		msc.switch_over();
+		//gcs().send_text(MAV_SEVERITY_CRITICAL, "Switch-Over to FC #2");
+		msc.switch_over(0);
 		fc_switch_over_from_gcs = false;
 	}
+	else
+		msc.switch_over(1);
 
 	// Motor Fail
 	if(AP_Notify::diag_status.motor_failed[0] == true) failed_motor = 0;

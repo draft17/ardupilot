@@ -352,9 +352,11 @@ bool AP_RangeFinder_LightWareI2C::legacy_get_reading(uint16_t &reading_cm)
         // combine results into distance
         reading_cm = be16toh(val);
 
+#if 0
 		// YIG-DIAG
 		if(!AP_Notify::diag_status.lidar_failed[1])
 			reading_cm = 10;
+#endif
 
         return true;
     }

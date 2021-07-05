@@ -174,9 +174,9 @@ bool AP_MSC::motor_status_check(uint8_t num, uint32_t &error_code)
 
 	return true;
 }
-void AP_MSC::switch_over()
+void AP_MSC::switch_over(int a)
 {
-	activeflag = 0;
+	activeflag = a;
 }
 
 void AP_MSC::motor_fail(uint8_t num)

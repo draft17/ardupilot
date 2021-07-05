@@ -38,7 +38,7 @@ public:
     ///// SRV output /////
     void SRV_push_servos(void);
 	bool motor_status_check(uint8_t num, uint32_t &error_code);
-	void switch_over();
+	void switch_over(int a);
 	void motor_fail(uint8_t num);
 
     void loop(void);

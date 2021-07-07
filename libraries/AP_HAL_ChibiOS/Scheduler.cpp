@@ -27,7 +27,11 @@
 #include <AP_HAL_ChibiOS/RCInput.h>
 #include <AP_HAL_ChibiOS/CAN.h>
 #include <AP_InternalError/AP_InternalError.h>
-#include <AP_Notify/AP_Notify.h>	// YIG-ADD
+// YIG-ADD
+#include <AP_Notify/AP_Notify.h>
+#include <AP_MSC/AP_MSC.h>
+#include <GCS_MAVLink/GCS.h>
+//
 
 #if CH_CFG_USE_DYNAMIC == TRUE
 
@@ -333,13 +337,16 @@ void Scheduler::_timer_thread(void *arg)
             }
         }
 
-		//YIG-ADD : diagnosis (sw deadlock)
-#if 1
-		uint32_t t_now = AP_HAL::millis();
-		if (AP_Notify::diag_status.watchdog_on && t_now - AP_Notify::diag_status.watchdog_pat_time > 1000) {
+#if 1 // YIG-ADD : diagnosis (sw deadlock)
+		if (AP_HAL::millis() - AP_Notify::diag_status.watchdog_pat_time > 800) 
+		{
 			if(!AP_Notify::diag_status.deadlock) {
-				AP_Notify::diag_status.deadlock = 1;
-				::printf("SW DEADLOCK Occure !!!\n\r");
+				AP_Notify::diag_status.deadlock = true;
+				//AP_Notify::diag_status.fc_switch_over = true;
+				gcs().send_text(MAV_SEVERITY_CRITICAL, "SWITCH OVER FC #2");
+
+				AP_MSC *ap_msc = AP_MSC::get_msc();
+				ap_msc->switch_over(0);
 			}
 		}
 #endif

@@ -157,6 +157,7 @@ protected:
         bool triggered(float target_climb_rate) const;
 
         bool running() const { return _running; }
+
     private:
         bool _running;
         float max_speed;

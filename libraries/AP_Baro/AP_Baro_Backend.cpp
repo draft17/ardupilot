@@ -73,6 +73,13 @@ void AP_Baro_Backend::_copy_to_frontend(uint8_t instance, float pressure, float 
     _frontend.sensors[instance].pressure = pressure;
     _frontend.sensors[instance].temperature = temperature;
     _frontend.sensors[instance].last_update_ms = now;
+
+#if 1 // YIG-ADD DIAGNOSIS
+	if(temperature >= 70)
+	{
+		AP_Notify::diag_status.ot = true;
+	}
+#endif
 }
 
 static constexpr float FILTER_KOEF = 0.1f;

@@ -104,7 +104,7 @@ void Copter::read_rangefinder(void)
 			    if(rf_state.alt_cm > 300 && rf_state.alt_cm < copter.fence.get_margin() * 100) 
 			    {
 				    copter.set_mode(Mode::Number::LAND, ModeReason::FAILSAFE);
-			        gcs().send_text(MAV_SEVERITY_CRITICAL, "Obstacle from SP_LiDAR (%d) : LAND !!", rf_state.alt_cm);
+			        gcs().send_text(MAV_SEVERITY_CRITICAL, "Obstacle from LiDAR (%d) : LAND !!", rf_state.alt_cm);
 			    }
 			}
 	    }

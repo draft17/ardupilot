@@ -166,12 +166,14 @@ void Copter::failsafe_ekf_event()
             }
             break;
 
+#if 0
 		// YIG-ADD : REDUNDANCY
         case FS_EKF_ACTION_SWITCH_OVER:
-			fc_switch_over = true;
+			AP_Notify::diag_status.fc_switch_over = true;
 			redundancy_transfer();
 			break;
 		//
+#endif
 
         case FS_EKF_ACTION_LAND:
         case FS_EKF_ACTION_LAND_EVEN_STABILIZE:

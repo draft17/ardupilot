@@ -9,7 +9,6 @@ Mode::_TakeOff Mode::takeoff;
 
 bool Mode::do_user_takeoff_start(float takeoff_alt_cm)
 {
-	gcs().send_text(MAV_SEVERITY_INFO,"do_user_takeoff_start %4.2f", takeoff_alt_cm);
     copter.flightmode->takeoff.start(takeoff_alt_cm);
     return true;
 }
@@ -39,7 +38,7 @@ bool Mode::do_user_takeoff(float takeoff_alt_cm, bool must_navigate)
         return false;
     }
 
-	takeoff_alt_cm = 110.0f; // YIG : imsi
+	takeoff_alt_cm = 200.0f; // YIG : imsi
 
     if (!do_user_takeoff_start(takeoff_alt_cm)) {
         return false;
@@ -64,6 +63,8 @@ void Mode::_TakeOff::start(float alt_cm)
     if (speed <= 0.0f || alt_cm <= 0.0f) {
         return;
     }
+
+	copter.gcs().send_text(MAV_SEVERITY_INFO,"Takeoff start alt(%4.2f)  speed(%4.2f)", alt_cm, speed);
 
     // initialise takeoff state
     _running = true;
@@ -113,8 +114,9 @@ void Mode::_TakeOff::get_climb_rates(float& pilot_climb_rate,
         stop();
     }
 #else
-    height_gained = height_gained; // imsi
-    if (copter.current_loc.alt >= alt_delta) {
+	height_gained = height_gained;
+	int32_t ground_cm = copter.flightmode->get_alt_above_ground_cm();
+    if (ground_cm >= alt_delta) {
 		stop();
 	}
 #endif

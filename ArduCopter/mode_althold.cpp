@@ -81,9 +81,9 @@ void ModeAltHold::run()
         // get avoidance adjusted climb rate
         target_climb_rate = get_avoidance_adjusted_climbrate(target_climb_rate);
 
-        if(AP_HAL::millis() - althold_debug_timer1 > 5000)
+        if(AP_HAL::millis() - althold_debug_timer1 > 1000)
         {
-        	gcs().send_text(MAV_SEVERITY_INFO,"althold  tar_cl (%4.2f) take_cl (%4.2f)", target_climb_rate, takeoff_climb_rate);
+        	gcs().send_text(MAV_SEVERITY_INFO,"t_cr (%4.2f) take_cr (%4.2f)", target_climb_rate, takeoff_climb_rate);
         	althold_debug_timer1 = AP_HAL::millis();
     	}
 

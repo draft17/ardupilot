@@ -364,7 +364,9 @@ void Copter::fast_loop()
 
 	// YIG-ADD
 	check_diagnosis();
+#if 0
 	redundancy_transfer();
+#endif
 }
 
 // rc_loops - reads user input from transmitter/receiver

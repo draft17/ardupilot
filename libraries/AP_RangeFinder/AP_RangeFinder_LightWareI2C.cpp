@@ -347,16 +347,15 @@ bool AP_RangeFinder_LightWareI2C::legacy_get_reading(uint16_t &reading_cm)
 
     const uint8_t read_reg = LIGHTWARE_DISTANCE_READ_REG;
 
+	// YIG-ADD : DIAGNOSIS TEST
+	if (AP_Notify::diag_status.lidar_failed_insert[1])
+		return false;
+	//
+
     // read the high and low byte distance registers
     if (_dev->transfer(&read_reg, 1, (uint8_t *)&val, sizeof(val))) {
         // combine results into distance
         reading_cm = be16toh(val);
-
-#if 0
-		// YIG-DIAG
-		if(!AP_Notify::diag_status.lidar_failed[1])
-			reading_cm = 10;
-#endif
 
         return true;
     }

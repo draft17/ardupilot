@@ -33,6 +33,10 @@
 
 #include <stdio.h>
 
+#if 0
+#include <AP_Notify/AP_Notify.h>    // YIG-DIAG
+#endif
+
 #ifndef BOARD_TYPE_DEFAULT
 #define BOARD_TYPE_DEFAULT PX4_BOARD_AUTO
 #endif
@@ -313,6 +317,9 @@ void AP_BoardConfig::init()
         _sdcard_slowdown.set(slowdown);
     } else {
         printf("SDCard failed to start\n");
+#if 0	//YIG-DIAG
+		AP_Notify::diag_status.storage_failed[0] = true;
+#endif
     }
 #endif
 }

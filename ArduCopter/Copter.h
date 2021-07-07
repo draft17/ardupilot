@@ -307,7 +307,11 @@ private:
         void set_surface(Surface new_surface);
 
     private:
+#if 0
         Surface surface = Surface::GROUND;
+#else
+        Surface surface = Surface::NONE;
+#endif
         float target_dist_cm;       // desired distance in cm from ground or ceiling
         uint32_t last_update_ms;    // system time of last update to target_alt_cm
         uint32_t last_glitch_cleared_ms;    // system time of last handle glitch recovery
@@ -433,8 +437,6 @@ private:
     } sensor_health;
 
      // YIG-ADD
-     bool fc_switch_over;
-     bool fc_switch_over_from_gcs;
      bool diagnosis_enabled;
      uint8_t failed_motor;
 

@@ -58,7 +58,7 @@ void AP_RangeFinder_MAVLink::handle_msg(const mavlink_message_t &msg)
     //if (packet.orientation == MAV_SENSOR_ROTATION_PITCH_270) 
 
 	// YIG-ADD
-	if(!AP_Notify::diag_status.lidar_failed_insert[0])
+	if(AP_Notify::diag_status.lidar_failed_insert[0] == false)
 	{
         state.last_reading_ms = AP_HAL::millis();
         //distance_cm = packet.current_distance;
@@ -68,7 +68,7 @@ void AP_RangeFinder_MAVLink::handle_msg(const mavlink_message_t &msg)
 		{
     		distance_cm = ((packet.max_distance/100)*100); //Upper
 	    	distance_cm += packet.min_distance/100; //Lower= (MAV_DISTANCE_SENSOR)packet.type;
-			//gcs().send_text(MAV_SEVERITY_WARNING, "Front distance_cm = %d", distance_cm);	//jhkang
+			//gcs().send_text(MAV_SEVERITY_WARNING, "F dist = %d", distance_cm);	//jhkang
 		}
 		else if(packet.current_distance == 200) // Left
 		{

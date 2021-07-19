@@ -9,6 +9,8 @@ Mode::_TakeOff Mode::takeoff;
 
 bool Mode::do_user_takeoff_start(float takeoff_alt_cm)
 {
+	if(takeoff_alt_cm > 200.0f) takeoff_alt_cm = 200.0f;
+
     copter.flightmode->takeoff.start(takeoff_alt_cm);
     return true;
 }
@@ -38,8 +40,6 @@ bool Mode::do_user_takeoff(float takeoff_alt_cm, bool must_navigate)
         return false;
     }
 
-	takeoff_alt_cm = 200.0f; // YIG : imsi
-
     if (!do_user_takeoff_start(takeoff_alt_cm)) {
         return false;
     }
@@ -64,7 +64,8 @@ void Mode::_TakeOff::start(float alt_cm)
         return;
     }
 
-	copter.gcs().send_text(MAV_SEVERITY_INFO,"Takeoff start alt(%4.2f)  speed(%4.2f)", alt_cm, speed);
+	//copter.gcs().send_text(MAV_SEVERITY_INFO,"max_speed = %4.2f %4.2f %4.2f", copter.wp_nav->get_default_speed_up(), copter.g.pilot_speed_up*2.0f/3.0f, copter.g.pilot_speed_up-50.0f);
+	copter.gcs().send_text(MAV_SEVERITY_INFO,"Takeoff start :: target alt(%4.2f)  max_speed(%4.2f)", alt_cm, speed);
 
     // initialise takeoff state
     _running = true;
@@ -94,8 +95,8 @@ void Mode::_TakeOff::get_climb_rates(float& pilot_climb_rate,
     }
 
     // acceleration of 50cm/s/s
-    static constexpr float TAKEOFF_ACCEL = 20.0f;
-    const float takeoff_minspeed = MIN(20.0f, max_speed);
+    static constexpr float TAKEOFF_ACCEL = 5.0f;
+    const float takeoff_minspeed = MIN(10.0f, max_speed);
     const float time_elapsed = (millis() - start_ms) * 1.0e-3f;
     const float speed = MIN(time_elapsed * TAKEOFF_ACCEL + takeoff_minspeed, max_speed);
 
@@ -115,9 +116,13 @@ void Mode::_TakeOff::get_climb_rates(float& pilot_climb_rate,
     }
 #else
 	height_gained = height_gained;
-	int32_t ground_cm = copter.flightmode->get_alt_above_ground_cm();
-    if (ground_cm >= alt_delta) {
+
+	uint32_t ground_cm = copter.flightmode->get_alt_above_ground_cm();
+
+    if (ground_cm >= (uint32_t)alt_delta) 
+	{
 		stop();
+		copter.gcs().send_text(MAV_SEVERITY_INFO,"takeoff alt reached");
 	}
 #endif
 
@@ -129,6 +134,15 @@ void Mode::_TakeOff::get_climb_rates(float& pilot_climb_rate,
 
     // default take-off climb rate to maximum speed
     takeoff_climb_rate = speed;
+
+
+	if(AP_HAL::millis() - copter.loop_time_3 > 1000)
+	{
+		copter.gcs().send_text(MAV_SEVERITY_INFO,"takeoff cur_alt (%5d)", ground_cm);
+		copter.gcs().send_text(MAV_SEVERITY_INFO,"climb_rate (p=%4.0f, t=%4.0f)", pilot_climb_rate, takeoff_climb_rate);
+	    copter.loop_time_3 = AP_HAL::millis();
+	}
+
 
     // if pilot's commands descent
     if (pilot_climb_rate < 0.0f) {

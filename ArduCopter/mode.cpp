@@ -510,6 +510,15 @@ int32_t Mode::get_alt_above_ground_cm(void)
     int32_t alt_above_ground;
     if (copter.rangefinder_alt_ok()) {
         alt_above_ground = copter.rangefinder_state.alt_cm_filt.get();
+
+		// YIG-ADD
+		if(AP_HAL::millis() - copter.loop_time_1 > 1000)
+	    {
+			gcs().send_text(MAV_SEVERITY_INFO,"down rng cm %d", (uint16_t)alt_above_ground);
+		    copter.loop_time_1 = AP_HAL::millis();
+		}
+		//
+
     } else {
         bool navigating = pos_control->is_active_xy();
         if (!navigating || !copter.current_loc.get_alt_cm(Location::AltFrame::ABOVE_TERRAIN, alt_above_ground)) {
@@ -554,6 +563,14 @@ void Mode::land_run_vertical_control(bool pause_descent)
             float max_descent_speed = abs(g.land_speed)*0.5f;
             float land_slowdown = MAX(0.0f, pos_control->get_horizontal_error()*(max_descent_speed/precland_acceptable_error));
             cmb_rate = MIN(-precland_min_descent_speed, -max_descent_speed+land_slowdown);
+
+			// YIG-ADD
+			if(AP_HAL::millis() - copter.loop_time_2 > 1000)
+	    	{
+				gcs().send_text(MAV_SEVERITY_INFO,"pre land rate %4.2f", cmb_rate);
+		    	copter.loop_time_2 = AP_HAL::millis();
+			}
+			//
         }
     }
 

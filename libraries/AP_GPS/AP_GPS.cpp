@@ -683,6 +683,7 @@ void AP_GPS::update_instance(uint8_t instance)
 	   (AP_Notify::diag_status.gps_failed_insert[2] && instance == 2))
 	{
 		result = 0;
+		AP_Notify::diag_status.gps_failed[instance] = true; // YIG-DIAG
 	}
 #endif
 
@@ -714,6 +715,9 @@ void AP_GPS::update_instance(uint8_t instance)
             // log this data as a "flag" that the GPS is no longer
             // valid (see PR#8144)
             data_should_be_logged = true;
+
+			gcs().send_text(MAV_SEVERITY_INFO, "GPS Fail %d %d", instance, state[instance].status);
+
         }
     } else {
         if (state[instance].uart_timestamp_ms != 0) {
@@ -1050,7 +1054,7 @@ void AP_GPS::send_mavlink_gps_raw(mavlink_channel_t chan)
 			}
 			last_send_time_ms[chan] = last_message_time_ms(2);
 		} else {
-			gcs().send_text(MAV_SEVERITY_ERROR, "3rd GPS error");	//jhkang
+			gcs().send_text(MAV_SEVERITY_INFO, "3rd GPS error");	//jhkang
 			// when we don't have a GPS then send at 1Hz
 			uint32_t now = AP_HAL::millis();
 			if (now - last_send_time_ms[chan] < 1000) {
@@ -1724,9 +1728,17 @@ bool AP_GPS::is_healthy(uint8_t instance) const
     }
 #endif
 
+#if 0
     return last_msg_valid &&
            drivers[instance] != nullptr &&
            drivers[instance]->is_healthy();
+#else
+	bool valid = true;
+	if(state[instance].status == NO_FIX || state[instance].status == NO_GPS)
+		valid = false;
+		
+    return valid;
+#endif
 }
 
 bool AP_GPS::prepare_for_arming(void) {

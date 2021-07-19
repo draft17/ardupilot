@@ -418,7 +418,7 @@ int16_t AP_MotorsMulticopter::output_to_pwm(float actuator)
     }
 
 #if 1 // YIG-IMSI : For GTB
-	if(pwm_output > 1600) pwm_output = 1600;
+	if(pwm_output > 1550) pwm_output = 1550;
 #endif
 
     return pwm_output;

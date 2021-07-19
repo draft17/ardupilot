@@ -32,6 +32,7 @@
 #ifndef HAL_BOOTLOADER_BUILD
 #include <AP_Logger/AP_Logger.h>
 #endif
+#include <GCS_MAVLink/GCS.h>
 
 #include <hwdef.h>
 
@@ -248,6 +249,10 @@ static void main_loop()
      */
     chThdSetPriority(APM_MAIN_PRIORITY);
 
+	// YIG-ADD
+	AP_Notify::diag_status.watchdog_on = true;
+	//
+
     while (true) {
         g_callbacks->loop();
 
@@ -276,6 +281,7 @@ static void main_loop()
 			AP_Notify::diag_status.deadlock_insert = false;
 			AP_Notify::diag_status._pat_time = AP_HAL::millis();
 
+			gcs().send_text(MAV_SEVERITY_CRITICAL, "SWITCH OVER FC #2");
 			while ((AP_HAL::millis() - AP_Notify::diag_status._pat_time) < 2000);
 		}
 #endif

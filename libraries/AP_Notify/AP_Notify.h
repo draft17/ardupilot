@@ -146,6 +146,7 @@ public:
 		bool fc_switch_over;
 		uint32_t _pat_time;
 		uint32_t watchdog_pat_time;
+		bool watchdog_on;
 
 		// For Diagnosis Test from GCS
 		bool ov_insert;

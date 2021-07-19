@@ -48,8 +48,12 @@ RangeFinder::RangeFinder_Status AP_RangeFinder_Backend::status() const {
 
 // true if sensor is returning data
 bool AP_RangeFinder_Backend::has_data() const {
+#if 0
     return ((state.status != RangeFinder::RangeFinder_NotConnected) &&
             (state.status != RangeFinder::RangeFinder_NoData));
+#else
+    return (state.status != RangeFinder::RangeFinder_NoData);
+#endif
 }
 
 // update status based on distance measurement

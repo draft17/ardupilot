@@ -15,7 +15,8 @@ void AP_InternalError::error(const AP_InternalError::error_t e) {
         // don't panic on these to facilitate watchdog testing
         break;
     default:
-        AP_HAL::panic("internal error %u", unsigned(e));
+        //AP_HAL::panic("internal error %u", unsigned(e));
+        AP_HAL::panic("Watchdog timeout %u", unsigned(e));
     }
 #endif
     internal_errors |= uint32_t(e);

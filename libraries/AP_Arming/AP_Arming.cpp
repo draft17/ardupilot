@@ -171,10 +171,11 @@ void AP_Arming::check_failed(const enum AP_Arming::ArmingChecks check, bool repo
     }
     char taggedfmt[MAVLINK_MSG_STATUSTEXT_FIELD_TEXT_LEN+1];
     hal.util->snprintf(taggedfmt, sizeof(taggedfmt), "Diagnosis %s", fmt);
-    MAV_SEVERITY severity = check_severity(check);
+    //MAV_SEVERITY severity = check_severity(check);
     va_list arg_list;
     va_start(arg_list, fmt);
-    gcs().send_textv(severity, taggedfmt, arg_list);
+    //gcs().send_textv(severity, taggedfmt, arg_list);
+    gcs().send_textv(MAV_SEVERITY_INFO, taggedfmt, arg_list);
     va_end(arg_list);
 }
 
@@ -187,7 +188,8 @@ void AP_Arming::check_failed(bool report, const char *fmt, ...) const
     hal.util->snprintf(taggedfmt, sizeof(taggedfmt), "Diagnosis %s", fmt);
     va_list arg_list;
     va_start(arg_list, fmt);
-    gcs().send_textv(MAV_SEVERITY_CRITICAL, taggedfmt, arg_list);
+    //gcs().send_textv(MAV_SEVERITY_CRITICAL, taggedfmt, arg_list);
+    gcs().send_textv(MAV_SEVERITY_INFO, taggedfmt, arg_list);
     va_end(arg_list);
 }
 
@@ -199,9 +201,9 @@ bool AP_Arming::barometer_checks(bool report)
         (checks_to_perform & ARMING_CHECK_BARO)) {
         if (!AP::baro().all_healthy()) {
 			// YIG-DIAG
-        	for (uint8_t i=0; i<BARO_MAX_INSTANCES; i++) {
+        	for (uint8_t i=0; i<BARO_MAX_INSTANCES-1; i++) {
 				if(!AP::baro().healthy(i))
-            		check_failed(ARMING_CHECK_BARO, report, "BARO %d %d :: Barometer not healthy", i+1, AP::baro().get_primary()+1);
+            		check_failed(ARMING_CHECK_BARO, report, "BARO-H %d %d :: Barometer not healthy", i+1, AP::baro().get_primary()+1);
 			}
             passed = false;
 			//
@@ -371,7 +373,7 @@ bool AP_Arming::ins_checks(bool report)
     		const uint8_t accel_count = ins.get_accel_count();
     		for(uint8_t i=0; i<accel_count; i++) {
 				if(!ins.accel_calibrated_ok(i)) {
-            		check_failed(ARMING_CHECK_INS, report, "ACCEL-C %d :: 3D Accel calibration needed", i);
+            		//check_failed(ARMING_CHECK_INS, report, "ACCEL-C %d :: 3D Accel calibration needed", i);
 				}
 			}
             passed = false;
@@ -386,7 +388,7 @@ bool AP_Arming::ins_checks(bool report)
 
         // check all accelerometers point in roughly same direction
         if (!ins_accels_consistent(ins)) {
-            check_failed(ARMING_CHECK_INS, report, "ACCEL :: Accels inconsistent");
+            //check_failed(ARMING_CHECK_INS, report, "ACCEL :: Accels inconsistent");
             passed = false;
         }
 
@@ -508,7 +510,7 @@ bool AP_Arming::gps_checks(bool report)
         //GPS update rate acceptable
     	for(uint8_t i=0; i<GPS_MAX_RECEIVERS; i++) {
         	if (!gps.is_healthy(i)) {
-            	check_failed(ARMING_CHECK_GPS, report, "GPS %d %d :: GPS not healthy", i+1, gps.primary_sensor()+1);
+            	check_failed(ARMING_CHECK_GPS, report, "GPS-H %d %d :: GPS not healthy", i+1, gps.primary_sensor()+1);
             	passed = false;
         	}
 		}
@@ -700,7 +702,7 @@ bool AP_Arming::rangefinder_checks(bool report)
         char buffer[MAVLINK_MSG_STATUSTEXT_FIELD_TEXT_LEN+1];
 		// YIG-CHG
         //if (!range->prearm_healthy(buffer, ARRAY_SIZE(buffer))) {
-    	for (uint8_t i = 0; i < RANGEFINDER_MAX_INSTANCES; i++) {
+    	for (uint8_t i = 0; i < RANGEFINDER_MAX_INSTANCES-1; i++) {
         	if (!range->prearm_healthy(i, buffer, ARRAY_SIZE(buffer))) {
             	check_failed(ARMING_CHECK_RANGEFINDER, report, "LIDAR %d :: %s", i+1, buffer);
             	check_passed = false;
@@ -800,7 +802,7 @@ bool AP_Arming::system_checks(bool report)
 #endif
     }
     if (AP::internalerror().errors() != 0) {
-        check_failed(report, "INERROR :: Internal errors (0x%x)", (unsigned int)AP::internalerror().errors());
+        check_failed(report, "DEADLOCK :: Watchdog timeout (0x%x)", (unsigned int)AP::internalerror().errors());
         passed = false;
     }
 
@@ -937,8 +939,8 @@ bool AP_Arming::pre_arm_checks(bool report)
         &  servo_checks(report)
         &  board_voltage_checks(report)
         &  system_checks(report)
-        &  can_checks(report)
-        &  proximity_checks(report);
+        &  can_checks(report);
+        //&  proximity_checks(report);
 }
 
 bool AP_Arming::arm_checks(AP_Arming::Method method)

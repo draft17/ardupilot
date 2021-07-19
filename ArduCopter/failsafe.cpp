@@ -107,6 +107,7 @@ void Copter::enable_diagnosis()
 	AP_Notify::diag_status.storage_failed[1] = 0; // not used :  FC#2에 동시 저장됨
 	for(int i=0;i<8;i++) AP_Notify::diag_status.motor_failed[i] = 0;
 	AP_Notify::diag_status.motor_status_failed = 0;
+	AP_Notify::diag_status.watchdog_on = false;
 
 #if 1 // YIG : For Diagnosis SW Insert
 	AP_Notify::diag_status.ov_insert = 0;
@@ -157,9 +158,10 @@ bool Copter::check_diagnosis()
 	{
 		if(!AP_Notify::diag_status.fc_switch_over)
 		{
-			gcs().send_text(MAV_SEVERITY_CRITICAL, "SWITCH OVER FC#2");
+			gcs().send_text(MAV_SEVERITY_CRITICAL, "SWITCH OVER FC [#2]");
 			AP_Notify::diag_status.fc_switch_over = true;
 			msc.switch_over(0);
+			//while(1);
 		}
 	}
 

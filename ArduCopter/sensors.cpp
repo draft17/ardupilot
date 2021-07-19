@@ -20,7 +20,12 @@ void Copter::init_rangefinder(void)
 
    // upward facing range finder
    rangefinder_up_state.alt_cm_filt.set_cutoff_frequency(RANGEFINDER_WPNAV_FILT_HZ);
-   rangefinder_up_state.enabled = rangefinder.has_orientation(ROTATION_PITCH_90);
+   rangefinder_up_state.enabled = rangefinder.has_orientation(ROTATION_YAW_45);
+
+   // YIG-ADD
+   rangefinder_fw_state.alt_cm_filt.set_cutoff_frequency(RANGEFINDER_WPNAV_FILT_HZ);
+   rangefinder_fw_state.enabled = rangefinder.has_orientation(ROTATION_NONE);
+   //
 #endif
 }
 
@@ -40,7 +45,8 @@ void Copter::read_rangefinder(void)
     struct {
         RangeFinderState &state;
         enum Rotation orientation;
-    } rngfnd[2] = { {rangefinder_state, ROTATION_NONE}, {rangefinder_up_state, ROTATION_YAW_45}};
+    //} rngfnd[2] = { {rangefinder_state, ROTATION_NONE}, {rangefinder_up_state, ROTATION_YAW_45}};
+    } rngfnd[3] = { {rangefinder_state, ROTATION_PITCH_270}, {rangefinder_up_state, ROTATION_YAW_45}, {rangefinder_fw_state, ROTATION_NONE} };
 
     for (uint8_t i=0; i < ARRAY_SIZE(rngfnd); i++) {
         // local variables to make accessing simpler
@@ -128,6 +134,10 @@ void Copter::read_rangefinder(void)
     rangefinder_up_state.enabled = false;
     rangefinder_up_state.alt_healthy = false;
     rangefinder_up_state.alt_cm = 0;
+
+    rangefinder_fw_state.enabled = false;
+    rangefinder_fw_state.alt_healthy = false;
+    rangefinder_fw_state.alt_cm = 0;
 #endif
 }
 
@@ -141,6 +151,11 @@ bool Copter::rangefinder_alt_ok()
 bool Copter::rangefinder_up_ok()
 {
     return (rangefinder_up_state.enabled && rangefinder_up_state.alt_healthy);
+}
+
+bool Copter::rangefinder_fw_ok()
+{
+    return (rangefinder_fw_state.enabled && rangefinder_fw_state.alt_healthy);
 }
 
 /*

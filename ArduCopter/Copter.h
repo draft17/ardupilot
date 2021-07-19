@@ -281,7 +281,7 @@ private:
         int16_t alt_cm_glitch_protected;    // last glitch protected altitude
         int8_t glitch_count;    // non-zero number indicates rangefinder is glitching
         uint32_t glitch_cleared_ms; // system time glitch cleared
-    } rangefinder_state, rangefinder_up_state;
+    } rangefinder_state, rangefinder_up_state, rangefinder_fw_state;
 
     class SurfaceTracking {
     public:
@@ -876,6 +876,7 @@ private:
     void read_rangefinder(void);
     bool rangefinder_alt_ok();
     bool rangefinder_up_ok();
+    bool rangefinder_fw_ok();
     void rpm_update();
     void init_optflow();
     void update_optical_flow(void);
@@ -1016,6 +1017,12 @@ private:
     // mode.cpp
     Mode *mode_from_mode_num(const Mode::Number mode);
     void exit_mode(Mode *&old_flightmode, Mode *&new_flightmode);
+
+	// YIG-ADD
+	uint32_t loop_time_1 = AP_HAL::millis();
+	uint32_t loop_time_2 = AP_HAL::millis();
+	uint32_t loop_time_3 = AP_HAL::millis();
+	//
 
 public:
     void mavlink_delay_cb();    // GCS_Mavlink.cpp

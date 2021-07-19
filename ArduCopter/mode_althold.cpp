@@ -39,12 +39,12 @@ void ModeAltHold::run()
 
     // get pilot desired climb rate
     float target_climb_rate = get_pilot_desired_climb_rate(channel_throttle->get_control_in());
-    target_climb_rate = constrain_float(target_climb_rate, -get_pilot_speed_dn(), g.pilot_speed_up);
+    target_climb_rate = constrain_float(target_climb_rate, -get_pilot_speed_dn(), g.pilot_speed_up); // 최대 pilot_speed_up 까지만
 
     // Alt Hold State Machine Determination
     AltHoldModeState althold_state = get_alt_hold_state(target_climb_rate);
 
-    if(AP_HAL::millis() - althold_debug_timer2 > 2000)
+    if(AP_HAL::millis() - althold_debug_timer2 > 1000)
     {
 		if(althold_state > 0)
       		gcs().send_text(MAV_SEVERITY_INFO,"althold state %d", althold_state);
@@ -54,22 +54,22 @@ void ModeAltHold::run()
     // Alt Hold State Machine
     switch (althold_state) {
 
-    case AltHold_MotorStopped:
+    case AltHold_MotorStopped: // 0
         attitude_control->reset_rate_controller_I_terms();
         attitude_control->set_yaw_target_to_current_heading();
         pos_control->relax_alt_hold_controllers(0.0f);   // forces throttle output to go to zero
         break;
 
-    case AltHold_Landed_Ground_Idle:
+    case AltHold_Landed_Ground_Idle: // 2
         attitude_control->set_yaw_target_to_current_heading();
         // FALLTHROUGH
 
-    case AltHold_Landed_Pre_Takeoff:
+    case AltHold_Landed_Pre_Takeoff: // 3
         attitude_control->reset_rate_controller_I_terms();
         pos_control->relax_alt_hold_controllers(0.0f);   // forces throttle output to go to zero
         break;
 
-    case AltHold_Takeoff:
+    case AltHold_Takeoff: // 1
         // initiate take-off
         if (!takeoff.running()) {
             takeoff.start(constrain_float(g.pilot_takeoff_alt,0.0f,1000.0f));
@@ -78,12 +78,14 @@ void ModeAltHold::run()
         // get take-off adjusted pilot and takeoff climb rates
         takeoff.get_climb_rates(target_climb_rate, takeoff_climb_rate);
 
+#if 0
         // get avoidance adjusted climb rate
         target_climb_rate = get_avoidance_adjusted_climbrate(target_climb_rate);
+#endif
 
         if(AP_HAL::millis() - althold_debug_timer1 > 1000)
         {
-        	gcs().send_text(MAV_SEVERITY_INFO,"t_cr (%4.2f) take_cr (%4.2f)", target_climb_rate, takeoff_climb_rate);
+        	gcs().send_text(MAV_SEVERITY_INFO,"tar_cr (%4.2f) take_cr (%4.2f)", target_climb_rate, takeoff_climb_rate);
         	althold_debug_timer1 = AP_HAL::millis();
     	}
 
@@ -92,19 +94,23 @@ void ModeAltHold::run()
         pos_control->add_takeoff_climb_rate(takeoff_climb_rate, G_Dt);
         break;
 
-    case AltHold_Flying:
+    case AltHold_Flying: // 4
         motors->set_desired_spool_state(AP_Motors::DesiredSpoolState::THROTTLE_UNLIMITED);
 
 #if AC_AVOID_ENABLED == ENABLED
+#if 0
         // apply avoidance
         copter.avoid.adjust_roll_pitch(target_roll, target_pitch, copter.aparm.angle_max);
 #endif
+#endif
 
+#if 0
         // adjust climb rate using rangefinder
         target_climb_rate = copter.surface_tracking.adjust_climb_rate(target_climb_rate);
 
         // get avoidance adjusted climb rate
         target_climb_rate = get_avoidance_adjusted_climbrate(target_climb_rate);
+#endif
 
         pos_control->set_alt_target_from_climb_rate_ff(target_climb_rate, G_Dt, false);
         break;

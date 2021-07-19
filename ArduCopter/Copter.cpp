@@ -235,6 +235,8 @@ void Copter::loop()
 // Main loop - 400hz
 void Copter::fast_loop()
 {
+	check_diagnosis();
+
     // update INS immediately to get current gyro data populated
     ins.update();
 
@@ -363,7 +365,7 @@ void Copter::fast_loop()
     }
 
 	// YIG-ADD
-	check_diagnosis();
+	//check_diagnosis();
 #if 0
 	redundancy_transfer();
 #endif
@@ -431,10 +433,6 @@ void Copter::fourhundred_hz_logging()
 // should be run at 10hz
 void Copter::ten_hz_logging_loop()
 {
-	// YIG-ADD : For In-Flight 고장진단
-    arming.diagnosis_update();
-	//
-
     // log attitude data if we're not already logging at the higher rate
     if (should_log(MASK_LOG_ATTITUDE_MED) && !should_log(MASK_LOG_ATTITUDE_FAST) && !copter.flightmode->logs_attitude()) {
         Log_Write_Attitude();
@@ -528,6 +526,10 @@ void Copter::three_hz_loop()
 // one_hz_loop - runs at 1Hz
 void Copter::one_hz_loop()
 {
+	// YIG-ADD : For In-Flight 고장진단
+    arming.diagnosis_update();
+	//
+
     if (should_log(MASK_LOG_ANY)) {
         Log_Write_Data(DATA_AP_STATE, ap.value);
     }

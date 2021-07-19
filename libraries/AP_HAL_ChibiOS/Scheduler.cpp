@@ -338,15 +338,15 @@ void Scheduler::_timer_thread(void *arg)
         }
 
 #if 1 // YIG-ADD : diagnosis (sw deadlock)
-		if (AP_HAL::millis() - AP_Notify::diag_status.watchdog_pat_time > 800) 
+		if (AP_Notify::diag_status.watchdog_on == true && AP_HAL::millis() - AP_Notify::diag_status.watchdog_pat_time > 800) 
 		{
 			if(!AP_Notify::diag_status.deadlock) {
 				AP_Notify::diag_status.deadlock = true;
 				//AP_Notify::diag_status.fc_switch_over = true;
 				gcs().send_text(MAV_SEVERITY_CRITICAL, "SWITCH OVER FC #2");
 
-				AP_MSC *ap_msc = AP_MSC::get_msc();
-				ap_msc->switch_over(0);
+				//AP_MSC *ap_msc = AP_MSC::get_msc();
+				//ap_msc->switch_over(0);
 			}
 		}
 #endif

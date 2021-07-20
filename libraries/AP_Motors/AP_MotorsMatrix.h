@@ -98,4 +98,6 @@ protected:
     // motor failure handling
     float               _thrust_rpyt_out_filt[AP_MOTORS_MAX_NUM_MOTORS];    // filtered thrust outputs with 1 second time constant
     uint8_t             _motor_lost_index;  // index number of the lost motor
+
+	uint32_t			_test_loop_timer;
 };

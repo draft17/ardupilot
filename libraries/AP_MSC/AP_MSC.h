@@ -39,7 +39,7 @@ public:
     void SRV_push_servos(void);
 	bool motor_status_check(uint8_t num, uint32_t &error_code);
 	void switch_over(int a);
-	void motor_fail(uint8_t num);
+	void motor_fail(uint8_t num, uint8_t percentage);
 
     void loop(void);
 
@@ -56,6 +56,7 @@ public:
     bool _initialized;
 	char activeflag;
 	char motorfailflag;
+	char motorfailperc;
     static AP_MSC *msc_singleton;
     ///// SRV output /////
     struct {

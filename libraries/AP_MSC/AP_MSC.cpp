@@ -39,6 +39,7 @@ AP_MSC::AP_MSC()
     }
 	activeflag = 1;
 	motorfailflag = - 1;
+	motorfailperc = 100;
     msc_singleton = this;
     debug_msc(2, "AP_MSC constructed\n\r");
 }
@@ -115,7 +116,7 @@ void AP_MSC::SRV_send_esc(void)
         if ((((uint32_t) 1) << i) & MSC_ESC_BM) {
             max_esc_num = i + 1;
 			if (_SRV_conf[i].pulse == 500) _SRV_conf[i].pulse = 0;
-			if (i == motorfailflag) _SRV_conf[i].pulse = 0;
+			if (i == motorfailflag) _SRV_conf[i].pulse = _SRV_conf[i].pulse * motorfailperc / 100;
             if (_SRV_conf[i].esc_pending) {
                 active_esc_num++;
             }
@@ -179,9 +180,10 @@ void AP_MSC::switch_over(int a)
 	activeflag = a;
 }
 
-void AP_MSC::motor_fail(uint8_t num)
+void AP_MSC::motor_fail(uint8_t num, uint8_t percentage)
 {
 	motorfailflag = num;
+	motorfailperc = percentage;
 }
 
 AP_MSC *AP_MSC::msc_singleton;

@@ -36,6 +36,8 @@ void AP_MotorsMatrix::init(motor_frame_class frame_class, motor_frame_type frame
 
     // enable fast channels or instant pwm
     set_update_rate(_speed_hz);
+
+	_test_loop_timer = AP_HAL::millis();
 }
 
 // set update rate to motors - a value in hertz
@@ -201,7 +203,15 @@ void AP_MotorsMatrix::output_armed_stabilizing()
     for (i = 0; i < AP_MOTORS_MAX_NUM_MOTORS; i++) {
         if (motor_enabled[i]) {
             // calculate the thrust outputs for roll and pitch
+
+#if 1 // YIG-ADD
+            //if (_thrust_boost || i == _motor_lost_index)
+            if (_thrust_boost && i == 5)
+            	_thrust_rpyt_out[i] = roll_thrust * (_roll_factor[i] * 2) + pitch_thrust * (_pitch_factor[i] * 2);
+			else
+#endif
             _thrust_rpyt_out[i] = roll_thrust * _roll_factor[i] + pitch_thrust * _pitch_factor[i];
+
             // record lowest roll + pitch command
             if (_thrust_rpyt_out[i] < rp_low) {
                 rp_low = _thrust_rpyt_out[i];
@@ -329,6 +339,16 @@ void AP_MotorsMatrix::output_armed_stabilizing()
     // compensation_gain can never be zero
     _throttle_out = throttle_thrust_best_plus_adj / compensation_gain;
 
+	if(_thrust_boost && AP_HAL::millis() - _test_loop_timer > 1000)
+	{
+		gcs().send_text(MAV_SEVERITY_CRITICAL,"m : %d", _motor_lost_index);
+		_test_loop_timer = AP_HAL::millis();
+#if 0
+    	for (i = 0; i < AP_MOTORS_MAX_NUM_MOTORS; i++)
+			gcs().send_text(MAV_SEVERITY_CRITICAL,"%d =  %4.2f", _thrust_rpyt_out[i]);
+#endif
+	}
+
     // check for failed motor
     check_for_failed_motor(throttle_thrust_best_plus_adj);
 }
@@ -383,7 +403,7 @@ void AP_MotorsMatrix::check_for_failed_motor(float throttle_thrust_best_plus_adj
 
     // check to see if thrust boost is using more throttle than _throttle_thrust_max
     if ((_throttle_thrust_max * get_compensation_gain() > throttle_thrust_best_plus_adj) && (rpyt_high < 0.9f) && _thrust_balanced) {
-        _thrust_boost = false; // boost가 불필요하다는 의미
+        //_thrust_boost = false; // boost가 불필요하다는 의미
     }
 }
 

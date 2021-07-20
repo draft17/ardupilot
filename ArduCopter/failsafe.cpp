@@ -179,7 +179,7 @@ bool Copter::check_diagnosis()
 	{
 		motors->set_thrust_boost(true);
 	//	motors->set_lost_motor(failed_motor);
-		msc.motor_fail(failed_motor);
+		msc.motor_fail(0, (failed_motor * 10));
 		AP_Notify::diag_status.motor_status_failed = true;
 
 		//gcs().senu_text(MAV_SEVERITY_CRITICAL, "MotorFail (%d)", failed_motor);

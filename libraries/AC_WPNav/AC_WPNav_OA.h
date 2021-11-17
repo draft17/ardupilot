@@ -8,7 +8,8 @@ class AC_WPNav_OA : public AC_WPNav
 
 public:
     /// Constructor
-    AC_WPNav_OA(const AP_InertialNav& inav, const AP_AHRS_View& ahrs, AC_PosControl& pos_control, const AC_AttitudeControl& attitude_control);
+	// YIG-CHG
+    AC_WPNav_OA(AP_Mission &_mission, const AP_InertialNav& inav, const AP_AHRS_View& ahrs, AC_PosControl& pos_control, const AC_AttitudeControl& attitude_control);
 
     // returns object avoidance adjusted wp location using location class
     // returns false if unable to convert from target vector to global coordinates

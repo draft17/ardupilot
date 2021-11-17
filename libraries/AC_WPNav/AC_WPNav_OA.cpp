@@ -1,7 +1,8 @@
 #include "AC_WPNav_OA.h"
 
-AC_WPNav_OA::AC_WPNav_OA(const AP_InertialNav& inav, const AP_AHRS_View& ahrs, AC_PosControl& pos_control, const AC_AttitudeControl& attitude_control) :
-    AC_WPNav(inav, ahrs, pos_control, attitude_control)
+// YIG-CHG
+AC_WPNav_OA::AC_WPNav_OA(AP_Mission &_mission, const AP_InertialNav& inav, const AP_AHRS_View& ahrs, AC_PosControl& pos_control, const AC_AttitudeControl& attitude_control) :
+    AC_WPNav(_mission, inav, ahrs, pos_control, attitude_control)
 {
 }
 

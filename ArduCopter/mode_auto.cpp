@@ -37,6 +37,12 @@ bool ModeAuto::init(bool ignore_checks)
             auto_yaw.set_mode(AUTO_YAW_HOLD);
         }
 
+		 // YIG-ADD : AVOID_AUTO
+		 copter.save_auto_yaw_mode = AUTO_YAW_NONE; // clear
+		 wp_nav->processing_avoidance_clear();
+		 gcs().send_text(MAV_SEVERITY_INFO, "Processing_avoidance_clear");
+		 //
+
         // initialise waypoint and spline controller
         wp_nav->wp_and_spline_init();
 
@@ -1112,6 +1118,13 @@ void ModeAuto::do_nav_wp(const AP_Mission::Mission_Command& cmd)
 {
     Location target_loc = loc_from_cmd(cmd);
 
+	// YIG-ADD : AVOID_AUTO
+	if(mission.get_avoid_flag()) {
+		mission.location_for_avoid(target_loc);
+        gcs().send_text(MAV_SEVERITY_INFO, "Auto : new avoid waypoint");
+	}
+	//
+
     // this will be used to remember the time in millis after we reach or pass the WP.
     loiter_time = 0;
     // this is the delay, stored in seconds
@@ -1813,6 +1826,16 @@ bool ModeAuto::verify_nav_wp(const AP_Mission::Mission_Command& cmd)
         gcs().send_text(MAV_SEVERITY_INFO, "Reached command #%i",cmd.index);
         return true;
     }
+
+#if 1
+	// YIG-ADD : AVOID_AUTO
+	if(mission.get_avoid_flag()) {
+        AP_Notify::events.waypoint_complete = 1;
+        gcs().send_text(MAV_SEVERITY_INFO, "For Avoid, Reached command #%i",cmd.index);
+		return true;
+	}
+#endif
+
     return false;
 }
 

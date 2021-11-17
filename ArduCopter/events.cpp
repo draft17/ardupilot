@@ -358,20 +358,47 @@ bool Copter::should_disarm_on_failsafe() {
 
 void Copter::do_failsafe_action(Failsafe_Action action, ModeReason reason){
 
+	const char *type_string = "";
+
+	if(reason == ModeReason::RADIO_FAILSAFE) 
+		type_string = "RADIO";
+	else if(reason == ModeReason::GCS_FAILSAFE) 
+		type_string = "GCS";
+	else if(reason == ModeReason::BATTERY_FAILSAFE) 
+		type_string = "BATTERY";
+	else if(reason == ModeReason::TERRAIN_FAILSAFE) 
+		type_string = "TERRAIN";
+
+
+
+
     // Execute the specified desired_action
     switch (action) {
         case Failsafe_Action_None:
+        	gcs().send_text(MAV_SEVERITY_WARNING, "Failsafe %s NoAction", type_string);
             return;
         case Failsafe_Action_Land:
             set_mode_land_with_pause(reason);
+        	gcs().send_text(MAV_SEVERITY_WARNING, "Failsafe %s LAND", type_string);
             break;
         case Failsafe_Action_RTL:
             set_mode_RTL_or_land_with_pause(reason);
+        	gcs().send_text(MAV_SEVERITY_WARNING, "Failsafe %s RTL", type_string);
             break;
         case Failsafe_Action_SmartRTL:
-            set_mode_SmartRTL_or_RTL(reason);
+			if(reason == ModeReason::BATTERY_FAILSAFE) // YIG-CHG
+			{
+				set_mode(Mode::Number::LOITER, reason);
+        		gcs().send_text(MAV_SEVERITY_WARNING, "Failsafe %s LOITER", type_string);
+			}
+			else
+			{
+            	set_mode_SmartRTL_or_RTL(reason);
+        		gcs().send_text(MAV_SEVERITY_WARNING, "Failsafe %s SMART_RTL", type_string);
+			}
             break;
         case Failsafe_Action_SmartRTL_Land:
+        	gcs().send_text(MAV_SEVERITY_WARNING, "Failsafe %s RTL", type_string);
             set_mode_SmartRTL_or_land_with_pause(reason);
             break;
         case Failsafe_Action_Terminate:
@@ -380,7 +407,8 @@ void Copter::do_failsafe_action(Failsafe_Action action, ModeReason reason){
             snprintf(battery_type_str, 17, "%s battery", type_str);
             g2.afs.gcs_terminate(true, battery_type_str);
 #else
-            arming.disarm();
+            //arming.disarm(AP_Arming::Method::FAILSAFE_ACTION_TERMINATE);
+			arming.disarm();	//jhkang
 #endif
     }
 }

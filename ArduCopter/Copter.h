@@ -280,7 +280,8 @@ private:
         int16_t alt_cm_glitch_protected;    // last glitch protected altitude
         int8_t glitch_count;    // non-zero number indicates rangefinder is glitching
         uint32_t glitch_cleared_ms; // system time glitch cleared
-    } rangefinder_state, rangefinder_up_state;
+    //} rangefinder_state, rangefinder_up_state;
+    } rangefinder_state, rangefinder_up_state, rangefinder_fw_state;
 
     class SurfaceTracking {
     public:
@@ -474,7 +475,8 @@ private:
     // Integration time (in seconds) for the gyros (DCM algorithm)
     // Updated with the fast loop
     float G_Dt;
-
+	
+	autopilot_yaw_mode save_auto_yaw_mode; // AVOID_AUTO
     // Inertial Navigation
     AP_InertialNav_NavEKF inertial_nav;
 
@@ -677,6 +679,7 @@ private:
     void update_throttle_hover();
     void set_throttle_takeoff();
     float get_pilot_desired_climb_rate(float throttle_control);
+    bool get_pilot_desired_throttle_below(float throttle_control); // YIG-ADD
     float get_non_takeoff_throttle();
     float get_avoidance_adjusted_climbrate(float target_rate);
     void set_accel_throttle_I_from_pilot_throttle();

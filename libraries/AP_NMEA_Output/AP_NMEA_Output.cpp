@@ -147,6 +147,7 @@ void AP_NMEA_Output::update()
                                "$GPRMC,%s,%c,%s,%s,%.2f,%.2f,%s,,",
                                tstring,
                                pos_valid ? 'A' : 'V',
+                               //pos_valid ? 'A' : 'A', // jhkang - for topotek cam
                                lat_string,
                                lng_string,
                                speed_knots,

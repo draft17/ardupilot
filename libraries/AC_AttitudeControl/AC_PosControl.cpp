@@ -724,6 +724,45 @@ void AC_PosControl::set_target_to_stopping_point_xy()
     get_stopping_point_xy(_pos_target);
 }
 
+// YIG-ADD : AVOID_AUTO
+void AC_PosControl::get_stopping_dist_xy(float &stopping_dist) const
+{
+    Vector3f curr_vel = _inav.get_velocity();
+    float linear_distance;      // the distance at which we swap from a linear to sqrt response
+    float linear_velocity;      // the velocity above which we swap from a linear to sqrt response
+    float kP = _p_pos_xy.kP();
+
+    // add velocity error to current velocity
+    if (is_active_xy()) {
+        curr_vel.x += _vel_error.x;
+        curr_vel.y += _vel_error.y;
+    }
+
+    // calculate current velocity
+    float vel_total = norm(curr_vel.x, curr_vel.y);
+
+    // avoid divide by zero by using current position if the velocity is below 10cm/s, kP is very low or acceleration is zero
+    if (kP <= 0.0f || _accel_cms <= 0.0f || is_zero(vel_total)) {
+        stopping_dist = 0.0f;
+        return;
+    }
+
+    // calculate point at which velocity switches from linear to sqrt
+    linear_velocity = _accel_cms / kP;
+
+    // calculate distance within which we can stop
+    if (vel_total < linear_velocity) {
+        stopping_dist = vel_total / kP;
+    } else {
+        linear_distance = _accel_cms / (2.0f * kP * kP);
+        stopping_dist = linear_distance + (vel_total * vel_total) / (2.0f * _accel_cms);
+    }
+
+    // constrain stopping distance
+    stopping_dist = constrain_float(stopping_dist, 0, _leash);
+}
+// END
+
 /// get_stopping_point_xy - calculates stopping point based on current position, velocity, vehicle acceleration
 ///     distance_max allows limiting distance to stopping point
 ///     results placed in stopping_position vector

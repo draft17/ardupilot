@@ -437,6 +437,15 @@ void Copter::three_hz_loop()
 // one_hz_loop - runs at 1Hz
 void Copter::one_hz_loop()
 {
+
+#if 0 // YIG-IMSI
+	const float angle_check = attitude_control->get_att_error_angle_deg();
+	if (angle_check >= 30.0f)
+	{
+		gcs().send_text(MAV_SEVERITY_EMERGENCY,"Emergency : Angle Error %4.2f", angle_check);
+	}
+#endif
+
     if (should_log(MASK_LOG_ANY)) {
         Log_Write_Data(DATA_AP_STATE, ap.value);
     }

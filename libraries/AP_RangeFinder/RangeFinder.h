@@ -22,7 +22,7 @@
 
 // Maximum number of range finder instances available on this platform
 #ifndef RANGEFINDER_MAX_INSTANCES
-#define RANGEFINDER_MAX_INSTANCES 10
+#define RANGEFINDER_MAX_INSTANCES 3
 #endif
 
 #define RANGEFINDER_GROUND_CLEARANCE_CM_DEFAULT 10
@@ -96,6 +96,8 @@ public:
     // The RangeFinder_State structure is filled in by the backend driver
     struct RangeFinder_State {
         uint16_t distance_cm;           // distance: in cm
+        uint16_t ri_distance_cm;           // distance: in cm
+        uint16_t le_distance_cm;           // distance: in cm
         uint16_t voltage_mv;            // voltage in millivolts, if applicable, otherwise 0
         enum RangeFinder_Status status; // sensor status
         uint8_t  range_valid_count;     // number of consecutive valid readings (maxes out at 10)
@@ -139,6 +141,7 @@ public:
 
     // methods to return a distance on a particular orientation from
     // any sensor which can current supply it
+    void distance_cm_set_orient(enum Rotation orientation, uint16_t dist) const; // YIG-ADD
     uint16_t distance_cm_orient(enum Rotation orientation) const;
     uint16_t voltage_mv_orient(enum Rotation orientation) const;
     int16_t max_distance_cm_orient(enum Rotation orientation) const;

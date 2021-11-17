@@ -21,6 +21,10 @@ void Copter::init_rangefinder(void)
    // upward facing range finder
    rangefinder_up_state.alt_cm_filt.set_cutoff_frequency(RANGEFINDER_WPNAV_FILT_HZ);
    rangefinder_up_state.enabled = rangefinder.has_orientation(ROTATION_PITCH_90);
+
+   // YIG-ADD
+   rangefinder_fw_state.alt_cm_filt.set_cutoff_frequency(RANGEFINDER_WPNAV_FILT_HZ);
+   rangefinder_fw_state.enabled = rangefinder.has_orientation(ROTATION_NONE);
 #endif
 }
 
@@ -40,7 +44,8 @@ void Copter::read_rangefinder(void)
     struct {
         RangeFinderState &state;
         enum Rotation orientation;
-    } rngfnd[2] = { {rangefinder_state, ROTATION_PITCH_270}, {rangefinder_up_state, ROTATION_PITCH_90}};
+    //} rngfnd[2] = {{rangefinder_state, ROTATION_PITCH_270}, {rangefinder_up_state, ROTATION_PITCH_90}}; // YIG-ADD
+    } rngfnd[3] = {{rangefinder_state, ROTATION_PITCH_270}, {rangefinder_up_state, ROTATION_PITCH_90}, {rangefinder_fw_state, ROTATION_NONE}};
 
     for (uint8_t i=0; i < ARRAY_SIZE(rngfnd); i++) {
         // local variables to make accessing simpler
@@ -87,7 +92,49 @@ void Copter::read_rangefinder(void)
             rf_state.last_healthy_ms = now;
         }
 
-        // send downward facing lidar altitude and health to waypoint navigation library
+#if 1 // YIG-ADD
+
+		if(copter.avoid.fence_margin() >= 2000.0f && copter.inertial_nav.get_altitude() >= 300.0f)
+		//if(copter.avoid.fence_margin() >= 2000.0f && copter.inertial_nav.get_altitude() > (copter.fence.get_safe_alt_min() - copter.avoid.fence_margin())) // 동해 무릉계곡
+		{
+        	//if (rf_orient == ROTATION_NONE) 
+        	if (rf_orient == ROTATION_NONE && rf_state.alt_healthy) 
+			{
+				// Auto 모드에서 자동 회피하지 못하고 15m 이내 장애물에 근접할경우 BRAKE mode로 진입
+				if(copter.control_mode == Mode::Number::AUTO) 
+				{
+					//if(mode_auto.mission.get_current_nav_id() == MAV_CMD_NAV_WAYPOINT 
+					if(mode_auto.mission.get_current_nav_cmd().id == MAV_CMD_NAV_WAYPOINT //jhkang
+						  && mode_auto.mission.curr_nav_idx() > 2
+					  	//|| mode_auto.mission.get_current_nav_id() == MAV_CMD_NAV_RETURN_TO_LAUNCH
+					)
+					{
+						float stop_dist;
+						pos_control->get_stopping_dist_xy(stop_dist);
+						//if(rf_state.alt_cm <= (int16_t)(stop_dist * 1.5))
+						if(rf_state.alt_cm != 0 && rf_state.alt_cm < 1500)
+						//if(rf_state.alt_cm != 0 && rf_state.alt_cm <= (uint16_t)copter.avoid.fence_margin()) // 동해 무릉계곡
+						{
+			    			copter.set_mode(Mode::Number::BRAKE, ModeReason::GCS_COMMAND);
+							gcs().send_text(MAV_SEVERITY_CRITICAL, "Obstacle (%d) (%d) : Emergency BRAKE !!", rf_state.alt_cm, (uint16_t)stop_dist);
+						}
+					}
+				}
+				// Loiter 모드에서 10m 이내 장애물에 근접할경우 BRAKE mode로 진입
+				else if(copter.control_mode == Mode::Number::LOITER) 
+				{
+					if(rf_state.alt_cm != 0 && rf_state.alt_cm <= 1000)
+					{
+			    		copter.set_mode(Mode::Number::BRAKE, ModeReason::GCS_COMMAND);
+						gcs().send_text(MAV_SEVERITY_CRITICAL, "Obstacle (%d) : Loiter to BRAKE !!", rf_state.alt_cm);
+					}
+				}
+
+			}
+		}
+#endif
+
+        // send downward facing lidar altitude and health to waypoint and circle navigation libraries
         if (rf_orient == ROTATION_PITCH_270) {
             if (rangefinder_state.alt_healthy || timed_out) {
                 wp_nav->set_rangefinder_alt(rangefinder_state.enabled, rangefinder_state.alt_healthy, rangefinder_state.alt_cm_filt.get());

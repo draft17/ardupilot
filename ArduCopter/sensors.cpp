@@ -98,7 +98,7 @@ void Copter::read_rangefinder(void)
 		//if(copter.avoid.fence_margin() >= 2000.0f && copter.inertial_nav.get_altitude() > (copter.fence.get_safe_alt_min() - copter.avoid.fence_margin())) // 동해 무릉계곡
 		{
         	//if (rf_orient == ROTATION_NONE) 
-        	if (rf_orient == ROTATION_NONE && rf_state.alt_healthy) 
+        	if (rf_orient == ROTATION_NONE && rf_state.alt_healthy && hal.util->get_soft_armed()) //get_soft_armed() : arming상태에서만 Check
 			{
 				// Auto 모드에서 자동 회피하지 못하고 15m 이내 장애물에 근접할경우 BRAKE mode로 진입
 				if(copter.control_mode == Mode::Number::AUTO) 

@@ -44,7 +44,12 @@ void Copter::ekf_check()
     }
 
     // compare compass and velocity variance vs threshold
+#if 1 // YIG-CHG
+	const bool has_position = ekf_position_ok();	
+    if (!has_position || ekf_over_threshold()) {
+#else
     if (ekf_over_threshold()) {
+#endif
         // if compass is not yet flagged as bad
         if (!ekf_check_state.bad_variance) {
             // increase counter
@@ -67,7 +72,17 @@ void Copter::ekf_check()
                     gcs().send_text(MAV_SEVERITY_CRITICAL,"EKF variance");
                     ekf_check_state.last_warn_time = AP_HAL::millis();
                 }
-                failsafe_ekf_event();
+				// YIG-CHG
+				float position_variance, vel_variance, height_variance, tas_variance;
+				Vector3f mag_variance;
+    			Vector2f offset;
+				ahrs.get_variances(vel_variance, position_variance, height_variance, mag_variance, tas_variance, offset);
+
+				if(!has_position || (position_variance >= 0.1f))
+                	failsafe_ekf_event(true); // force althold
+				else
+                	failsafe_ekf_event(false);
+				//
             }
         }
     } else {
@@ -81,6 +96,12 @@ void Copter::ekf_check()
                 AP::logger().Write_Error(LogErrorSubsystem::EKFCHECK, LogErrorCode::EKFCHECK_VARIANCE_CLEARED);
                 // clear failsafe
                 failsafe_ekf_off_event();
+
+				// YIG-ADD
+				if(copter.control_mode == Mode::Number::ALT_HOLD && copter.control_mode_reason == ModeReason::EKF_FAILSAFE)
+					if(set_mode(Mode::Number::RTL, ModeReason::EKF_FAILSAFE))
+        				gcs().send_text(MAV_SEVERITY_CRITICAL, "RTL Changed");
+				//
             }
         }
     }
@@ -124,6 +145,10 @@ bool Copter::ekf_over_threshold()
     if (over_thresh_count >= 2) {
         return true;
     }
+	
+	// YIG-ADD
+    if (position_variance >= 0.1f)
+        return true;
 
     // either optflow relative or absolute position estimate OK
     if (optflow_position_ok() || ekf_position_ok()) {
@@ -134,7 +159,8 @@ bool Copter::ekf_over_threshold()
 
 
 // failsafe_ekf_event - perform ekf failsafe
-void Copter::failsafe_ekf_event()
+//void Copter::failsafe_ekf_event()
+void Copter::failsafe_ekf_event(bool force_althold)
 {
     // return immediately if ekf failsafe already triggered
     if (failsafe.ekf) {
@@ -155,6 +181,16 @@ void Copter::failsafe_ekf_event()
     if (!copter.flightmode->requires_GPS() && (g.fs_ekf_action != FS_EKF_ACTION_LAND_EVEN_STABILIZE)) {
         return;
     }
+
+	// YIG-ADD
+	if(force_althold) {
+    	// AltHold
+        if (!set_mode(Mode::Number::ALT_HOLD, ModeReason::EKF_FAILSAFE)) {
+       		set_mode_land_with_pause(ModeReason::EKF_FAILSAFE);
+		}
+		return;
+	}
+	//
 
     // take action based on fs_ekf_action parameter
     switch (g.fs_ekf_action) {

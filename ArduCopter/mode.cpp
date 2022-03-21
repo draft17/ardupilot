@@ -259,6 +259,11 @@ bool Copter::set_mode(Mode::Number mode, ModeReason reason)
         return false;
     }
 
+	// YIG-ADD
+    if (new_flightmode == &mode_althold && reason == ModeReason::EKF_FAILSAFE) 
+    	control_mode_reason = reason;
+	//
+
     if (!new_flightmode->init(ignore_checks)) {
         gcs().send_text(MAV_SEVERITY_WARNING,"Flight mode change failed");
         AP::logger().Write_Error(LogErrorSubsystem::FLIGHT_MODE, LogErrorCode(mode));
@@ -410,6 +415,46 @@ void Mode::get_pilot_desired_lean_angles(float &roll_out, float &pitch_out, floa
     pitch_out = channel_pitch->get_control_in();
 
 	// limit max lean angle
+    angle_limit = constrain_float(angle_limit, 1000.0f, angle_max);
+
+    // scale roll and pitch inputs to ANGLE_MAX parameter range
+    float scaler = angle_max/(float)ROLL_PITCH_YAW_INPUT_MAX;
+    roll_out *= scaler;
+    pitch_out *= scaler;
+
+    // do circular limit
+    float total_in = norm(pitch_out, roll_out);
+    if (total_in > angle_limit) {
+        float ratio = angle_limit / total_in;
+        roll_out *= ratio;
+        pitch_out *= ratio;
+    }
+
+    // do lateral tilt to euler roll conversion
+    roll_out = (18000/M_PI) * atanf(cosf(pitch_out*(M_PI/18000))*tanf(roll_out*(M_PI/18000)));
+
+    // roll_out and pitch_out are returned
+}
+
+// YIG-ADD
+void Mode::auto_get_pilot_desired_lean_angles(float &roll_out, float &pitch_out, float angle_max, float angle_limit) const
+{
+    // throttle failsafe check
+    /*
+    if (copter.failsafe.radio || !copter.ap.rc_receiver_present) {
+        roll_out = 0;
+        pitch_out = 0;
+        return;
+    }
+    */
+
+    // fetch roll and pitch inputs
+    roll_out = 0;
+	pitch_out = -((float)copter.avoid.get_ang_max());
+	if(fabs(pitch_out) < 1500)
+    	pitch_out = -1500;
+
+    // limit max lean angle
     angle_limit = constrain_float(angle_limit, 1000.0f, angle_max);
 
     // scale roll and pitch inputs to ANGLE_MAX parameter range

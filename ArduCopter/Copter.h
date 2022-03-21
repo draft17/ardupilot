@@ -451,6 +451,8 @@ private:
     // Stores initial bearing when armed - initial simple bearing is modified in super simple mode so not suitable
     int32_t initial_armed_bearing;
 
+	int32_t rtl_bearing;	// YIG
+
     // Battery Sensors
     AP_BattMonitor battery{MASK_LOG_CURRENT,
                            FUNCTOR_BIND_MEMBER(&Copter::handle_battery_failsafe, void, const char*, const int8_t),
@@ -714,7 +716,7 @@ private:
     // ekf_check.cpp
     void ekf_check();
     bool ekf_over_threshold();
-    void failsafe_ekf_event();
+    void failsafe_ekf_event(bool force_althold);	// YIG - CHG
     void failsafe_ekf_off_event(void);
     void check_ekf_reset();
     void check_vibration();

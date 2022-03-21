@@ -81,6 +81,7 @@ public:
 
     // return margin (in meters) that the vehicle should stay from objects
     float get_margin() const { return _margin; }
+    float get_ang_max() const { return _angle_max; } // YIG-ADD
 
     static const struct AP_Param::GroupInfo var_info[];
 

@@ -265,7 +265,8 @@ void AP_Follow::handle_msg(const mavlink_message_t &msg)
     }
 
     // skip message if not from our target
-    if (_sysid != 0 && msg.sysid != _sysid) {
+    //if (_sysid != 0 && msg.sysid != _sysid) {
+    if (_sysid != 0 && msg.sysid != 100) {	// jhkang - TRIP2 Follow sysid = 100
         if (_automatic_sysid) {
             // maybe timeout who we were following...
             if ((_last_location_update_ms == 0) || (AP_HAL::millis() - _last_location_update_ms > AP_FOLLOW_SYSID_TIMEOUT_MS)) {

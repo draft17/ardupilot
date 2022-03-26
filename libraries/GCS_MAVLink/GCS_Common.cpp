@@ -3643,6 +3643,7 @@ MAV_RESULT GCS_MAVLINK::handle_command_do_set_home(const mavlink_command_long_t 
     new_home_loc.lat = (int32_t)(packet.param5 * 1.0e7f);
     new_home_loc.lng = (int32_t)(packet.param6 * 1.0e7f);
     new_home_loc.alt = (int32_t)(packet.param7 * 100.0f);
+
     if (!set_home(new_home_loc, true)) {
         return MAV_RESULT_FAILED;
     }

@@ -451,8 +451,13 @@ void Mode::auto_get_pilot_desired_lean_angles(float &roll_out, float &pitch_out,
     // fetch roll and pitch inputs
     roll_out = 0;
 	pitch_out = -((float)copter.avoid.get_ang_max());
+	/*	YIG 
 	if(fabs(pitch_out) < 1500)
     	pitch_out = -1500;
+	*/
+	// jhkang-tentative
+	if(fabs(pitch_out) < 1000)
+    	pitch_out = -1000;
 
     // limit max lean angle
     angle_limit = constrain_float(angle_limit, 1000.0f, angle_max);

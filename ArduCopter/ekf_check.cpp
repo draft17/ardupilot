@@ -58,7 +58,8 @@ void Copter::ekf_check()
             if (ekf_check_state.fail_count == EKF_CHECK_ITERATIONS_MAX-1) {
                 // we are just about to declare a EKF failsafe, ask the EKF if we can change lanes
                 // to resolve the issue
-                ahrs.check_lane_switch();
+				if(has_position)
+                	ahrs.check_lane_switch();
             }
 #endif
             // if counter above max then trigger failsafe
@@ -69,7 +70,13 @@ void Copter::ekf_check()
                 AP::logger().Write_Error(LogErrorSubsystem::EKFCHECK, LogErrorCode::EKFCHECK_BAD_VARIANCE);
                 // send message to gcs
                 if ((AP_HAL::millis() - ekf_check_state.last_warn_time) > EKF_CHECK_WARNING_TIME) {
-                    gcs().send_text(MAV_SEVERITY_CRITICAL,"EKF variance");
+                    //gcs().send_text(MAV_SEVERITY_CRITICAL,"EKF variance");
+					if (!has_position) {
+                    	gcs().send_text(MAV_SEVERITY_CRITICAL,"GPS Failsafe");
+					}
+					else {
+                    	gcs().send_text(MAV_SEVERITY_CRITICAL,"EKF variance");
+					}
                     ekf_check_state.last_warn_time = AP_HAL::millis();
                 }
 				// YIG-CHG
@@ -78,7 +85,8 @@ void Copter::ekf_check()
     			Vector2f offset;
 				ahrs.get_variances(vel_variance, position_variance, height_variance, mag_variance, tas_variance, offset);
 
-				if(!has_position || (position_variance >= 0.1f))
+				//if(!has_position || (position_variance >= 0.8f))
+				if(!has_position || (position_variance >= g.fs_ekf_thresh)) // jhkang-tentative
                 	failsafe_ekf_event(true); // force althold
 				else
                 	failsafe_ekf_event(false);
@@ -98,9 +106,11 @@ void Copter::ekf_check()
                 failsafe_ekf_off_event();
 
 				// YIG-ADD
+#if 0
 				if(copter.control_mode == Mode::Number::ALT_HOLD && copter.control_mode_reason == ModeReason::EKF_FAILSAFE)
 					if(set_mode(Mode::Number::RTL, ModeReason::EKF_FAILSAFE))
         				gcs().send_text(MAV_SEVERITY_CRITICAL, "RTL Changed");
+#endif
 				//
             }
         }
@@ -146,9 +156,12 @@ bool Copter::ekf_over_threshold()
         return true;
     }
 	
+#if 1
 	// YIG-ADD
-    if (position_variance >= 0.1f)
+    //if (position_variance >= 0.8f)
+    if (position_variance >= g.fs_ekf_thresh)	//jhkang-tentative
         return true;
+#endif
 
     // either optflow relative or absolute position estimate OK
     if (optflow_position_ok() || ekf_position_ok()) {

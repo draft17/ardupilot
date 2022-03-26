@@ -19,7 +19,6 @@ bool ModeAltHold::init(bool ignore_checks)
 		//rtl_bearing = home_bearing();
 
 		_state = SubMode::GlitchAltHold_Starting;
-		_loop_timer = AP_HAL::millis();
 		gcs().send_text(MAV_SEVERITY_INFO, "AltHold on GPS Fail");
 		gcs().send_text(MAV_SEVERITY_INFO, "home bearing = %ld", copter.rtl_bearing);
 	}
@@ -142,7 +141,7 @@ void ModeAltHold::run()
 				attitude_control->input_euler_angle_roll_pitch_yaw(target_roll, target_pitch, auto_yaw.yaw(), true);
 
 				//if ((abs(wrap_180_cd(ahrs.yaw_sensor-copter.rtl_bearing))) <= 3)
-				if ((abs(wrap_180_cd(ahrs.yaw_sensor-copter.rtl_bearing))) <= 50)	// 0.5 degree
+				if ((abs(wrap_180_cd(ahrs.yaw_sensor-copter.rtl_bearing))) <= 30)	// 0.3 degree
 				{
 #if 0
 					takeoff.gps_glitch_start(constrain_float(1000.0f,0.0f,10000.0f));
@@ -150,6 +149,7 @@ void ModeAltHold::run()
 					gcs().send_text(MAV_SEVERITY_INFO, "starting Climb");
 #else
 					_state = SubMode::GlitchAltHold_ReturnToHome;
+					_loop_timer = AP_HAL::millis();
 					gcs().send_text(MAV_SEVERITY_INFO, "starting ReturnToHome");
 #endif
 				}
@@ -171,11 +171,18 @@ void ModeAltHold::run()
 		       	break;
 
 			case SubMode::GlitchAltHold_ReturnToHome:
-        		//pos_control->set_pos_target_z_from_climb_rate_cm(target_climb_rate);
-        		pos_control->set_alt_target_from_climb_rate_ff(target_climb_rate, G_Dt, false);	// jhkang
-
-    			attitude_control->input_euler_angle_roll_pitch_euler_rate_yaw(target_roll, target_pitch, target_yaw_rate);
-
+			//	if(AP_HAL::millis() - _loop_timer > 3000)
+				{
+        			pos_control->set_alt_target_from_climb_rate_ff(target_climb_rate, G_Dt, false);	// jhkang
+    				attitude_control->input_euler_angle_roll_pitch_euler_rate_yaw(target_roll, target_pitch, target_yaw_rate);
+				}
+#if 0
+				else
+				{
+        			pos_control->set_alt_target_from_climb_rate_ff(0, G_Dt, false);	// jhkang
+    				attitude_control->input_euler_angle_roll_pitch_euler_rate_yaw(0, 0, 0);
+				}
+#endif
 		       	break;
 			}
 

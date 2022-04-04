@@ -131,4 +131,5 @@ private:
 
     // setup jitter correction with max transport lag of 3s
     JitterCorrection _jitter{3000};
+	uint32_t last_log_ms; // jhkang
 };

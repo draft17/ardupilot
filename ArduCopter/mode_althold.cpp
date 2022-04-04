@@ -20,7 +20,7 @@ bool ModeAltHold::init(bool ignore_checks)
 
 		_state = SubMode::GlitchAltHold_Starting;
 		gcs().send_text(MAV_SEVERITY_INFO, "AltHold on GPS Fail");
-		gcs().send_text(MAV_SEVERITY_INFO, "home bearing = %ld", copter.rtl_bearing);
+		gcs().send_text(MAV_SEVERITY_INFO, "home bearing = %ld", (long)copter.rtl_bearing);
 	}
 	else
 		_state = SubMode::GlitchAltHold_None;
@@ -73,7 +73,7 @@ void ModeAltHold::run()
 
 		case SubMode::GlitchAltHold_ReturnToHome:
 			target_yaw_rate = 0; target_climb_rate = 0;
-    		auto_get_pilot_desired_lean_angles(target_roll, target_pitch, copter.aparm.angle_max, attitude_control->get_althold_lean_angle_max());
+    		auto_get_pilot_desired_lean_angles(target_roll, target_pitch, copter.aparm.angle_max, attitude_control->get_althold_lean_angle_max(), _yaw_direc);
 			break;
 		}
 	}
@@ -140,7 +140,35 @@ void ModeAltHold::run()
 
 				attitude_control->input_euler_angle_roll_pitch_yaw(target_roll, target_pitch, auto_yaw.yaw(), true);
 
-				//if ((abs(wrap_180_cd(ahrs.yaw_sensor-copter.rtl_bearing))) <= 3)
+#if 0
+				/*
+				yaw (-) : clockwise
+				yaw (+) : count clockwise
+				roll (-) : go left
+				roll (+) : go right
+				*/
+
+				if (!_adj_yaw) {
+					// jhkang-ADD
+					_yaw_direc = wrap_180_cd(ahrs.yaw_sensor-copter.rtl_bearing);
+					if (_yaw_direc >= 0) {
+						copter.rtl_bearing -= 3000;
+						auto_yaw.set_fixed_yaw(copter.rtl_bearing * 0.01f, 0.0f, 0, 0);
+						attitude_control->input_euler_angle_roll_pitch_yaw(target_roll, target_pitch, auto_yaw.yaw(), true);
+					}
+					else {
+						copter.rtl_bearing += 3000;
+						auto_yaw.set_fixed_yaw(copter.rtl_bearing * 0.01f, 0.0f, 0, 0);
+						attitude_control->input_euler_angle_roll_pitch_yaw(target_roll, target_pitch, auto_yaw.yaw(), true);
+					}
+					_adj_yaw = 1;
+				}
+#endif
+				if (((abs(wrap_180_cd(ahrs.yaw_sensor-copter.rtl_bearing))) > 40) && ((abs(wrap_180_cd(ahrs.yaw_sensor-copter.rtl_bearing))) < 200))
+				{
+					_yaw_direc = wrap_180_cd(ahrs.yaw_sensor-copter.rtl_bearing);
+				}
+
 				if ((abs(wrap_180_cd(ahrs.yaw_sensor-copter.rtl_bearing))) <= 30)	// 0.3 degree
 				{
 #if 0

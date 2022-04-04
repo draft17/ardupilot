@@ -259,6 +259,10 @@ void AP_Follow::handle_msg(const mavlink_message_t &msg)
         return;
     }
 
+	if(msg.sysid == 100) {
+        gcs().send_text(MAV_SEVERITY_INFO, "msg.msgid(%ld)", msg.msgid);
+	}
+
     // skip our own messages
     if (msg.sysid == mavlink_system.sysid) {
         return;
@@ -296,6 +300,13 @@ void AP_Follow::handle_msg(const mavlink_message_t &msg)
         _target_location.lat = packet.lat;
         _target_location.lng = packet.lon;
 
+
+		//uint32_t now = AP_HAL::millis();
+		//if ((now - last_log_ms >= 3000) || (last_log_ms == 0)) {
+        	gcs().send_text(MAV_SEVERITY_INFO, "target.lat(%ld) taget.lng(%ld)", _target_location.lat, _target_location.lng);
+		//	last_log_ms = now;
+		//}
+
         // select altitude source based on FOLL_ALT_TYPE param 
         if (_alt_type == AP_FOLLOW_ALTITUDE_TYPE_RELATIVE) {
             // relative altitude
@@ -306,6 +317,8 @@ void AP_Follow::handle_msg(const mavlink_message_t &msg)
             _target_location.alt = packet.alt / 10;                 // convert millimeters to cm
             _target_location.relative_alt = 0;                // reset relative_alt flag
         }
+
+        //gcs().send_text(MAV_SEVERITY_INFO, "target.alt(%ld)", _target_location.alt);
 
         _target_velocity_ned.x = packet.vx * 0.01f; // velocity north
         _target_velocity_ned.y = packet.vy * 0.01f; // velocity east

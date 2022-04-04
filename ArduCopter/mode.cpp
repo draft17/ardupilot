@@ -437,7 +437,7 @@ void Mode::get_pilot_desired_lean_angles(float &roll_out, float &pitch_out, floa
 }
 
 // YIG-ADD
-void Mode::auto_get_pilot_desired_lean_angles(float &roll_out, float &pitch_out, float angle_max, float angle_limit) const
+void Mode::auto_get_pilot_desired_lean_angles(float &roll_out, float &pitch_out, float angle_max, float angle_limit, int32_t _yaw_value) const
 {
     // throttle failsafe check
     /*
@@ -448,14 +448,24 @@ void Mode::auto_get_pilot_desired_lean_angles(float &roll_out, float &pitch_out,
     }
     */
 
+#if 0
     // fetch roll and pitch inputs
-    roll_out = 0;
+	if(_yaw_value > 0) // 시계방향
+	{
+    	roll_out = ((float)copter.parachute.alt_min());
+	}
+	else if(_yaw_value < 0) // 반시계방향
+	{
+    	roll_out = -((float)copter.parachute.alt_min());
+	}
+	else
+		roll_out = 0;
+#endif
+
+    roll_out = channel_roll->get_control_in();
+
 	pitch_out = -((float)copter.avoid.get_ang_max());
-	/*	YIG 
-	if(fabs(pitch_out) < 1500)
-    	pitch_out = -1500;
-	*/
-	// jhkang-tentative
+
 	if(fabs(pitch_out) < 1000)
     	pitch_out = -1000;
 
@@ -591,14 +601,58 @@ void Mode::land_run_vertical_control(bool pause_descent)
             max_land_descent_velocity = pos_control->get_max_speed_down();
         }
 
+#if 1
+		// YIG-ADD , 0.9 = 2.7, 0.8 = 2.4, 0.7 = 2.1, 0.6 = 1.8, 0.5 = 1.5
+		if(get_alt_above_ground_cm() < 4500.0f && get_alt_above_ground_cm() >= 3500.0f) max_land_descent_velocity = pos_control->get_max_speed_down() * 0.9;
+		else if(get_alt_above_ground_cm() < 3500.0f && get_alt_above_ground_cm() >= 2500.0f) max_land_descent_velocity = pos_control->get_max_speed_down() * 0.8;
+		else if(get_alt_above_ground_cm() < 2500.0f && get_alt_above_ground_cm() >= 1500.0f) max_land_descent_velocity = pos_control->get_max_speed_down() * 0.7;
+		else if(get_alt_above_ground_cm() < 1500.0f && get_alt_above_ground_cm() >= 1100.0f) max_land_descent_velocity = pos_control->get_max_speed_down() * 0.6;
+		else if(get_alt_above_ground_cm() < 1100.0f && get_alt_above_ground_cm() >= g2.land_alt_low) max_land_descent_velocity = pos_control->get_max_speed_down() * 0.5;
+#endif
+
+#if 0
+		if(get_alt_above_ground_cm() < 5000.0f && get_alt_above_ground_cm() >= 4000.0f) 
+		{
+			max_land_descent_velocity = pos_control->get_max_speed_down() * 0.9;
+        	cmb_rate = AC_AttitudeControl::sqrt_controller(4000-get_alt_above_ground_cm(), pos_control->get_pos_z_p().kP(), pos_control->get_max_accel_z(), G_Dt);
+		}
+		else if(get_alt_above_ground_cm() < 4000.0f && get_alt_above_ground_cm() >= 3000.0f) 
+		{
+			max_land_descent_velocity = pos_control->get_max_speed_down() * 0.8;
+        	cmb_rate = AC_AttitudeControl::sqrt_controller(3000-get_alt_above_ground_cm(), pos_control->get_pos_z_p().kP(), pos_control->get_max_accel_z(), G_Dt);
+		}
+		else if(get_alt_above_ground_cm() < 3000.0f && get_alt_above_ground_cm() >= 2000.0f) 
+		{
+			max_land_descent_velocity = pos_control->get_max_speed_down() * 0.7;
+        	cmb_rate = AC_AttitudeControl::sqrt_controller(2000-get_alt_above_ground_cm(), pos_control->get_pos_z_p().kP(), pos_control->get_max_accel_z(), G_Dt);
+		}
+		else if(get_alt_above_ground_cm() < 2000.0f)
+		{
+			max_land_descent_velocity = pos_control->get_max_speed_down() * 0.6;
+        	cmb_rate = AC_AttitudeControl::sqrt_controller(MAX(g2.land_alt_low,100)-get_alt_above_ground_cm(), pos_control->get_pos_z_p().kP(), pos_control->get_max_accel_z(), G_Dt);
+		}
+		else
+		{
+        	// Compute a vertical velocity demand such that the vehicle approaches g2.land_alt_low. Without the below constraint, this would cause the vehicle to hover at g2.land_alt_low.
+        	cmb_rate = AC_AttitudeControl::sqrt_controller(5000-get_alt_above_ground_cm(), pos_control->get_pos_z_p().kP(), pos_control->get_max_accel_z(), G_Dt);
+		}
+
+        // Don't speed up for landing.
+        max_land_descent_velocity = MIN(max_land_descent_velocity, -abs(g.land_speed));
+
+#else
         // Don't speed up for landing.
         max_land_descent_velocity = MIN(max_land_descent_velocity, -abs(g.land_speed));
 
         // Compute a vertical velocity demand such that the vehicle approaches g2.land_alt_low. Without the below constraint, this would cause the vehicle to hover at g2.land_alt_low.
         cmb_rate = AC_AttitudeControl::sqrt_controller(MAX(g2.land_alt_low,100)-get_alt_above_ground_cm(), pos_control->get_pos_z_p().kP(), pos_control->get_max_accel_z(), G_Dt);
+#endif
 
         // Constrain the demanded vertical velocity so that it is between the configured maximum descent speed and the configured minimum descent speed.
         cmb_rate = constrain_float(cmb_rate, max_land_descent_velocity, -abs(g.land_speed));
+
+		// YIG-ADD
+		if(get_alt_above_ground_cm() < 100.0f) cmb_rate = -(abs(g.land_speed) * 0.6f);
 
         if (doing_precision_landing && copter.rangefinder_alt_ok() && copter.rangefinder_state.alt_cm > 35.0f && copter.rangefinder_state.alt_cm < 200.0f) {
             float max_descent_speed = abs(g.land_speed)*0.5f;

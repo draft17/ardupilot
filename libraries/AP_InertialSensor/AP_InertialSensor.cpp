@@ -684,7 +684,7 @@ bool AP_InertialSensor::_add_backend(AP_InertialSensor_Backend *backend)
         AP_HAL::panic("Too many INS backends");
     }
     _backends[_backend_count++] = backend;
-	::printf("imu backend count %d\n", _backend_count);
+	//::printf("imu backend count %d\n", _backend_count);
     return true;
 }
 
@@ -698,7 +698,7 @@ AP_InertialSensor::detect_backends(void)
         return;
     }
 
-    ::printf("Board %d\n", AP_BoardConfig::get_board_type());
+    //::printf("Board %d\n", AP_BoardConfig::get_board_type());
     _backends_detected = true;
 
 #if defined(HAL_CHIBIOS_ARCH_CUBEBLACK)
@@ -779,17 +779,17 @@ AP_InertialSensor::detect_backends(void)
     case AP_BoardConfig::PX4_BOARD_FMUV5:
     case AP_BoardConfig::PX4_BOARD_FMUV6:
         _fast_sampling_mask.set_default(1);
-		::printf("11111\n");
+		//::printf("11111\n");
         ADD_BACKEND(AP_InertialSensor_Invensense::probe(*this, hal.spi->get_device("icm20689"), ROTATION_NONE));
-		::printf("22222\n");
+		//::printf("22222\n");
         ADD_BACKEND(AP_InertialSensor_Invensense::probe(*this, hal.spi->get_device("icm20602"), ROTATION_NONE));
         // allow for either BMI055 or BMI088
-		::printf("33333\n");
+		//::printf("33333\n");
         ADD_BACKEND(AP_InertialSensor_BMI055::probe(*this,
                                                     hal.spi->get_device("bmi055_a"),
                                                     hal.spi->get_device("bmi055_g"),
                                                     ROTATION_ROLL_180_YAW_90));
-		::printf("44444\n");
+		//::printf("44444\n");
         ADD_BACKEND(AP_InertialSensor_BMI088::probe(*this,
                                                     hal.spi->get_device("bmi055_a"),
                                                     hal.spi->get_device("bmi055_g"),

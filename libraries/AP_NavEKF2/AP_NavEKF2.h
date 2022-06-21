@@ -464,7 +464,7 @@ private:
 
     // time at start of current filter update
     uint64_t imuSampleTime_us;
-    
+
     struct {
         uint32_t last_function_call;  // last time getLastYawYawResetAngle was called
         bool core_changed;            // true when a core change happened and hasn't been consumed, false otherwise

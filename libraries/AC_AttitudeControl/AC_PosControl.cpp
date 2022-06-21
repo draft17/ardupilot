@@ -2,6 +2,7 @@
 #include "AC_PosControl.h"
 #include <AP_Math/AP_Math.h>
 #include <AP_Logger/AP_Logger.h>
+#include <AC_Fence/AC_Fence.h> // YIG-ADD
 
 extern const AP_HAL::HAL& hal;
 
@@ -250,6 +251,8 @@ AC_PosControl::AC_PosControl(const AP_AHRS_View& ahrs, const AP_InertialNav& ina
     _limit.vel_up = true;
     _limit.vel_down = true;
     _limit.accel_xy = true;
+
+	_loop_timer = AP_HAL::millis();
 }
 
 ///
@@ -303,6 +306,14 @@ void AC_PosControl::set_alt_target_with_slew(float alt_cm, float dt)
 {
     float alt_change = alt_cm - _pos_target.z;
 
+#if 0
+	if(AP_HAL::millis() - _loop_timer > 1000)
+	{
+		gcs().send_text(MAV_SEVERITY_INFO,"alt_cm (%4.2f) _pos_target.z (%4.2f)", alt_cm, _pos_target.z);
+	    _loop_timer = AP_HAL::millis();
+	}
+#endif
+
     // do not use z-axis desired velocity feed forward
     _flags.use_desvel_ff_z = false;
 
@@ -331,7 +342,8 @@ void AC_PosControl::set_alt_target_from_climb_rate(float climb_rate_cms, float d
 {
     // adjust desired alt if motors have not hit their limits
     // To-Do: add check of _limit.pos_down?
-    if ((climb_rate_cms < 0 && (!_motors.limit.throttle_lower || force_descend)) || (climb_rate_cms > 0 && !_motors.limit.throttle_upper && !_limit.pos_up)) {
+    //if ((climb_rate_cms < 0 && (!_motors.limit.throttle_lower || force_descend)) || (climb_rate_cms > 0 && !_motors.limit.throttle_upper && !_limit.pos_up)) {
+    if ((climb_rate_cms < 0 && (!_motors.limit.throttle_lower)) || (climb_rate_cms > 0 && !_motors.limit.throttle_upper && !_limit.pos_up)) {
         _pos_target.z += climb_rate_cms * dt;
     }
 
@@ -339,6 +351,31 @@ void AC_PosControl::set_alt_target_from_climb_rate(float climb_rate_cms, float d
     // vel_desired set to desired climb rate for reporting and land-detector
     _flags.use_desvel_ff_z = false;
     _vel_desired.z = climb_rate_cms;
+
+#if 1 // YIG-ADD for GTB
+	AC_Fence *fence = AP::fence();
+	float limit_target = (float)fence->get_margin() * 10;
+	if(limit_target < 30.0f) limit_target = 30.0f;
+	if(_pos_target.z > limit_target)
+	{
+		_pos_target.z = limit_target;
+    	_vel_desired.z = 0;
+	}
+#endif
+
+#if 0
+	// YIG-ADD : for GTB
+    float curr_alt = _inav.get_altitude();
+	_pos_target.z = constrain_float(_pos_target.z, curr_alt - _leash_down_z, curr_alt + _leash_up_z);
+#endif
+
+#if 0
+	if(AP_HAL::millis() - _loop_timer > 2000)
+	{
+		gcs().send_text(MAV_SEVERITY_INFO,"_pos_target.z (%4.2f)", _pos_target.z);
+	    _loop_timer = AP_HAL::millis();
+	}
+#endif
 }
 
 /// set_alt_target_from_climb_rate_ff - adjusts target up or down using a climb rate in cm/s using feed-forward
@@ -375,6 +412,23 @@ void AC_PosControl::set_alt_target_from_climb_rate_ff(float climb_rate_cms, floa
     if ((_vel_desired.z < 0 && (!_motors.limit.throttle_lower || force_descend)) || (_vel_desired.z > 0 && !_motors.limit.throttle_upper && !_limit.pos_up)) {
         _pos_target.z += _vel_desired.z * dt;
     }
+
+#if 1 // YIG-ADD for GTB
+	AC_Fence *fence = AP::fence();
+	float limit_target = (float)fence->get_margin() * 10;
+	if(limit_target < 30.0f) limit_target = 30.0f;
+	if(_pos_target.z > limit_target)
+	{
+		_pos_target.z = limit_target;
+    	_vel_desired.z = 0;
+	}
+
+	if(AP_HAL::millis() - _loop_timer > 2000)
+	{
+		gcs().send_text(MAV_SEVERITY_INFO,"pos_target (%4.2f) (%4.2f)", _pos_target.z, limit_target);
+	    _loop_timer = AP_HAL::millis();
+	}
+#endif
 }
 
 /// add_takeoff_climb_rate - adjusts alt target up or down using a climb rate in cm/s

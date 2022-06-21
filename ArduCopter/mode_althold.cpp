@@ -44,12 +44,19 @@ void ModeAltHold::run()
     // Alt Hold State Machine Determination
     AltHoldModeState althold_state = get_alt_hold_state(target_climb_rate);
 
+#if 0
     if(AP_HAL::millis() - althold_debug_timer2 > 1000)
     {
 		if(althold_state > 0)
-      		gcs().send_text(MAV_SEVERITY_INFO,"althold state %d", althold_state);
+		{
+      		gcs().send_text(MAV_SEVERITY_INFO,"(%d) climb %4.1f", althold_state, target_climb_rate);
+      		//gcs().send_text(MAV_SEVERITY_INFO,"(%d) alt ( %4.2f, %4.2f )", althold_state, alt_above_ground, inertial_nav.get_altitude());
+			gcs().send_text(MAV_SEVERITY_INFO,"(%d) est_rt(%4.1f) rel_alt(%4.1f)", althold_state, inertial_nav.get_altitude() * 0.01f, copter.current_loc.alt * 0.01f);
+			
+		}
        	althold_debug_timer2 = AP_HAL::millis();
     }
+#endif
 
     // Alt Hold State Machine
     switch (althold_state) {
@@ -83,14 +90,20 @@ void ModeAltHold::run()
         target_climb_rate = get_avoidance_adjusted_climbrate(target_climb_rate);
 #endif
 
+#if 0
         if(AP_HAL::millis() - althold_debug_timer1 > 1000)
         {
-        	gcs().send_text(MAV_SEVERITY_INFO,"tar_cr (%4.2f) take_cr (%4.2f)", target_climb_rate, takeoff_climb_rate);
+        	//gcs().send_text(MAV_SEVERITY_INFO,"tar_cr (%4.2f) take_cr (%4.2f)", target_climb_rate, takeoff_climb_rate);
         	althold_debug_timer1 = AP_HAL::millis();
     	}
+#endif
 
         // set position controller targets
+#if 0 // YIG-CHG
         pos_control->set_alt_target_from_climb_rate_ff(target_climb_rate, G_Dt, false);
+#else
+        pos_control->set_alt_target_from_climb_rate(target_climb_rate, G_Dt, true);
+#endif
         pos_control->add_takeoff_climb_rate(takeoff_climb_rate, G_Dt);
         break;
 
@@ -112,9 +125,54 @@ void ModeAltHold::run()
         target_climb_rate = get_avoidance_adjusted_climbrate(target_climb_rate);
 #endif
 
+#if 0 // YIG-CHG
         pos_control->set_alt_target_from_climb_rate_ff(target_climb_rate, G_Dt, false);
+#else // for GTB
+
+
+#if 0
+		if (copter.rangefinder_alt_ok() && copter.rangefinder_state.alt_cm >= 50.0f)                                                                            
+        {
+	        target_climb_rate = 0;
+		}
+#endif
+
+        if(AP_HAL::millis() - althold_debug_timer1 > 2000)
+        {
+        	gcs().send_text(MAV_SEVERITY_INFO,"target_climb_rate (%4.1f) (%4.1f)", target_climb_rate, copter.pos_control->get_alt_target());
+        	althold_debug_timer1 = AP_HAL::millis();
+    	}
+
+#if 0
+		if(target_climb_rate == 0)
+		{
+			pos_control->set_alt_target_with_slew(copter.t float current_alt_error = copter.pos_control->get_alt_target()ave_rel_alt, G_Dt);
+		}
+		else
+#endif
+        	//pos_control->set_alt_target_from_climb_rate(target_climb_rate, G_Dt, false);
+        	pos_control->set_alt_target_from_climb_rate_ff(target_climb_rate, G_Dt, false);
+#endif
         break;
     }
+
+#if 0
+	const float angle_error = attitude_control->get_att_error_angle_deg();
+	if(angle_error < 2.0f)
+	{
+		//if (throttle > 0.0f && fabsf(inertial_nav.get_velocity_z()) < 60 && labs(ahrs.roll_sensor) < 200 && labs(ahrs.pitch_sensor) < 200) 
+		if(labs(ahrs.roll_sensor) < 200)
+		{
+			if((target_roll * 0.01f) > 3.0f)
+				target_roll = 300;
+		}
+		if(labs(ahrs.pitch_sensor) < 200)
+		{
+			if((target_pitch * 0.01f) > 3.0f)
+				target_pitch = 300;
+		}
+	}
+#endif
 
     // call attitude controller
     attitude_control->input_euler_angle_roll_pitch_euler_rate_yaw(target_roll, target_pitch, target_yaw_rate);

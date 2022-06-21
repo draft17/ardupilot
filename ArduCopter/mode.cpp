@@ -511,13 +511,15 @@ int32_t Mode::get_alt_above_ground_cm(void)
     if (copter.rangefinder_alt_ok()) {
         alt_above_ground = copter.rangefinder_state.alt_cm_filt.get();
 
+#if 0
 		// YIG-ADD
 		if(AP_HAL::millis() - copter.loop_time_1 > 1000)
 	    {
-			gcs().send_text(MAV_SEVERITY_INFO,"down rng cm %d", (uint16_t)alt_above_ground);
+			//gcs().send_text(MAV_SEVERITY_INFO,"down rng cm %d", (uint16_t)alt_above_ground);
 		    copter.loop_time_1 = AP_HAL::millis();
 		}
 		//
+#endif
 
     } else {
         bool navigating = pos_control->is_active_xy();
@@ -558,6 +560,13 @@ void Mode::land_run_vertical_control(bool pause_descent)
 
         // Constrain the demanded vertical velocity so that it is between the configured maximum descent speed and the configured minimum descent speed.
         cmb_rate = constrain_float(cmb_rate, max_land_descent_velocity, -abs(g.land_speed));
+
+#if 0 // YIG-ADD
+        if (copter.rangefinder_alt_ok() && copter.rangefinder_state.alt_cm > 35.0f && copter.rangefinder_state.alt_cm < 80.0f) 
+		{
+			cmb_rate = abs(g.land_speed) * 0.5f;
+		}
+#endif
 
         if (doing_precision_landing && copter.rangefinder_alt_ok() && copter.rangefinder_state.alt_cm > 35.0f && copter.rangefinder_state.alt_cm < 200.0f) {
             float max_descent_speed = abs(g.land_speed)*0.5f;

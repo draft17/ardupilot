@@ -33,6 +33,7 @@
 #include <AP_RangeFinder/AP_RangeFinder.h>
 #include <AP_Terrain/AP_Terrain.h>
 #include <AP_Scripting/AP_Scripting.h>
+#include <AP_RCMapper/AP_RCMapper.h>
 
 #if HAL_WITH_UAVCAN
   #include <AP_BoardConfig/AP_BoardConfig_CAN.h>
@@ -289,6 +290,7 @@ bool AP_Arming::ins_accels_consistent(const AP_InertialSensor &ins)
             last_accel_pass_ms[i] = now;
         }
         if (now - last_accel_pass_ms[i] > 10000) {
+			gcs().send_text(MAV_SEVERITY_WARNING, "ACCEL :: last_accel_pass_ms[%d]", i);
             return false;
         }
     }
@@ -339,7 +341,10 @@ bool AP_Arming::ins_checks(bool report)
     		const uint8_t gyro_count = ins.get_gyro_count();
     		for(uint8_t i=0; i<gyro_count; i++) {
 				if(!ins.get_gyro_health(i))
+				{
             		check_failed(ARMING_CHECK_INS, report, "GYRO-H %d %d :: Gyro not healthy", i+1, ins.get_primary_gyro()+1);
+					gcs().send_text(MAV_SEVERITY_WARNING, "GYRO-H %d %d :: Gyro not healthy", i+1, ins.get_primary_gyro()+1);
+				}
 			}
             passed = false;
 			//
@@ -351,6 +356,7 @@ bool AP_Arming::ins_checks(bool report)
     		for(uint8_t i=0; i<gyro_count; i++) {
 				if(!ins.gyro_calibrated_ok(i)) {
             		check_failed(ARMING_CHECK_INS, report, "GYRO-C %d :: Gyro calibration needed", i+1);
+					gcs().send_text(MAV_SEVERITY_WARNING, "GYRO-C %d :: Gyro calibration needed", i+1);
 				}
 			}
             passed = false;
@@ -362,7 +368,10 @@ bool AP_Arming::ins_checks(bool report)
     		const uint8_t accel_count = ins.get_accel_count();
     		for(uint8_t i=0; i<accel_count; i++) {
 				if(!ins.get_accel_health(i))
+				{
             		check_failed(ARMING_CHECK_INS, report, "ACCEL-H %d %d :: Accel not healthy", i+1, ins.get_primary_accel()+1);
+					gcs().send_text(MAV_SEVERITY_WARNING, "ACCEL-H %d %d :: Accel not healthy", i+1, ins.get_primary_accel()+1);
+				}
 			}
             passed = false;
 			//
@@ -374,6 +383,7 @@ bool AP_Arming::ins_checks(bool report)
     		for(uint8_t i=0; i<accel_count; i++) {
 				if(!ins.accel_calibrated_ok(i)) {
             		//check_failed(ARMING_CHECK_INS, report, "ACCEL-C %d :: 3D Accel calibration needed", i);
+					gcs().send_text(MAV_SEVERITY_WARNING, "ACCEL-C %d :: 3D Accel calibration needed", i);
 				}
 			}
             passed = false;
@@ -383,18 +393,21 @@ bool AP_Arming::ins_checks(bool report)
         //check if accelerometers have calibrated and require reboot
         if (ins.accel_cal_requires_reboot()) {
             check_failed(ARMING_CHECK_INS, report, "ACCEL :: Accels calibrated requires reboot");
+			gcs().send_text(MAV_SEVERITY_WARNING, "ACCEL :: Accels calibrated requires reboot");
             passed = false;
         }
 
         // check all accelerometers point in roughly same direction
         if (!ins_accels_consistent(ins)) {
             //check_failed(ARMING_CHECK_INS, report, "ACCEL :: Accels inconsistent");
+			gcs().send_text(MAV_SEVERITY_WARNING, "ACCEL :: Accels inconsistent");
             passed = false;
         }
 
         // check all gyros are giving consistent readings
         if (!ins_gyros_consistent(ins)) {
             check_failed(ARMING_CHECK_INS, report, "GYRO :: Gyros inconsistent");
+			gcs().send_text(MAV_SEVERITY_WARNING, "GYRO :: Gyros inconsistent");
             passed = false;
         }
 
@@ -402,6 +415,7 @@ bool AP_Arming::ins_checks(bool report)
         char failure_msg[50] = {};
         if (!AP::ahrs().attitudes_consistent(failure_msg, ARRAY_SIZE(failure_msg))) {
             check_failed(ARMING_CHECK_INS, report, "AHRS :: %s", failure_msg);
+			gcs().send_text(MAV_SEVERITY_WARNING, "AHRS :: %s", failure_msg);
             passed = false;
         }
     }
@@ -507,6 +521,7 @@ bool AP_Arming::gps_checks(bool report)
             passed = false;
         }
 
+#if 0 // imsi
         //GPS update rate acceptable
     	for(uint8_t i=0; i<GPS_MAX_RECEIVERS; i++) {
         	if (!gps.is_healthy(i)) {
@@ -514,6 +529,7 @@ bool AP_Arming::gps_checks(bool report)
             	passed = false;
         	}
 		}
+#endif
 
         // check GPSs are within 50m of each other and that blending is healthy
         float distance_m;
@@ -583,6 +599,75 @@ bool AP_Arming::hardware_safety_check(bool report)
 
     return true;
 }
+
+// YIG-ADD
+#if 1
+bool AP_Arming::rc_arm_checks(AP_Arming::Method method)                                                                                                                                                    
+{
+    // don't check the trims if we are in a failsafe
+    if (!rc().has_valid_input()) {
+        return true;
+    }
+
+    // only check if we've received some form of input within the last second
+    // this is a protection against a vehicle having never enabled an input
+    uint32_t last_input_ms = rc().last_input_ms();
+    if ((last_input_ms == 0) || ((AP_HAL::millis() - last_input_ms) > 1000)) {
+        return true;
+    }
+
+    bool check_passed = true;
+    // ensure all rc channels have different functions
+    if (rc().duplicate_options_exist()) {
+        check_failed(ARMING_CHECK_PARAMETERS, true, "Duplicate Aux Switch Options");
+        check_passed = false;
+    }
+    if (rc().flight_mode_channel_conflicts_with_rc_option()) {
+        //check_failed(ARMING_CHECK_PARAMETERS, true, "Mode channel and RC%d_OPTION conflict", rc().flight_mode_channel_number());
+        check_failed(ARMING_CHECK_PARAMETERS, true, "RC Option conflict");
+        check_passed = false;
+    }
+    const RCMapper * rcmap = AP::rcmap();
+    if (rcmap != nullptr) {
+        if (!rc().arming_skip_checks_rpy()) {
+            const char *names[3] = {"Roll", "Pitch", "Yaw"};
+            const uint8_t channels[3] = {rcmap->roll(), rcmap->pitch(), rcmap->yaw()};
+            for (uint8_t i = 0; i < ARRAY_SIZE(channels); i++) {
+                const RC_Channel *c = rc().channel(channels[i] - 1);
+                if (c == nullptr) {
+                    continue;
+                }
+                if (c->get_control_in() != 0) {
+                    if ((method != Method::RUDDER) || (c != rc().get_arming_channel())) { // ignore the yaw input channel if rudder arming
+                        check_failed(ARMING_CHECK_RC, true, "%s (RC%d) is not neutral", names[i], channels[i]);
+                        check_passed = false;
+                    }
+                }
+            }
+        }
+
+        // if throttle check is enabled, require zero input
+        if (rc().arming_check_throttle()) {
+            RC_Channel *c = rc().channel(rcmap->throttle() - 1);
+            if (c != nullptr) {
+                if (c->get_control_in() != 0) {check_failed(ARMING_CHECK_RC, true, "Throttle (RC%d) is not neutral", rcmap->throttle());
+                    check_passed = false;
+                }
+            }
+            c = rc().find_channel_for_option(RC_Channel::AUX_FUNC::FWD_THR);
+            if (c != nullptr) {
+                uint8_t fwd_thr = c->percent_input();
+                // require channel input within 2% of minimum
+                if (fwd_thr > 2) {
+                    check_failed(ARMING_CHECK_RC, true, "VTOL Fwd Throttle is not zero");
+                    check_passed = false;
+                }
+            }
+        }
+    }
+    return check_passed;
+}
+#endif
 
 bool AP_Arming::rc_calibration_checks(bool report)
 {
@@ -945,6 +1030,15 @@ bool AP_Arming::pre_arm_checks(bool report)
 
 bool AP_Arming::arm_checks(AP_Arming::Method method)
 {
+#if 1 // YIG-ADD
+	if ((checks_to_perform & ARMING_CHECK_ALL) ||
+        (checks_to_perform & ARMING_CHECK_RC)) {
+        if (!rc_arm_checks(method)) {
+	        return false;
+        }
+    }
+#endif
+
     // ensure the GPS drivers are ready on any final changes
     if ((checks_to_perform & ARMING_CHECK_ALL) ||
         (checks_to_perform & ARMING_CHECK_GPS_CONFIG)) {

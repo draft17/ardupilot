@@ -1206,4 +1206,8 @@ private:
 
     // vehicle specific initial gyro bias uncertainty
     float InitialGyroBiasUncertainty(void) const;
+
+	uint32_t _posvel_loop_timer1 = AP_HAL::millis();
+	uint32_t _posvel_loop_timer2 = AP_HAL::millis();
+	uint32_t _posvel_loop_timer3 = AP_HAL::millis();
 };

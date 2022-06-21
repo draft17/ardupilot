@@ -576,7 +576,7 @@ void Compass::init()
         _detect_backends();
     }
 
-    ::printf("Compass count %d\n", _compass_count);
+    //::printf("Compass count %d\n", _compass_count);
 
     if (_compass_count != 0) {
         // get initial health status
@@ -773,7 +773,7 @@ void Compass::_probe_external_i2c_compasses(void)
         const uint8_t ist8310_addr[] = { 0x0C, 0x0D, 0x0E, 0x0F };
 
         for (uint8_t a=0; a<ARRAY_SIZE(ist8310_addr); a++) {
-			::printf("ist8310 probe\n\r");	//jhkang
+			//::printf("ist8310 probe\n\r");	//jhkang
             FOREACH_I2C_EXTERNAL(i) {
                 ADD_BACKEND(DRIVER_IST8310, AP_Compass_IST8310::probe(GET_I2C_DEVICE(i, ist8310_addr[a]),
                                                                       true, default_rotation));
@@ -1212,13 +1212,13 @@ bool Compass::configured(uint8_t i)
 
     // exit immediately if all offsets are zero
     if (is_zero(get_offsets(i).length())) {
-		::printf("1111111\n");
+		//::printf("1111111\n");
         return false;
     }
 
     // exit immediately if dev_id hasn't been detected
     if (_state[i].detected_dev_id == 0) {
-		::printf("222222\n");
+		//::printf("222222\n");
         return false;
     }
 
@@ -1233,13 +1233,13 @@ bool Compass::configured(uint8_t i)
         // restore cached value
         _state[i].dev_id = dev_id_cache_value;
         // return failure
-		::printf("3333333\n");
+		//::printf("3333333\n");
         return false;
     }
 
     // if expected_dev_id is configured and the detected dev_id is different, return false
     if (_state[i].expected_dev_id != -1 && _state[i].expected_dev_id != _state[i].dev_id) {
-		::printf("4444444\n");
+		//::printf("4444444\n");
         return false;
     }
 
@@ -1253,7 +1253,7 @@ bool Compass::configured(void)
     for(uint8_t i=0; i<get_count(); i++) {
         all_configured = all_configured && (!use_for_yaw(i) || configured(i));
     }
-	::printf("configured %d\n", all_configured);
+	//::printf("configured %d\n", all_configured);
     return all_configured;
 }
 

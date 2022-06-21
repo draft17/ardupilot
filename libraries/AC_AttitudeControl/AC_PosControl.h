@@ -433,4 +433,7 @@ protected:
 
     // high vibration handling
     bool        _vibe_comp_enabled;     // true when high vibration compensation is on
+
+	Vector3f	_save_pos_target; 		// YIG-ADD for GTB
+	uint32_t	_loop_timer;
 };

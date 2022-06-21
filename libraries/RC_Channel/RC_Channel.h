@@ -182,6 +182,7 @@ public:
 
         // inputs eventually used to replace RCMAP
         MAINSAIL =           207, // mainsail input
+		FWD_THR =			 209,
     };
     typedef enum AUX_FUNC aux_func_t;
 
@@ -342,7 +343,21 @@ public:
 
     float override_timeout_ms() const {
         return _override_timeout.get() * 1e3f;
+	}
+
+	// YIG-ADD
+	virtual RC_Channel *get_arming_channel(void) const { return nullptr; };
+	bool arming_check_throttle() const {
+        return _options & uint32_t(Option::ARMING_CHECK_THROTTLE);
     }
+
+    bool arming_skip_checks_rpy() const {
+        return _options & uint32_t(Option::ARMING_SKIP_CHECK_RPY);
+    }
+    uint32_t last_input_ms() const { return last_update_ms; };
+	bool flight_mode_channel_conflicts_with_rc_option();
+	
+
 
 protected:
 
@@ -350,6 +365,8 @@ protected:
         IGNORE_RECEIVER  = (1 << 0), // RC receiver modules
         IGNORE_OVERRIDES = (1 << 1), // MAVLink overrides
         IGNORE_FAILSAFE  = (1 << 2), // ignore RC failsafe bits
+        ARMING_CHECK_THROTTLE  = (1 << 3), // ignore RC failsafe bits
+        ARMING_SKIP_CHECK_RPY  = (1 << 4), // ignore RC failsafe bits
     };
 
     void new_override_received() {
@@ -360,6 +377,8 @@ private:
     static RC_Channels *_singleton;
     // this static arrangement is to avoid static pointers in AP_Param tables
     static RC_Channel *channels;
+
+	uint32_t last_update_ms; // YIG-ADD
 
     bool has_new_overrides;
 

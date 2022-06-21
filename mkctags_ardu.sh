@@ -4,7 +4,7 @@ rm -rf ./tags
 
 find . \
 -path "./AntennaTracker" -prune -o \
--path "./Rover" -prune -o \
+-path "./APMrover2" -prune -o \
 -path "./ArduPlane" -prune -o \
 -path "./ArduSub" -prune -o \
 -path "./tests" -prune -o \

@@ -76,6 +76,8 @@ void AP_MSC::init()
 
     _initialized = true;
     debug_msc(2, "MSC: init done\n\r");
+
+	_test_timer1 = AP_HAL::millis();
 }
 
 void AP_MSC::loop(void)
@@ -122,6 +124,17 @@ void AP_MSC::SRV_send_esc(void)
             }
         }
     }
+
+#if 0
+	// imsi
+	if(AP_HAL::millis() - _test_timer1 > 2000)
+	{
+        for (uint8_t i = 0; i < max_esc_num; i++) {
+			gcs().send_text(MAV_SEVERITY_INFO, "%4.0d", _SRV_conf[i].pulse);
+		}
+		_test_timer1 = AP_HAL::millis();
+	}
+#endif
 
     // if at least one is active (update) we need to send to all
     if (active_esc_num > 0) {

@@ -84,7 +84,7 @@ float Copter::get_pilot_desired_climb_rate(float throttle_control)
         return 0.0f;
     }
 
-	if(throttle_control > 1250) return 0.0f;
+	//if(throttle_control > 1250) return 0.0f;
 
 #if TOY_MODE_ENABLED == ENABLED
     if (g2.toy_mode.enabled()) {

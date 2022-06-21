@@ -1,8 +1,8 @@
 #include "Copter.h"
 
 // Code to detect a crash main ArduCopter code
-#define LAND_CHECK_ANGLE_ERROR_DEG  30.0f       // maximum angle error to be considered landing
-#define LAND_CHECK_LARGE_ANGLE_CD   1500.0f     // maximum angle target to be considered landing
+#define LAND_CHECK_ANGLE_ERROR_DEG  15.0f       // YIG-CHG (30.0f -> 15.0f) // maximum angle error to be considered landing
+#define LAND_CHECK_LARGE_ANGLE_CD   1000.0f     // YIG-CHG (1500.0f -> 1000.0f) // maximum angle target to be considered landing
 #define LAND_CHECK_ACCEL_MOVING     3.0f        // maximum acceleration after subtracting gravity
 
 
@@ -75,6 +75,13 @@ void Copter::update_land_detector()
 
         // if we have a healthy rangefinder only allow landing detection below 2 meters
         bool rangefinder_check = (!rangefinder_alt_ok() || rangefinder_state.alt_cm_filt.get() < LAND_RANGEFINDER_MIN_ALT_CM);
+
+		// YIG-ADD
+		if(AP_HAL::millis() - copter.loop_time_2 > 1500)
+        {
+        	gcs().send_text(MAV_SEVERITY_INFO,"land detect : %2d %2d %2d %2d", motor_at_lower_limit, accel_stationary, descent_rate_low, rangefinder_check);
+            copter.loop_time_2 = AP_HAL::millis();                                                                                                                                                     
+        }
 
         if (motor_at_lower_limit && accel_stationary && descent_rate_low && rangefinder_check) {
             // landed criteria met - increment the counter and check if we've triggered

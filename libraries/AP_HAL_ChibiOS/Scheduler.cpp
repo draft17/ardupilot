@@ -326,24 +326,27 @@ void Scheduler::_timer_thread(void *arg)
         // process any pending RC output requests
         hal.rcout->timer_tick();
 
+		// long delay job (e.g compass calibration) 이 설정되어 있다면, watchdog timer clear 함
         if (sched->expect_delay_start != 0) {	// long delay job (e.g compass calibration)
             uint32_t now = AP_HAL::millis();
-            if (now - sched->expect_delay_start <= sched->expect_delay_length) {
+            if (now - sched->expect_delay_start <= sched->expect_delay_length) { // 설정된 시간이 아직 지나지 않았다면, 만일 지났으면 watchdog 발생됨
                 sched->watchdog_pat();	//watchdog timer clear
 
-				// YIG-ADD : diagnosis (sw deadlock)
+				// YIG-ADD : diagnosis (sw deadlock) - 주기적으로 timer를 clear 시킴
 				AP_Notify::diag_status.watchdog_pat_time = AP_HAL::millis();
-				// End
             }
         }
 
 #if 1 // YIG-ADD : diagnosis (sw deadlock)
+		// main loop 가 정상적으로 동작하지 않는다면 main loop에서 watchdog_pat_time 이 현재시간으로 재 설정되지 않기에 여기에서 체크됨
 		if (AP_Notify::diag_status.watchdog_on == true && AP_HAL::millis() - AP_Notify::diag_status.watchdog_pat_time > 800) 
 		{
 			if(!AP_Notify::diag_status.deadlock) {
-				AP_Notify::diag_status.deadlock = true;
+				AP_Notify::diag_status.deadlock = true; // true 설정하면 failsafe 에서 switch over 시킴
+
 				//AP_Notify::diag_status.fc_switch_over = true;
-				gcs().send_text(MAV_SEVERITY_CRITICAL, "SWITCH OVER FC #2");
+
+				gcs().send_text(MAV_SEVERITY_CRITICAL, "Watchdog Triggered");
 
 				//AP_MSC *ap_msc = AP_MSC::get_msc();
 				//ap_msc->switch_over(0);

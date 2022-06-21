@@ -380,7 +380,10 @@ void AP_MotorsMulticopter::update_lift_max_from_batt_voltage()
     float thrust_curve_expo = constrain_float(_thrust_curve_expo, -1.0f, 1.0f);
     _lift_max = batt_voltage_filt * (1 - thrust_curve_expo) + thrust_curve_expo * batt_voltage_filt * batt_voltage_filt;
 
-	_lift_max = 1.0f; // YIG-ADD
+	// YIG-ADD
+    _batt_voltage_filt.reset(1.0f);
+	_lift_max = 1.0f; 
+	//
 }
 
 float AP_MotorsMulticopter::get_compensation_gain() const
@@ -398,6 +401,11 @@ float AP_MotorsMulticopter::get_compensation_gain() const
         ret *= 1.0f / constrain_float(_air_density_ratio, 0.5f, 1.25f);
     }
 #endif
+
+	// YIG-ADD
+	ret = 1.0f;
+	//
+
     return ret;
 }
 
@@ -417,9 +425,9 @@ int16_t AP_MotorsMulticopter::output_to_pwm(float actuator)
         pwm_output = get_pwm_output_min() + (get_pwm_output_max() - get_pwm_output_min()) * actuator;
     }
 
-#if 1 // YIG-IMSI : For GTB
+#if 0 // YIG-IMSI : For GTB
 	//if(pwm_output > 1550) pwm_output = 1550;
-	if(pwm_output > 1900) pwm_output = 1900;
+	if(pwm_output > 1600) pwm_output = 1600;
 #endif
 
     return pwm_output;

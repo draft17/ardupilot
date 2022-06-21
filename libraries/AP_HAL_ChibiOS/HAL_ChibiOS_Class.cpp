@@ -269,23 +269,23 @@ static void main_loop()
             hal.scheduler->delay_microseconds(50);
         }
 #endif
+		// OS 레벨의 watchdog timer clear
         schedulerInstance.watchdog_pat();
 
-		// YIG-ADD
+		// YIG-ADD : 고장진단의 watchdog timer clear
 		AP_Notify::diag_status.watchdog_pat_time = AP_HAL::millis();
 
-#if 1 // SW-DEADLOCK TEST
+#if 1 // SW-DEADLOCK TEST : 2초 무한루프 진입 --> _timer_thread() 에서 위의 watchdog_pat_time이 변하지 않기때문에 watchdog 체크될것임
 		//simple method to rest watchdog functionality
 		if (AP_Notify::diag_status.deadlock_insert) 
 		{
 			AP_Notify::diag_status.deadlock_insert = false;
 			AP_Notify::diag_status._pat_time = AP_HAL::millis();
 
-			gcs().send_text(MAV_SEVERITY_CRITICAL, "SWITCH OVER FC #2");
+			gcs().send_text(MAV_SEVERITY_CRITICAL, "Endless loop");
 			while ((AP_HAL::millis() - AP_Notify::diag_status._pat_time) < 2000);
 		}
 #endif
-		//
 
     }
     thread_running = false;

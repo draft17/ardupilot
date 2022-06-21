@@ -124,6 +124,11 @@ void SRV_Channel::calc_pwm(int16_t output_scaled)
     } else {
         pwm = pwm_from_range(output_scaled);
     }
+
+    // jhkang-ADD
+    if (SRV_Channel::should_e_stop(get_function()) && SRV_Channels::emergency_stop) {
+        pwm = 0;    //jhkang-CHG
+    }
     set_output_pwm(pwm);
 }
 

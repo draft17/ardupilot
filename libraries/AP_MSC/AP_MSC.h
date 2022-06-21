@@ -92,6 +92,8 @@ public:
         uint32_t reserved : 1;
         uint32_t spiCRC : 32;
     } *spirxdata;
+
+	uint32_t _test_timer1 = 0;
 };
 
 #endif /* AP_MSC_H_ */

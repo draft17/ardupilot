@@ -339,9 +339,9 @@ void AP_MotorsMatrix::output_armed_stabilizing()
     // compensation_gain can never be zero
     _throttle_out = throttle_thrust_best_plus_adj / compensation_gain;
 
-	if(_thrust_boost && AP_HAL::millis() - _test_loop_timer > 1000)
+	if(_thrust_boost && AP_HAL::millis() - _test_loop_timer > 2000)
 	{
-		gcs().send_text(MAV_SEVERITY_CRITICAL,"m : %d", _motor_lost_index);
+		//gcs().send_text(MAV_SEVERITY_CRITICAL,"m : %d", _motor_lost_index);
 		_test_loop_timer = AP_HAL::millis();
 #if 0
     	for (i = 0; i < AP_MOTORS_MAX_NUM_MOTORS; i++)
@@ -727,7 +727,7 @@ void AP_MotorsMatrix::setup_motors(motor_frame_class frame_class, motor_frame_ty
                     add_motor(AP_MOTORS_MOT_8,  180, AP_MOTORS_MATRIX_YAW_FACTOR_CW,  6);
                     break;
                 case MOTOR_FRAME_TYPE_X:
-#if 0
+#if 1
                     add_motor(AP_MOTORS_MOT_1,   45, AP_MOTORS_MATRIX_YAW_FACTOR_CCW, 1);
                     add_motor(AP_MOTORS_MOT_2,  -45, AP_MOTORS_MATRIX_YAW_FACTOR_CW,  7);
                     add_motor(AP_MOTORS_MOT_3, -135, AP_MOTORS_MATRIX_YAW_FACTOR_CCW, 5);
@@ -736,7 +736,7 @@ void AP_MotorsMatrix::setup_motors(motor_frame_class frame_class, motor_frame_ty
                     add_motor(AP_MOTORS_MOT_6,   45, AP_MOTORS_MATRIX_YAW_FACTOR_CW,  2);
                     add_motor(AP_MOTORS_MOT_7,  135, AP_MOTORS_MATRIX_YAW_FACTOR_CCW, 4);
                     add_motor(AP_MOTORS_MOT_8, -135, AP_MOTORS_MATRIX_YAW_FACTOR_CW,  6);
-#else
+#else // YIG-CHG for PAV
                     add_motor(AP_MOTORS_MOT_1,   39, AP_MOTORS_MATRIX_YAW_FACTOR_CCW, 1);
                     add_motor(AP_MOTORS_MOT_2,  -39, AP_MOTORS_MATRIX_YAW_FACTOR_CW,  7);
                     add_motor(AP_MOTORS_MOT_3, -141, AP_MOTORS_MATRIX_YAW_FACTOR_CCW, 5);

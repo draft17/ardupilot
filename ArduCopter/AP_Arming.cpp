@@ -59,8 +59,9 @@ bool AP_Arming_Copter::run_pre_arm_checks(bool display_failure)
         & motor_checks(display_failure)
         & pilot_throttle_checks(display_failure)
         & oa_checks(display_failure)
-        & gcs_failsafe_check(display_failure) &
-        AP_Arming::pre_arm_checks(display_failure);
+        & gcs_failsafe_check(display_failure)
+        & alt_checks(display_failure)
+        & AP_Arming::pre_arm_checks(display_failure);
 }
 
 bool AP_Arming_Copter::barometer_checks(bool display_failure)
@@ -114,6 +115,7 @@ bool AP_Arming_Copter::ins_checks(bool display_failure)
         // get ekf attitude (if bad, it's usually the gyro biases)
         if (!pre_arm_ekf_attitude_check()) {
             check_failed(ARMING_CHECK_INS, display_failure, "AHRS :: EKF attitude bad");
+        	gcs().send_text(MAV_SEVERITY_CRITICAL,"AHRS :: EKF attitude bad");
             ret = false;
         }
     }
@@ -575,6 +577,19 @@ bool AP_Arming_Copter::gcs_failsafe_check(bool display_failure)
     return true;
 }
 
+// YIG-ADD
+// performs altitude checks.  returns true if passed
+bool AP_Arming_Copter::alt_checks(bool display_failure)                                                                                                                                                      
+{
+    // always EKF altitude estimate
+    if (!copter.flightmode->has_manual_throttle() && !copter.ekf_alt_ok()) {
+        check_failed(display_failure, "Need Alt Estimate");
+        return false;
+    }
+
+    return true;
+}
+
 // arm_checks - perform final checks before arming
 //  always called just before arming.  Return true if ok to arm
 //  has side-effect that logging is started
@@ -626,8 +641,11 @@ bool AP_Arming_Copter::arm_checks(AP_Arming::Method method)
         SRV_Channels::set_emergency_stop(false);
         // if we are using motor Estop switch, it must not be in Estop position
     } else if (rc().find_channel_for_option(RC_Channel::AUX_FUNC::MOTOR_ESTOP) && SRV_Channels::get_emergency_stop()){
+        SRV_Channels::set_emergency_stop(false);	// jhkang - ADD
+        #if 0   // jhkang - CHG for GTB
         gcs().send_text(MAV_SEVERITY_CRITICAL,"Arm: Motor Emergency Stopped");
         return false;
+        #endif
     }
 
     // succeed if arming checks are disabled
@@ -677,6 +695,14 @@ bool AP_Arming_Copter::arm_checks(AP_Arming::Method method)
             #if FRAME_CONFIG != HELI_FRAME
             if ((copter.flightmode->has_manual_throttle() || control_mode == Mode::Number::DRIFT) && copter.channel_throttle->get_control_in() > 0) {
                 check_failed(ARMING_CHECK_RC, true, "%s too high", rc_item);
+                return false;
+            }
+            if (copter.flightmode->has_manual_throttle() && copter.channel_pitch->get_control_in() != 0) {
+                check_failed(ARMING_CHECK_RC, true, "Pitch is not neutral");
+                return false;
+            }
+            if (copter.flightmode->has_manual_throttle() && copter.channel_roll->get_control_in() != 0) {
+                check_failed(ARMING_CHECK_RC, true, "Roll is not neutral");
                 return false;
             }
             #endif

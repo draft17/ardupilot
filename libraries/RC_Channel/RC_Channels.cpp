@@ -201,6 +201,17 @@ void RC_Channels::read_mode_switch()
     c->read_mode_switch();
 }
 
+// YIG-ADD
+// check if flight mode channel is assigned RC option
+// return true if assigned
+bool RC_Channels::flight_mode_channel_conflicts_with_rc_option()
+{
+    RC_Channel *chan = flight_mode_channel();
+    if (chan == nullptr) {
+        return false;
+    }
+    return (RC_Channel::aux_func_t)chan->option.get() != RC_Channel::AUX_FUNC::DO_NOTHING;
+}
 
 // singleton instance
 RC_Channels *RC_Channels::_singleton;

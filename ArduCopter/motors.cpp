@@ -104,7 +104,8 @@ void Copter::auto_disarm_check()
 #if FRAME_CONFIG != HELI_FRAME
         // use a shorter delay if using throttle interlock switch or Emergency Stop, because it is less
         // obvious the copter is armed as the motors will not be spinning
-        disarm_delay_ms /= 2;
+        //disarm_delay_ms /= 2;
+        disarm_delay_ms = 500; // YIG-ADD
 #endif
     } else {
         bool sprung_throttle_stick = (g.throttle_behavior & THR_BEHAVE_FEEDBACK_FROM_MID_STICK) != 0;

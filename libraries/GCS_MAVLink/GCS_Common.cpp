@@ -3585,7 +3585,9 @@ MAV_RESULT GCS_MAVLINK::handle_command_get_home_position(const mavlink_command_l
 }
 
 MAV_RESULT GCS_MAVLINK::handle_command_do_gripper(const mavlink_command_long_t &packet)
-{
+{ 
+	// jhkang - CHG
+#if 0
     AP_Gripper *gripper = AP::gripper();
     if (gripper == nullptr) {
         return MAV_RESULT_FAILED;
@@ -3612,6 +3614,25 @@ MAV_RESULT GCS_MAVLINK::handle_command_do_gripper(const mavlink_command_long_t &
     }
 
     return result;
+#else
+    // jhkang - ADD
+    MAV_RESULT result = MAV_RESULT_ACCEPTED;
+
+    switch ((uint8_t)packet.param2) {
+    case GRIPPER_ACTION_RELEASE:
+        //gripper->release();
+        SRV_Channels::set_emergency_stop(false);
+        break;
+    case GRIPPER_ACTION_GRAB:
+        SRV_Channels::set_emergency_stop(true);
+        break;
+    default:
+        result = MAV_RESULT_FAILED;
+        break;
+    }
+
+    return result;
+#endif
 }
 
 MAV_RESULT GCS_MAVLINK::handle_command_accelcal_vehicle_pos(const mavlink_command_long_t &packet)

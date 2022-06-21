@@ -1054,7 +1054,7 @@ void AP_GPS::send_mavlink_gps_raw(mavlink_channel_t chan)
 			}
 			last_send_time_ms[chan] = last_message_time_ms(2);
 		} else {
-			gcs().send_text(MAV_SEVERITY_INFO, "3rd GPS error");	//jhkang
+			//gcs().send_text(MAV_SEVERITY_INFO, "3rd GPS error");
 			// when we don't have a GPS then send at 1Hz
 			uint32_t now = AP_HAL::millis();
 			if (now - last_send_time_ms[chan] < 1000) {

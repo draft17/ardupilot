@@ -920,7 +920,18 @@ void NavEKF2_core::selectHeightForFusion()
             // calculate height above ground
             hgtMea  = MAX(rangeDataDelayed.rng * prevTnb.c.z, rngOnGnd);
             // correct for terrain position relative to datum
+#if 0
+			if(AP_HAL::millis() - _posvel_loop_timer3 > 2000)
+			{
+				//gcs().send_text(MAV_SEVERITY_WARNING, "de=%4.1f %4.1f OnG=%4.1f ter=%4.1f %4.1f", rangeDataDelayed.rng, prevTnb.c.z, rngOnGnd, terrainState, hgtMea);
+				//gcs().send_text(MAV_SEVERITY_WARNING, "hgtMea=%4.1f %4.1f", hgtMea, heaMea-terrainState);
+				gcs().send_text(MAV_SEVERITY_WARNING, "de=%f %f OnG=%f ter=%f %f", rangeDataDelayed.rng, prevTnb.c.z, rngOnGnd, terrainState, hgtMea);
+				gcs().send_text(MAV_SEVERITY_WARNING, "hgtMea=%f %f", hgtMea, hgtMea-terrainState);
+				_posvel_loop_timer3 = AP_HAL::millis();
+			}
+#endif
             hgtMea -= terrainState;
+
             // enable fusion
             fuseHgtData = true;
             velPosObs[5] = -hgtMea;

@@ -61,8 +61,14 @@ const AP_Param::GroupInfo RCMapper::var_info[] = {
     AP_GROUPEND
 };
 
+RCMapper *RCMapper::_singleton;
+
 // object constructor.
 RCMapper::RCMapper(void)
 {
     AP_Param::setup_object_defaults(this, var_info);
+}
+
+RCMapper *AP::rcmap() {
+	return RCMapper::get_singleton();
 }

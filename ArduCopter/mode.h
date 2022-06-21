@@ -121,6 +121,8 @@ protected:
 
 	uint32_t althold_debug_timer1 = 0;
 	uint32_t althold_debug_timer2 = 0;
+	uint32_t loiter_debug_timer1 = 0;
+	uint32_t loiter_debug_timer2 = 0;
 
     // convenience references to avoid code churn in conversion:
     Parameters &g;

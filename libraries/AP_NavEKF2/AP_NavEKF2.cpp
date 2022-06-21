@@ -651,7 +651,7 @@ bool NavEKF2::InitialiseFilter(void)
         for (uint8_t i=0; i<7; i++) {
             if (_imuMask & (1U<<i)) {
                 num_cores++;
-            	gcs().send_text(MAV_SEVERITY_INFO, "NavEKF2: EKF2 core on %d", num_cores);
+            	gcs().send_text(MAV_SEVERITY_CRITICAL, "NavEKF2: EKF2 core on %d", num_cores);
             }
         }
 
@@ -682,7 +682,7 @@ bool NavEKF2::InitialiseFilter(void)
                     return false;
                 }
                 num_cores++;
-            	gcs().send_text(MAV_SEVERITY_INFO, "NavEKF2: EKF2 core setup %d", num_cores);
+            	gcs().send_text(MAV_SEVERITY_CRITICAL, "NavEKF2: EKF2 core setup %d", num_cores);
             }
         }
 

@@ -307,7 +307,7 @@ private:
         void set_surface(Surface new_surface);
 
     private:
-#if 0
+#if 0 // YIG-CHG
         Surface surface = Surface::GROUND;
 #else
         Surface surface = Surface::NONE;
@@ -907,6 +907,7 @@ private:
     bool position_ok() const;
     bool ekf_position_ok() const;
     bool optflow_position_ok() const;
+	bool ekf_alt_ok() const; // YIG-ADD
     void update_auto_armed();
     bool should_log(uint32_t mask);
     MAV_TYPE get_frame_mav_type();
@@ -1022,6 +1023,7 @@ private:
 	uint32_t loop_time_1 = AP_HAL::millis();
 	uint32_t loop_time_2 = AP_HAL::millis();
 	uint32_t loop_time_3 = AP_HAL::millis();
+	int32_t	save_rel_alt;
 	//
 
 public:

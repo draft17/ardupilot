@@ -177,11 +177,20 @@ void ModeLoiter::run()
         // call attitude controller
         attitude_control->input_euler_angle_roll_pitch_euler_rate_yaw(loiter_nav->get_roll(), loiter_nav->get_pitch(), target_yaw_rate);
 
+#if 0
         // adjust climb rate using rangefinder
         target_climb_rate = copter.surface_tracking.adjust_climb_rate(target_climb_rate);
 
         // get avoidance adjusted climb rate
         target_climb_rate = get_avoidance_adjusted_climbrate(target_climb_rate);
+#endif
+
+#if 1 // YIG-ADD
+		if (copter.rangefinder_alt_ok() && copter.rangefinder_state.alt_cm >= 120.0f)
+        {                                                                                                                                                                                                  
+	        target_climb_rate = 0;
+        }
+#endif
 
         pos_control->set_alt_target_from_climb_rate_ff(target_climb_rate, G_Dt, false);
         pos_control->update_z_controller();

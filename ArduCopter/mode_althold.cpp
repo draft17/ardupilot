@@ -13,6 +13,7 @@ bool ModeAltHold::init(bool ignore_checks)
         pos_control->set_alt_target_to_current_alt();
         pos_control->set_desired_velocity_z(inertial_nav.get_velocity_z());
     }
+
 	// YIG-ADD
 	if(copter.control_mode_reason == ModeReason::EKF_FAILSAFE)
 	{

@@ -44,10 +44,11 @@ void Copter::read_rangefinder(void)
     struct {
         RangeFinderState &state;
         enum Rotation orientation;
-    //} rngfnd[2] = {{rangefinder_state, ROTATION_PITCH_270}, {rangefinder_up_state, ROTATION_PITCH_90}}; // YIG-ADD
-    } rngfnd[3] = {{rangefinder_state, ROTATION_PITCH_270}, {rangefinder_up_state, ROTATION_PITCH_90}, {rangefinder_fw_state, ROTATION_NONE}};
+    //} rngfnd[2] = {{rangefinder_state, ROTATION_PITCH_270}, {rangefinder_up_state, ROTATION_PITCH_90}};
+    } rngfnd[3] = {{rangefinder_state, ROTATION_PITCH_270}, {rangefinder_up_state, ROTATION_PITCH_90}, {rangefinder_fw_state, ROTATION_NONE}}; // YIG-CHG
 
-    for (uint8_t i=0; i < ARRAY_SIZE(rngfnd); i++) {
+    for (uint8_t i=0; i < ARRAY_SIZE(rngfnd); i++) 
+	{
         // local variables to make accessing simpler
         RangeFinderState &rf_state = rngfnd[i].state;
         enum Rotation rf_orient = rngfnd[i].orientation;
@@ -94,13 +95,11 @@ void Copter::read_rangefinder(void)
 
 #if 1 // YIG-ADD
 
-		if(copter.avoid.fence_margin() >= 2000.0f && copter.inertial_nav.get_altitude() >= 300.0f)
-		//if(copter.avoid.fence_margin() >= 2000.0f && copter.inertial_nav.get_altitude() > (copter.fence.get_safe_alt_min() - copter.avoid.fence_margin())) // 동해 무릉계곡
+		if(copter.avoid.fence_margin() >= 2000.0f && copter.inertial_nav.get_altitude() >= copter.fence.get_alt_min())
 		{
-        	//if (rf_orient == ROTATION_NONE) 
-        	if (rf_orient == ROTATION_NONE && rf_state.alt_healthy && hal.util->get_soft_armed()) //get_soft_armed() : arming상태에서만 Check
+        	if (rf_orient == ROTATION_NONE && rf_state.alt_healthy && hal.util->get_soft_armed())
 			{
-				// Auto 모드에서 자동 회피하지 못하고 15m 이내 장애물에 근접할경우 BRAKE mode로 진입
+				// Auto 모드에서 자동 회피하지 못하고 장애물에 근접할경우 BRAKE mode로 진입
 				if(copter.control_mode == Mode::Number::AUTO) 
 				{
 					//if(mode_auto.mission.get_current_nav_id() == MAV_CMD_NAV_WAYPOINT 
@@ -112,8 +111,7 @@ void Copter::read_rangefinder(void)
 						float stop_dist;
 						pos_control->get_stopping_dist_xy(stop_dist);
 						//if(rf_state.alt_cm <= (int16_t)(stop_dist * 1.5))
-						if(rf_state.alt_cm != 0 && rf_state.alt_cm < 1500)
-						//if(rf_state.alt_cm != 0 && rf_state.alt_cm <= (uint16_t)copter.avoid.fence_margin()) // 동해 무릉계곡
+						if(rf_state.alt_cm != 0 && rf_state.alt_cm < 1000)
 						{
 			    			copter.set_mode(Mode::Number::BRAKE, ModeReason::GCS_COMMAND);
 							gcs().send_text(MAV_SEVERITY_CRITICAL, "Obstacle (%d) (%d) : Emergency BRAKE !!", rf_state.alt_cm, (uint16_t)stop_dist);

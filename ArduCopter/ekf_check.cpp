@@ -87,7 +87,11 @@ void Copter::ekf_check()
 
 				//if(!has_position || (position_variance >= 0.8f))
 				if(!has_position || (position_variance >= g.fs_ekf_thresh)) // jhkang-tentative
+#if 0 // GPS 교란 자동 리턴
                 	failsafe_ekf_event(true); // force althold
+#else
+                	failsafe_ekf_event(false);
+#endif
 				else
                 	failsafe_ekf_event(false);
 				//

@@ -30,9 +30,7 @@ AP_RangeFinder_MAVLink::AP_RangeFinder_MAVLink(RangeFinder::RangeFinder_State &_
 {
     state.last_reading_ms = AP_HAL::millis();
     distance_cm = 0;
-	// YIG-ADD
-	ri_distance_cm = 0;
-	le_distance_cm = 0;
+	for(uint8_t i=0; i<8; i++) round_distance_cm[i] = 0; // YIG-ADD
 }
 
 /*
@@ -61,10 +59,17 @@ void AP_RangeFinder_MAVLink::handle_msg(const mavlink_message_t &msg)
 #if 0 // YIG-CHG
         distance_cm = packet.current_distance;
 #else
-		distance_cm = ((packet.max_distance/100)*100); //Upper
-		distance_cm += packet.min_distance/100; //Lower
-
-		ri_distance_cm = packet.current_distance;
+		uint8_t sector = (packet.current_distance / 100) - 1;
+		if(sector == 0)
+		{
+			distance_cm = ((packet.max_distance/100)*100); //Upper
+			distance_cm += packet.min_distance/100; //Lower
+		}
+		else
+		{
+			round_distance_cm[sector] = ((packet.max_distance/100)*100); //Upper
+			round_distance_cm[sector] += packet.min_distance/100; //Lower
+		}
 #endif
     }
     sensor_type = (MAV_DISTANCE_SENSOR)packet.type;
@@ -77,15 +82,14 @@ void AP_RangeFinder_MAVLink::update(void)
 {
     //Time out on incoming data; if we don't get new
     //data in 500ms, dump it
-    if (AP_HAL::millis() - state.last_reading_ms > AP_RANGEFINDER_MAVLINK_TIMEOUT_MS) {
-        //set_status(RangeFinder::Status::NoData); // YIG-CHG
-        state.distance_cm = 9000;
-		state.ri_distance_cm = 9000;
-		state.le_distance_cm = 9000;
+    if (AP_HAL::millis() - state.last_reading_ms > AP_RANGEFINDER_MAVLINK_TIMEOUT_MS) 
+	{
+        set_status(RangeFinder::Status::NoData);
+        state.distance_cm = 0;
+		for(uint8_t i=0; i<8; i++) state.round_distance_cm[i] = 0;
     } else {
         state.distance_cm = distance_cm;
-		state.ri_distance_cm = ri_distance_cm;
-		state.le_distance_cm = le_distance_cm;
+		for(uint8_t i=0; i<8; i++) state.round_distance_cm[i] = round_distance_cm[i];
         update_status();
     }
 }

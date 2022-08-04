@@ -45,18 +45,6 @@ bool Mode::do_user_takeoff(float takeoff_alt_cm, bool must_navigate)
     return true;
 }
 
-#if 0
-// YIG-ADD
-void Mode::_TakeOff::gps_glitch_start(float alt_cm)
-{
-    // initialise takeoff state
-    _gps_glitch_running = true;
-    take_off_start_alt = copter.pos_control->get_pos_target_z_cm();
-    take_off_complete_alt  = take_off_start_alt + alt_cm;
-}
-//
-#endif
-
 // start takeoff to specified altitude above home in centimeters
 void Mode::_TakeOff::start(float alt_cm)
 {
@@ -86,14 +74,6 @@ void Mode::_TakeOff::stop()
     _running = false;
     start_ms = 0;
 }
-
-#if 0
-// YIG-ADD
-void Mode::_TakeOff::gps_glitch_stop()
-{
-    _gps_glitch_running = false;
-}
-#endif
 
 // returns pilot and takeoff climb rates
 //  pilot_climb_rate is both an input and an output
@@ -157,28 +137,6 @@ void Mode::_TakeOff::get_climb_rates(float& pilot_climb_rate,
         }
     }
 }
-
-#if 0
-// YIG-ADD
-void Mode::_TakeOff::do_pilot_gps_glitch_takeoff(float& pilot_climb_rate_cm)
-{
-    // return pilot_climb_rate if take-off inactive
-    if (!_gps_glitch_running) {
-        return;
-    }
-
-    float pos_z = take_off_complete_alt;
-    float vel_z = pilot_climb_rate_cm;
-
-    // command the aircraft to the take off altitude and current pilot climb rate
-    copter.pos_control->input_pos_vel_accel_z(pos_z, vel_z, 0);
-
-    // stop take off early and return if we are within 0.1% of our take off altitude
-    if ((take_off_complete_alt  - take_off_start_alt) * 0.999f < copter.pos_control->get_pos_target_z_cm() - take_off_start_alt) {
-        gps_glitch_stop();
-    }
-}
-#endif
 
 void Mode::auto_takeoff_set_start_alt(void)
 {

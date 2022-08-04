@@ -474,34 +474,29 @@ bool AC_WPNav::advance_wp_target_along_track(float dt)
 
 // YIG-ADD : AVOID_AUTO
 
+	AC_Fence *_fence = AP::fence();
 	float current_alt = _inav.get_altitude(); 
 	float nav_alt = mission.nav_loc_alt(); 
 	bool wp_mode = mission.mode_for_avoid();
-	float stop_distance;
-	_pos_control.get_stopping_dist_xy(stop_distance);
+	float stop_distance; _pos_control.get_stopping_dist_xy(stop_distance);
 
 #if 1
 	if(AP_HAL::millis() - auto_loop_time > 3000)
 	{
-		if(_flags.speed_down_before_avoidance)
-			gcs().send_text(MAV_SEVERITY_INFO, "during spd dn (%d)", _obs_far_cnt);
-
-		gcs().send_text(MAV_SEVERITY_INFO, "[SAT %4.2f, LSpd %4.2f, Alt %4.2f]	[%d, NAlt %4.2f, WP %d] stop_dist %4.2f", speed_along_track, _limited_speed_xy_cms, current_alt, mission.curr_nav_idx(), nav_alt, wp_mode, stop_distance);
-		//gcs().send_text(MAV_SEVERITY_INFO, "[%d  SAT %4.2f, LSpd %4.2f]", mission.curr_nav_idx(), speed_along_track, _limited_speed_xy_cms);
+		if(_flags.speed_down_before_avoidance) gcs().send_text(MAV_SEVERITY_INFO, "during spd dn (%d)", _obs_far_cnt);
+		gcs().send_text(MAV_SEVERITY_INFO, "[C-spd %4.2f, L-spd %4.2f, Alt %4.2f]	[%d, NAlt %4.2f, WP %d] Stop_d %4.2f", 
+											speed_along_track, _limited_speed_xy_cms, current_alt, mission.curr_nav_idx(), nav_alt, wp_mode, stop_distance);
 
 		auto_loop_time = AP_HAL::millis();
 	}
 #endif
 
-	//if (_avoid != nullptr && wp_mode && current_alt > 200.0f && nav_alt < 500.0f && mission.curr_nav_idx() > 2)
-	if (wp_mode && current_alt >= 300.0f && mission.curr_nav_idx() > 2) // no takeoff
+	if (wp_mode && current_alt >= _fence->get_alt_min() && mission.curr_nav_idx() > 2) // no takeoff
 	{
-		uint16_t distance_cm = 0;
-		float fence_distance = _avoid->fence_margin(); // cm 단위로 리턴됨
-		//if(fence_distance < 1500.0f) goto avoid_pass; 
-		if(fence_distance < 2000.0f) goto avoid_pass; // 동해 무릉계곡 
-		if(fence_distance > 5000.0f) fence_distance = 5000.0f;
-		float stopp_dist; _pos_control.get_stopping_dist_xy(stopp_dist); // new adding
+		uint16_t distance_cm = 0; uint16_t left_distance_cm = 0; uint16_t right_distance_cm = 0;
+		float fence_distance = _avoid->fence_margin(); // cm 단위
+		if(fence_distance < 2000.0f) goto avoid_pass; if(fence_distance > 5000.0f) fence_distance = 5000.0f;
+		float stop_dist; _pos_control.get_stopping_dist_xy(stop_dist);
 
 		for (uint8_t i = 0; i < RANGEFINDER_MAX_INSTANCES; i++)
 		{
@@ -511,38 +506,27 @@ bool AC_WPNav::advance_wp_target_along_track(float dt)
 				if (sensor->has_data())
 				{
 					distance_cm = sensor->distance_cm();
-
-#if 0
-					if(AP_HAL::millis() - avoid_loop_time > 2000)
-					{
-						gcs().send_text(MAV_SEVERITY_INFO, "[LiDAR] %d	stop_dist = %4.2f", i, distance_cm, stopp_dist);
-						if(i == (RANGEFINDER_MAX_INSTANCES - 1))
-							avoid_loop_time = AP_HAL::millis();
-					}
-#endif
+					left_distance_cm = sensor->round_distance_cm(1);
+					right_distance_cm = sensor->round_distance_cm(2);
 
 					enum Rotation orient = sensor->orientation();
 					if(orient == ROTATION_NONE)
 					{
-#if 1
 						if(AP_HAL::millis() - avoid_loop_time > 2000)
 						{
-							gcs().send_text(MAV_SEVERITY_INFO, "[LiDAR]	%d (%d)", distance_cm, (uint16_t)(stopp_dist));
+							gcs().send_text(MAV_SEVERITY_INFO, "[LiDAR]	( %d %d %d )	%d", left_distance_cm, distance_cm, right_distance_cm, (uint16_t)(stop_dist));
 							avoid_loop_time = AP_HAL::millis();
 						}
-#endif
-						//if(distance_cm <= fence_distance && distance_cm > (uint16_t)(stopp_dist * 2))
+
 						if(distance_cm > 100 && distance_cm <= fence_distance)
 					    {
 						    do_avoid = 3; // 회피
-						    if(!_flags.processing_avoidance) 
-								gcs().send_text(MAV_SEVERITY_CRITICAL, "Obstacle !! [%d cm]", distance_cm);
+						    if(!_flags.processing_avoidance) gcs().send_text(MAV_SEVERITY_CRITICAL, "Obstacle !! [%d cm]", distance_cm);
 						}
-						else if(distance_cm > fence_distance && distance_cm <= (fence_distance + stopp_dist))
+						else if(distance_cm > fence_distance && distance_cm <= (fence_distance + stop_dist))
 						{
 							do_avoid = 2; // speed down
-						    if(!_flags.speed_down_before_avoidance) 
-								gcs().send_text(MAV_SEVERITY_INFO, "FAR-Obstacle (%d)", distance_cm);
+						    if(!_flags.speed_down_before_avoidance) gcs().send_text(MAV_SEVERITY_INFO, "FAR-Obstacle (%d)", distance_cm);
 						}
 						else do_avoid = 0;
 				    }
@@ -554,17 +538,13 @@ bool AC_WPNav::advance_wp_target_along_track(float dt)
 	    {
 			AC_Fence *_fence = AP::fence();
 
-		    if(do_avoid > 2 && _fence->get_action() != 0) // 동해무릉계곡
-		    //if(do_avoid > 2 ) // Avoid
+		    if(do_avoid > 2 && _fence->get_action() != 0)
 		    {
 				bool avoid_opt = false;
-#if 1
 				AC_Avoid *avoid = AP::ac_avoid();
-				uint8_t avoid_direction = _fence->get_action();
-				float avoid_distance = avoid->get_margin();
-#else
-				uint8_t avoid_direction = 3; // default upward
-#endif
+				uint8_t avoid_direction = _fence->get_action(); // 회피방향 설정
+				float avoid_distance = avoid->get_margin(); // 회피거리 설정
+
 				float avoid_len = fence_distance/100;
 				float avoid_alt = 0.0f;
 				float avoid_angle = 30.0f;
@@ -596,14 +576,8 @@ bool AC_WPNav::advance_wp_target_along_track(float dt)
 
 				if(avoid_direction == 3) 
 				{
-#if 0
-					avoid_len = 5.0f; // 직진거리
-					avoid_alt = 20.0f; // 고도
-#else
-					avoid_len = avoid_distance/2; // 직진거리
-					avoid_alt = avoid_distance; // 고도
-#endif
-					//avoid_alt = fence_distance/100; // 고도
+					avoid_len = avoid_distance/2; // 직진상승거리
+					avoid_alt = avoid_distance; // 상승고도
 				}
 
 				if(avoid_direction == 1) avoid_yaw = ((_ahrs.yaw_sensor / 100) % 360) - avoid_angle;
@@ -633,7 +607,7 @@ bool AC_WPNav::advance_wp_target_along_track(float dt)
 			        _avoid_track_desired = 0;
 					_speed_down_leash = false;
 					_pos_control.get_stopping_dist_xy(_avoid_slow_down_dist); // new adding
-			        gcs().send_text(MAV_SEVERITY_INFO, "[AVOID] speed down start (stop dist = %4.2f cm)", _avoid_slow_down_dist);
+			        gcs().send_text(MAV_SEVERITY_INFO, "[AVOID] Speed Down Start (stop dist = %4.2f cm)", _avoid_slow_down_dist);
 					AP_Notify::events.waypoint_complete = 1; // beep alarm
 			    }
 			}

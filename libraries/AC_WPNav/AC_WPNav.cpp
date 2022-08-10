@@ -536,13 +536,13 @@ bool AC_WPNav::advance_wp_target_along_track(float dt)
 
 		if(!_flags.processing_avoidance)
 	    {
-			AC_Fence *_fence = AP::fence();
+			AC_Fence *fence = AP::fence();
 
-		    if(do_avoid > 2 && _fence->get_action() != 0)
+		    if(do_avoid > 2 && fence->get_action() != 0)
 		    {
 				bool avoid_opt = false;
 				AC_Avoid *avoid = AP::ac_avoid();
-				uint8_t avoid_direction = _fence->get_action(); // 회피방향 설정
+				uint8_t avoid_direction = fence->get_action(); // 회피방향 설정
 				float avoid_distance = avoid->get_margin(); // 회피거리 설정
 
 				float avoid_len = fence_distance/100;

@@ -84,7 +84,7 @@ void AP_RangeFinder_MAVLink::update(void)
     //data in 500ms, dump it
     if (AP_HAL::millis() - state.last_reading_ms > AP_RANGEFINDER_MAVLINK_TIMEOUT_MS) 
 	{
-        set_status(RangeFinder::Status::NoData);
+        set_status(RangeFinder::RangeFinder_NoData);
         state.distance_cm = 0;
 		for(uint8_t i=0; i<8; i++) state.round_distance_cm[i] = 0;
     } else {

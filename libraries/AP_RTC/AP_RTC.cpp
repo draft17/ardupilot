@@ -83,6 +83,8 @@ bool AP_RTC::get_utc_usec(uint64_t &usec) const
         return false;
     }
     usec = AP_HAL::micros64() + rtc_shift;
+	//jhkang
+	//gcs().send_text(MAV_SEVERITY_WARNING, " usec=%d, rtc_shift=%d", usec, rtc_shift);
     return true;
 }
 

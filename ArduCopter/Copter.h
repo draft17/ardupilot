@@ -452,6 +452,7 @@ private:
     int32_t initial_armed_bearing;
 
 	int32_t rtl_bearing;	// YIG
+	uint32_t dist_loop_time = AP_HAL::millis();
 
     // Battery Sensors
     AP_BattMonitor battery{MASK_LOG_CURRENT,

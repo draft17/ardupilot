@@ -59,11 +59,15 @@ void AP_RangeFinder_MAVLink::handle_msg(const mavlink_message_t &msg)
 #if 0 // YIG-CHG
         distance_cm = packet.current_distance;
 #else
+		// jhkang
+		//gcs().send_text(MAV_SEVERITY_NOTICE, "packet.current_distance = %d", packet.current_distance);
 		uint8_t sector = (packet.current_distance / 100) - 1;
 		if(sector == 0)
 		{
 			distance_cm = ((packet.max_distance/100)*100); //Upper
 			distance_cm += packet.min_distance/100; //Lower
+			//jhkang
+			gcs().send_text(MAV_SEVERITY_NOTICE, "Front distance_cm = %d", distance_cm);
 		}
 		else
 		{

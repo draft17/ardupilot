@@ -475,28 +475,29 @@ bool AC_WPNav::advance_wp_target_along_track(float dt)
 // YIG-ADD : AVOID_AUTO
 
 	AC_Fence *_fence = AP::fence();
-	float current_alt = _inav.get_altitude(); 
-	float nav_alt = mission.nav_loc_alt(); 
 	bool wp_mode = mission.mode_for_avoid();
-	float stop_distance; _pos_control.get_stopping_dist_xy(stop_distance);
+	float current_alt = _inav.get_altitude(); 
 
-#if 1
-	if(AP_HAL::millis() - auto_loop_time > 3000)
+	if (_avoid->fence_margin() >= 2000.0f && wp_mode && current_alt >= _fence->get_alt_min() && mission.curr_nav_idx() > 2) // no takeoff
 	{
-		if(_flags.speed_down_before_avoidance) gcs().send_text(MAV_SEVERITY_INFO, "during spd dn (%d)", _obs_far_cnt);
-		gcs().send_text(MAV_SEVERITY_INFO, "[C-spd %4.2f, L-spd %4.2f, Alt %4.2f]	[%d, NAlt %4.2f, WP %d] Stop_d %4.2f", 
-											speed_along_track, _limited_speed_xy_cms, current_alt, mission.curr_nav_idx(), nav_alt, wp_mode, stop_distance);
+		float nav_alt = mission.nav_loc_alt(); 
+		float stop_distance; _pos_control.get_stopping_dist_xy(stop_distance);
 
-		auto_loop_time = AP_HAL::millis();
-	}
-#endif
-
-	if (wp_mode && current_alt >= _fence->get_alt_min() && mission.curr_nav_idx() > 2) // no takeoff
-	{
 		uint16_t distance_cm = 0; uint16_t left_distance_cm = 0; uint16_t right_distance_cm = 0;
 		float fence_distance = _avoid->fence_margin(); // cm 단위
 		if(fence_distance < 2000.0f) goto avoid_pass; if(fence_distance > 5000.0f) fence_distance = 5000.0f;
 		float stop_dist; _pos_control.get_stopping_dist_xy(stop_dist);
+
+#if 1
+		if(AP_HAL::millis() - auto_loop_time > 3000)
+		{
+			if(_flags.speed_down_before_avoidance) gcs().send_text(MAV_SEVERITY_INFO, "during spd dn (%d)", _obs_far_cnt);
+			gcs().send_text(MAV_SEVERITY_INFO, "[C-spd %4.2f, L-spd %4.2f, Alt %4.2f]	[%d, NAlt %4.2f, WP %d] Stop_d %4.2f", 
+											speed_along_track, _limited_speed_xy_cms, current_alt, mission.curr_nav_idx(), nav_alt, wp_mode, stop_distance);
+
+			auto_loop_time = AP_HAL::millis();
+		}
+#endif
 
 		for (uint8_t i = 0; i < RANGEFINDER_MAX_INSTANCES; i++)
 		{

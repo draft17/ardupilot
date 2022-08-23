@@ -1,4 +1,5 @@
 #include "AC_WPNav_OA.h"
+#include <GCS_MAVLink/GCS.h>
 
 // YIG-CHG
 AC_WPNav_OA::AC_WPNav_OA(AP_Mission &_mission, const AP_InertialNav& inav, const AP_AHRS_View& ahrs, AC_PosControl& pos_control, const AC_AttitudeControl& attitude_control) :
@@ -85,14 +86,14 @@ bool AC_WPNav_OA::update_wpnav()
         Location oa_origin_new, oa_destination_new;
         const AP_OAPathPlanner::OA_RetState oa_retstate = oa_ptr->mission_avoidance(current_loc, origin_loc, destination_loc, oa_origin_new, oa_destination_new);
         switch (oa_retstate) {
-        case AP_OAPathPlanner::OA_NOT_REQUIRED:
+        case AP_OAPathPlanner::OA_NOT_REQUIRED: // 회피할 필요 없음 (장애물 없음)
             if (_oa_state != oa_retstate) {
                 // object avoidance has become inactive so reset target to original destination
                 set_wp_destination(_destination_oabak, _terrain_alt);
                 _oa_state = oa_retstate;
             }
             break;
-        case AP_OAPathPlanner::OA_PROCESSING:
+        case AP_OAPathPlanner::OA_PROCESSING: // 현재 회피를 수행하고 있거나, 에러가 발생할 경우 stop 함
         case AP_OAPathPlanner::OA_ERROR:
             // during processing or in case of error stop the vehicle
             // by setting the oa_destination to a stopping point
@@ -106,9 +107,11 @@ bool AC_WPNav_OA::update_wpnav()
                 }
             }
             break;
-        case AP_OAPathPlanner::OA_SUCCESS:
+        case AP_OAPathPlanner::OA_SUCCESS: // BendyRuler 가 회피 필요하다고 Notify함
             // if oa destination has become active or destination has changed update wpnav
-            if ((_oa_state != AP_OAPathPlanner::OA_SUCCESS) || !oa_destination_new.same_latlon_as(_oa_destination)) {
+            if ((_oa_state != AP_OAPathPlanner::OA_SUCCESS) || !oa_destination_new.same_latlon_as(_oa_destination)) { 
+				// 이미 이전에 요청(OA_SUCCESS)되지 않았거나, 같은 회피 목적지가 아니면 리턴된 회피좌표(oa_origin_new, oa_destination_new)로 set_wp_destination()을 적용함
+
                 _oa_destination = oa_destination_new;
                 // convert Location to offset from EKF origin
                 Vector3f dest_NEU;
@@ -119,6 +122,8 @@ bool AC_WPNav_OA::update_wpnav()
                     dest_NEU.z = linear_interpolate(_origin_oabak.z, _destination_oabak.z, dist_along_path, 0.0f, 1.0f);
                     if (set_wp_destination(dest_NEU, _terrain_alt)) {
                         _oa_state = oa_retstate;
+
+						gcs().send_text(MAV_SEVERITY_INFO, "OA_SUCCESS"); // YIG-ADD
                     }
                 }
             }

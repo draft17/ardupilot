@@ -160,9 +160,9 @@ AP_OAPathPlanner::OA_RetState AP_OAPathPlanner::mission_avoidance(const Location
     WITH_SEMAPHORE(_rsem);
 
     // place new request for the thread to work on
-    avoidance_request.current_loc = current_loc;
-    avoidance_request.origin = origin;
-    avoidance_request.destination = destination;
+    avoidance_request.current_loc = current_loc; // 현재 위치
+    avoidance_request.origin = origin; // waypoint track 상의 origin
+    avoidance_request.destination = destination; // waypoint track 상의 destination
     avoidance_request.ground_speed_vec = AP::ahrs().groundspeed_vector();
     avoidance_request.request_time_ms = now;
 
@@ -173,11 +173,11 @@ AP_OAPathPlanner::OA_RetState AP_OAPathPlanner::mission_avoidance(const Location
     const bool timed_out = now - avoidance_result.result_time_ms > OA_TIMEOUT_MS;
 
     // return results from background thread's latest checks
-    if (destination_matches && !timed_out) {
+    if (destination_matches && !timed_out) { // 회피가 필요하거나(OA_SUCCESS), 필요없거나(OA_NOT_REQUIRED)
         // we have a result from the thread
-        result_origin = avoidance_result.origin_new;
-        result_destination = avoidance_result.destination_new;
-        return avoidance_result.ret_state;
+        result_origin = avoidance_result.origin_new; // 회피가 필요하다면 회피좌표가 들어가 있고, 필요없다면 원래의 origin이 들어가 있음
+        result_destination = avoidance_result.destination_new; // 회피가 필요하다면 회피좌표가 들어가 있고, 필요없다면 원래의 destination이 들어가 있음
+        return avoidance_result.ret_state; // OA_SUCCESS or OA_NOT_REQUIRED
     }
 
     // if timeout then path planner is taking too long to respond
@@ -186,7 +186,7 @@ AP_OAPathPlanner::OA_RetState AP_OAPathPlanner::mission_avoidance(const Location
     }
 
     // background thread is working on a new destination
-    return OA_PROCESSING;
+    return OA_PROCESSING; // 회피 진행중
 }
 
 // avoidance thread that continually updates the avoidance_result structure based on avoidance_request
@@ -237,7 +237,7 @@ void AP_OAPathPlanner::avoidance_thread()
             }
             _oabendyruler->set_config(_lookahead, _margin_max);
             if (_oabendyruler->update(avoidance_request2.current_loc, avoidance_request2.destination, avoidance_request2.ground_speed_vec, origin_new, destination_new)) {
-                res = OA_SUCCESS;
+                res = OA_SUCCESS; // 회피가 필요 : origin_new, destination_new 에 새로운 회피좌표가 들어가있음
             }
             break;
 
@@ -265,10 +265,10 @@ void AP_OAPathPlanner::avoidance_thread()
             // give the main thread the avoidance result
             WITH_SEMAPHORE(_rsem);
             avoidance_result.destination = avoidance_request2.destination;
-            avoidance_result.origin_new = (res == OA_SUCCESS) ? origin_new : avoidance_result.origin_new;
-            avoidance_result.destination_new = (res == OA_SUCCESS) ? destination_new : avoidance_result.destination;
+            avoidance_result.origin_new = (res == OA_SUCCESS) ? origin_new : avoidance_result.origin_new; // 회피가 필요하다면 회피좌표(origin_new)를 제공
+            avoidance_result.destination_new = (res == OA_SUCCESS) ? destination_new : avoidance_result.destination; // 회피가 필요하다면 회피좌표(destination_new)를 제공
             avoidance_result.result_time_ms = AP_HAL::millis();
-            avoidance_result.ret_state = res;
+            avoidance_result.ret_state = res; // OA_NOT_REQUIRED 이거나 OA_SUCCESS
         }
     }
 }

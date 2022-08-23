@@ -95,6 +95,20 @@ void Copter::read_rangefinder(void)
 
 #if 1 // YIG-ADD
 
+		if (copter.avoid.proximity_avoidance_enabled())
+	    {
+			float ang_deg, dist_m_0, dist_m_1, dist_m_7;
+			if(AP_HAL::millis() - dist_loop_time > 2000)
+			{
+				gcs().send_text(MAV_SEVERITY_INFO, "[LiDAR]\n");
+				copter.g2.proximity.get_object_angle_and_distance(0, ang_deg, dist_m_0);
+				copter.g2.proximity.get_object_angle_and_distance(1, ang_deg, dist_m_1);
+				copter.g2.proximity.get_object_angle_and_distance(7, ang_deg, dist_m_7);
+				gcs().send_text(MAV_SEVERITY_INFO, "  %4.1f %4.1f %4.1f", dist_m_7, dist_m_0, dist_m_1);
+		    	dist_loop_time = AP_HAL::millis();
+			}
+		}
+
 		if(copter.avoid.fence_margin() >= 2000.0f && copter.inertial_nav.get_altitude() >= copter.fence.get_alt_min())
 		{
         	if (rf_orient == ROTATION_NONE && rf_state.alt_healthy && hal.util->get_soft_armed())

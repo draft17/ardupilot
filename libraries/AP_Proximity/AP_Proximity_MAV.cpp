@@ -19,6 +19,8 @@
 #include <ctype.h>
 #include <stdio.h>
 
+#include <GCS_MAVLink/GCS.h>    //jhkang
+
 extern const AP_HAL::HAL& hal;
 
 #define PROXIMITY_MAV_TIMEOUT_MS    500 // distance messages must arrive within this many milliseconds
@@ -48,7 +50,7 @@ bool AP_Proximity_MAV::get_upward_distance(float &distance) const
 // handle mavlink DISTANCE_SENSOR messages
 void AP_Proximity_MAV::handle_msg(const mavlink_message_t &msg)
 {
-    //if (msg.msgid == MAVLINK_MSG_ID_DISTANCE_SENSOR) 
+    if (msg.msgid == MAVLINK_MSG_ID_DISTANCE_SENSOR) 
 	{
         mavlink_distance_sensor_t packet;
         mavlink_msg_distance_sensor_decode(&msg, &packet);
@@ -64,12 +66,15 @@ void AP_Proximity_MAV::handle_msg(const mavlink_message_t &msg)
 			_distance[sector] = (packet.max_distance/100)*100;
 			_distance[sector] += packet.min_distance/100;
 
+            //gcs().send_text(MAV_SEVERITY_NOTICE, " sector = %d : _distance = %f", sector, _distance[sector]);
+
             //_distance_min = packet.min_distance * 0.01f;
             //_distance_max = packet.max_distance * 0.01f;
-            _distance_min = 100; // 1m = 100cm
+            _distance_min = 50; // 1m = 100cm
             _distance_max = 12000; // 120m = 12000cm
 
             _distance_valid[sector] = (_distance[sector] >= _distance_min) && (_distance[sector] <= _distance_max);
+            //gcs().send_text(MAV_SEVERITY_NOTICE, "_distance_valid = %d", _distance_valid[sector]);
             _last_update_ms = AP_HAL::millis();
             update_boundary_for_sector(sector, true);
         }

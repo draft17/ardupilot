@@ -9,8 +9,7 @@ Mode::_TakeOff Mode::takeoff;
 
 bool Mode::do_user_takeoff_start(float takeoff_alt_cm)
 {
-	takeoff_alt_cm = (float)copter.fence.get_margin() * 10;
-
+	if(takeoff_alt_cm >= 300.0f) takeoff_alt_cm = 300.0f;
     copter.flightmode->takeoff.start(takeoff_alt_cm);
     return true;
 }
@@ -25,12 +24,10 @@ bool Mode::do_user_takeoff(float takeoff_alt_cm, bool must_navigate)
         // can't takeoff again!
         return false;
     }
-	/*
     if (!has_user_takeoff(must_navigate)) {
         // this mode doesn't support user takeoff
         return false;
     }
-	*/
     if (takeoff_alt_cm <= copter.current_loc.alt) {
         // can't takeoff downwards...
         return false;
@@ -57,10 +54,7 @@ void Mode::_TakeOff::start(float alt_cm)
     copter.set_throttle_takeoff();
 
     // calculate climb rate
-    //const float speed = MIN(copter.wp_nav->get_default_speed_up(), MAX(copter.g.pilot_speed_up*2.0f/3.0f, copter.g.pilot_speed_up-50.0f));
-    float speed = MIN(copter.wp_nav->get_default_speed_up(), MAX(copter.g.pilot_speed_up*2.0f/3.0f, copter.g.pilot_speed_up-50.0f));
-
-	speed = 4.0f;
+    const float speed = MIN(copter.wp_nav->get_default_speed_up(), MAX(copter.g.pilot_speed_up*2.0f/3.0f, copter.g.pilot_speed_up-50.0f));
 
     // sanity check speed and target
     if (speed <= 0.0f || alt_cm <= 0.0f) {
@@ -98,8 +92,8 @@ void Mode::_TakeOff::get_climb_rates(float& pilot_climb_rate,
     }
 
     // acceleration of 50cm/s/s
-    static constexpr float TAKEOFF_ACCEL = 5.0f;
-    const float takeoff_minspeed = MIN(10.0f, max_speed);
+    static constexpr float TAKEOFF_ACCEL = 50.0f;
+    const float takeoff_minspeed = MIN(50.0f, max_speed);
     const float time_elapsed = (millis() - start_ms) * 1.0e-3f;
     const float speed = MIN(time_elapsed * TAKEOFF_ACCEL + takeoff_minspeed, max_speed);
 
@@ -112,39 +106,14 @@ void Mode::_TakeOff::get_climb_rates(float& pilot_climb_rate,
                         (time_elapsed - time_to_max_speed) * max_speed;
     }
 
-#if 0 // YIG-CHG
     // check if the takeoff is over
     if (height_gained >= alt_delta) {
         stop();
     }
-#else
-	height_gained = height_gained;
-
-	//int32_t target_alt = copter.avoid.get_margin() * 100;
-	int32_t rng_alt = copter.flightmode->get_alt_above_ground_cm();
-
-	int32_t rel_alt = copter.current_loc.alt;
-	float nav_alt = copter.inertial_nav.get_altitude();
-
-	//if (rel_alt >= alt_delta && rng_alt >= target_alt)
-	if (rel_alt >= alt_delta)
-	{
-		stop();
-		copter.save_rel_alt = rel_alt;
-		copter.gcs().send_text(MAV_SEVERITY_INFO,"rel alt reached (%4.2f) (%4.2f) (%4.2f)", rel_alt*0.01f, rng_alt * 0.01f, nav_alt * 0.01f);
-	}
-#if 1
-	else if (rng_alt >= 130)
-	{
-		stop();
-		copter.save_rel_alt = rel_alt;
-		copter.gcs().send_text(MAV_SEVERITY_INFO,"rng alt reached (%4.2f) (%4.2f) (%4.2f)", rng_alt * 0.01, rel_alt * 0.01, nav_alt * 0.01);
-	}
-#endif
-#endif
 
     // if takeoff climb rate is zero return
-    if (speed <= 0.0f) {
+    if (speed <= 0.0f) // YIG-Jawoldo : 조종기의 쓰로틀 값만 사용
+	{
         takeoff_climb_rate = 0.0f;
         return;
     }
@@ -152,31 +121,22 @@ void Mode::_TakeOff::get_climb_rates(float& pilot_climb_rate,
     // default take-off climb rate to maximum speed
     takeoff_climb_rate = speed;
 
-
-	if(AP_HAL::millis() - copter.loop_time_3 > 1000)
-	{
-		//copter.gcs().send_text(MAV_SEVERITY_INFO,"takeoff cur_alt (%5d)", ground_cm);
-		//copter.gcs().send_text(MAV_SEVERITY_INFO,"climb_rate (p=%4.0f, t=%4.0f)", pilot_climb_rate, takeoff_climb_rate);
-	    copter.loop_time_3 = AP_HAL::millis();
-	}
-
-
     // if pilot's commands descent
-    if (pilot_climb_rate < 0.0f) {
+    if (pilot_climb_rate < 0.0f) { // 조종기 값을 내렸는데
         // if overall climb rate is still positive, move to take-off climb rate
-        if (takeoff_climb_rate + pilot_climb_rate > 0.0f) {
-            takeoff_climb_rate = takeoff_climb_rate + pilot_climb_rate;
+        if (takeoff_climb_rate + pilot_climb_rate > 0.0f) { // takeoff_climb_rate가 조종기 내린값보다 크면 차이만큼 climb rate를 올림
+            takeoff_climb_rate = takeoff_climb_rate + pilot_climb_rate; // 차이만큼만 올림
             pilot_climb_rate = 0.0f;
-        } else {
+        } else { // 조종기 내린 값이 takeoff_climb_rate 보다 크면 차이만큼 내림
             // if overall is negative, move to pilot climb rate
             pilot_climb_rate = pilot_climb_rate + takeoff_climb_rate;
             takeoff_climb_rate = 0.0f;
         }
-    } else { // pilot commands climb
+    } else { // pilot commands climb // 조종기 값을 올렸다면
         // pilot climb rate is zero until it surpasses the take-off climb rate
-        if (pilot_climb_rate > takeoff_climb_rate) {
-            pilot_climb_rate = pilot_climb_rate - takeoff_climb_rate;
-        } else {
+        if (pilot_climb_rate > takeoff_climb_rate) { // 조종기 값이 takeoff_climb_rate보다 크면
+            pilot_climb_rate = pilot_climb_rate - takeoff_climb_rate; // 플러스 하지말고 조종기 값과의 차이만큼만 올림
+        } else { // takeoff_climb_rate가 조종기 값보다 크다면 그냥 takeoff_climb_rate 값만 적용
             pilot_climb_rate = 0.0f;
         }
     }

@@ -8,6 +8,7 @@
 
 // counter to verify landings
 static uint32_t land_detector_count = 0;
+//static uint32_t _detector_count = 0; // YIG
 
 // run land and crash detectors
 // called at MAIN_LOOP_RATE
@@ -82,6 +83,18 @@ void Copter::update_land_detector()
         	gcs().send_text(MAV_SEVERITY_INFO,"land detect : %2d %2d %2d %2d", motor_at_lower_limit, accel_stationary, descent_rate_low, rangefinder_check);
             copter.loop_time_2 = AP_HAL::millis();                                                                                                                                                     
         }
+
+#if 0 // YIG-ADD for Jawoldo
+        if (!motor_at_lower_limit && (accel_stationary && descent_rate_low && rangefinder_check)) 
+		{
+            if( _detector_count < ((float)LAND_DETECTOR_TRIGGER_SEC)*scheduler.get_loop_rate_hz()) {
+                _detector_count++;
+            } else {
+				SRV_Channels::set_emergency_stop(true);
+                set_land_complete(true);
+            }
+		}
+#endif
 
         if (motor_at_lower_limit && accel_stationary && descent_rate_low && rangefinder_check) {
             // landed criteria met - increment the counter and check if we've triggered

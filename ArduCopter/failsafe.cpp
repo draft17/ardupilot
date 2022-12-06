@@ -158,6 +158,7 @@ bool Copter::check_diagnosis()
 			gcs().send_text(MAV_SEVERITY_CRITICAL, "Switch-Over to FC #2");
 			AP_Notify::diag_status.fc_switch_over = true;
 			msc.switch_over(0);
+			Log_Write_Event(DATA_SWITCHOVER_HAPPENED);
 		}
 	}
 

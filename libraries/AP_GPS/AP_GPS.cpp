@@ -329,6 +329,8 @@ void AP_GPS::init(const AP_SerialManager& serial_manager)
 {
     primary_instance = 0;
 
+    printf("AP_GPS::init\n");   //jhkang
+
     // search for serial ports with gps protocol
     uint8_t uart_idx = 0;
     for (uint8_t i=0; i<GPS_MAX_RECEIVERS; i++) {

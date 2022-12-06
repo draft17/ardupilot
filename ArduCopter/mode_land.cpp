@@ -12,9 +12,11 @@ bool ModeLand::init(bool ignore_checks)
     // check if we have GPS and decide which LAND we're going to do
     land_with_gps = copter.position_ok();
 
+#if 0
 	// YIG-IMSI for GTB LAND
 	land_with_gps = false;
 	//
+#endif
 
     if (land_with_gps) {
         // set target to stopping point

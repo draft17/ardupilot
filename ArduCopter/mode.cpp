@@ -410,7 +410,11 @@ void Mode::get_pilot_desired_lean_angles(float &roll_out, float &pitch_out, floa
     pitch_out = channel_pitch->get_control_in();
 
 	// limit max lean angle
+#if 0 // YIG-IMSI for PAV #3 비행
     angle_limit = constrain_float(angle_limit, 1000.0f, angle_max);
+#else
+    angle_limit = constrain_float(angle_limit, 100.0f, angle_max);
+#endif
 
     // scale roll and pitch inputs to ANGLE_MAX parameter range
     float scaler = angle_max/(float)ROLL_PITCH_YAW_INPUT_MAX;

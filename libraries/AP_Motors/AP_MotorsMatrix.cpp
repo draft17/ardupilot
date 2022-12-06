@@ -322,7 +322,9 @@ void AP_MotorsMatrix::output_armed_stabilizing()
             thr_adj = 0.0f;
         } else if (thr_adj > 1.0f - (throttle_thrust_best_rpy + rpy_high)) {
             // Throttle can't be increased to desired value
+#if 0 // YIG-IMSI for PAV#3
             thr_adj = 1.0f - (throttle_thrust_best_rpy + rpy_high);
+#endif
             limit.throttle_upper = true;
         }
     }

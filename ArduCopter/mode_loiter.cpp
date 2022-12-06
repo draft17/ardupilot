@@ -185,7 +185,7 @@ void ModeLoiter::run()
         target_climb_rate = get_avoidance_adjusted_climbrate(target_climb_rate);
 #endif
 
-#if 1 // YIG-ADD
+#if 0 // YIG-ADD
 		if (copter.rangefinder_alt_ok() && copter.rangefinder_state.alt_cm >= 120.0f)
         {                                                                                                                                                                                                  
 	        target_climb_rate = 0;

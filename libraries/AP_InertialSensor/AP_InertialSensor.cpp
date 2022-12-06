@@ -909,9 +909,11 @@ bool AP_InertialSensor::_calculate_trim(const Vector3f &accel_sample, float& tri
 void
 AP_InertialSensor::init_gyro()
 {
+    printf(">>init_gyro\n"); //jkang
     _init_gyro();
 
     // save calibration
+    printf(">>save gyro cal\n"); //jkang
     _save_gyro_calibration();
 }
 

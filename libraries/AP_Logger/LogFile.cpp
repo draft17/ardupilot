@@ -157,7 +157,7 @@ void AP_Logger::Write_GPS(uint8_t i, uint64_t time_us)
         ground_course : gps.ground_course(i),
         vel_z         : gps.velocity(i).z,
         yaw           : yaw_deg,
-        used          : (uint8_t)(gps.primary_sensor() == i)
+        used          : gps.primary_sensor()
     };
     WriteBlock(&pkt, sizeof(pkt));
 

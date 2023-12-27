@@ -71,6 +71,10 @@ public:
     // get a copy of state structure
     void get_state(EFI_State &state);
 
+	void request_startup() { state.req_engine_startup = true; }
+	void request_flameout() { state.req_engine_flameout = true; }
+	void request_throttle(uint16_t level) { state.req_engine_throttle_level = level; }
+
     // Parameter info
     static const struct AP_Param::GroupInfo var_info[];
 

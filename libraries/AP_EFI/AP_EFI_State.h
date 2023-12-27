@@ -127,6 +127,10 @@ struct EFI_State {
     // When this structure was last updated (milliseconds)
     uint32_t last_updated_ms;
 
+	bool req_engine_startup;
+	bool req_engine_flameout;
+	uint16_t req_engine_throttle_level;
+
     // Current overall engine state
     Engine_State engine_state;
  

@@ -380,6 +380,21 @@ uint16_t crc16_ccitt_GDL90(const uint8_t *buf, uint32_t len, uint16_t crc)
     return crc;
 }
 
+// YIG-ADD
+uint16_t crc16_ccitt_false(const uint8_t *buf, uint32_t len, uint16_t crc)
+{
+    crc = 0xffff;
+
+    while(len-- != 0){
+        uint16_t high = (unsigned int)(crc/256);
+        crc <<= 8;
+        crc ^= crc16tab[high^*buf];
+        buf++;
+    }
+
+    return crc;
+}
+
 /**
  * Calculate Modbus CRC16 for array of bytes
  * 

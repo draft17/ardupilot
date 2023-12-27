@@ -17,6 +17,7 @@
 
 #if HAL_EFI_ENABLED
 
+#include "AP_EFI_Serial_DLA.h"
 #include "AP_EFI_Serial_MS.h"
 #include "AP_EFI_Serial_Lutan.h"
 #include "AP_EFI_NWPMU.h"
@@ -87,9 +88,9 @@ void AP_EFI::init(void)
     switch ((Type)type.get()) {
     case Type::NONE:
         break;
-#if AP_EFI_SERIAL_MS_ENABLED
+#if AP_EFI_SERIAL_DLA_ENABLED
     case Type::MegaSquirt:
-        backend = new AP_EFI_Serial_MS(*this);
+        backend = new AP_EFI_Serial_DLA232(*this);
         break;
 #endif
 #if AP_EFI_SERIAL_LUTAN_ENABLED
@@ -129,7 +130,7 @@ void AP_EFI::update()
     if (backend) {
         backend->update();
 #if HAL_LOGGING_ENABLED
-        log_status();
+        //log_status();
 #endif
     }
 }

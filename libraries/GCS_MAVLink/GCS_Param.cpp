@@ -19,6 +19,8 @@
 #include "GCS.h"
 #include <AP_Logger/AP_Logger.h>
 #include <AP_BoardConfig/AP_BoardConfig.h>
+#include <AP_Notify/AP_Notify.h>        // jhkang
+#include <stdio.h>                      // jhkang
 
 extern const AP_HAL::HAL& hal;
 
@@ -27,6 +29,8 @@ ObjectBuffer<GCS_MAVLINK::pending_param_request> GCS_MAVLINK::param_requests(20)
 ObjectBuffer<GCS_MAVLINK::pending_param_reply> GCS_MAVLINK::param_replies(5);
 
 bool GCS_MAVLINK::param_timer_registered;
+
+#define PARM_THROTTLE_OFFSET 3
 
 /**
  * @brief Send the next pending parameter, called from deferred message
@@ -266,6 +270,34 @@ void GCS_MAVLINK::handle_param_set(const mavlink_message_t &msg)
     char key[AP_MAX_NAME_SIZE+1];
     strncpy(key, (char *)packet.param_id, AP_MAX_NAME_SIZE);
     key[AP_MAX_NAME_SIZE] = 0;
+
+    printf("key = %s v=%f\n", packet.param_id, packet.param_value);
+
+#if 1 // jhkang-ADD for engine start / flameout test
+    // if(!strcmp(key, "ENGINE_CMD") && old_value == 0) {
+    if(!strcmp(key, "ENGINE_CMD"))
+    {
+        //if(packet.param_value != 0 && packet.param_value < 3) {
+        if(static_cast<int>(packet.param_value) != 0 && static_cast<int>(packet.param_value) < 14) {
+            if( static_cast<int>(packet.param_value) == 1) {       // engine start
+                AP_Notify::engine_cmd.engine_start = true;
+                gcs().send_text(MAV_SEVERITY_INFO, "Received Engine_Start Cmd");
+                printf(">> Received Engine_Start Cmd\n");
+            }
+            else if( static_cast<int>(packet.param_value) == 2) {  // engine flameout
+                AP_Notify::engine_cmd.engine_flameout = true;
+                gcs().send_text(MAV_SEVERITY_INFO, "Received Engine_FlameOut Cmd");
+                printf(">> Received Engine_FlameOut Cmd\n");
+            }
+            else {  // engine throttle 0~100, param_value = 3~13
+            //else if( static_cast<int>(packet.param_value) == 3) {  // engine flameout
+                AP_Notify::engine_cmd.engine_throttle = static_cast<int>(packet.param_value) - PARM_THROTTLE_OFFSET;
+                gcs().send_text(MAV_SEVERITY_INFO, "Received eng_throttle_%d Cmd", AP_Notify::engine_cmd.engine_throttle);
+                printf(">> Received eng_throttle_%d Cmd\n", AP_Notify::engine_cmd.engine_throttle);
+            }
+        }
+    }
+#endif
 
     // find existing param so we can get the old value
     uint16_t parameter_flags = 0;

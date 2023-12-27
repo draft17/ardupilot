@@ -158,10 +158,18 @@ public:
         uint32_t temp_cal_failed        : 1;    // 1 when temperature calibration has just failed
     };
 
+    // jhkang-ADD
+    struct notify_engine_cmd {
+        bool engine_start;              
+        bool engine_flameout;
+        uint8_t engine_throttle;
+    };
+
     // The notify flags and values are static to allow direct class access
     // without declaring the object.
     static struct notify_flags_and_values_type flags;
     static struct notify_events_type events;
+    static struct notify_engine_cmd  engine_cmd;    // jhkang-ADD
 
     // initialisation
     void init(void);

@@ -71,32 +71,33 @@ private:
     uint32_t ack_fail_cnt;
     uint32_t dump_time;
 
-    struct PACKED Status {
-		uint32_t pkt_length;
-        uint16_t reserved_78;
-		uint8_t  command;
-		uint8_t  reserved_1015[6];
-		uint16_t rpm;
-		uint8_t  reserved_1820[3];
-		uint8_t  engine_state;
-		uint8_t  reserved_2225[4];
-		uint16_t atmospheric_pressure;
-		uint8_t  reserved_2829[2];
-		uint16_t atmospheric_temperature;
-		uint8_t  reserved_3235[4];
-		uint16_t battery_voltage;
-		uint8_t  reserved_3889[52];
-		uint8_t  startup_success;
-		uint32_t engine_fuel;
-		uint16_t cylinder_1_temp;
-		uint16_t cylinder_3_temp;
-		uint16_t cylinder_4_temp;
-		uint16_t cylinder_2_temp;
-		uint8_t  reserved_104107[4];
-		uint16_t rt_engine_fuel;
-		uint8_t  reserved_110119[10];
-		uint32_t runtime;
-    };
+    struct PACKED Status {                      // [1][2] : frame header
+		uint32_t pkt_length;                    // [3][4][5][6]
+        uint16_t reserved_78;                   // [7][8]
+		uint8_t  command;                       // [9]
+		uint8_t  reserved_1015[6];              // [10][11][12][13][14][15]
+		uint16_t rpm;                           // [16][17]
+		uint8_t  reserved_1820[3];              // [18][19][20]
+		uint8_t  engine_state;                  // [21]
+		uint8_t  reserved_2225[4];              // [22][23][24][25]
+		uint16_t atmospheric_pressure;          // [26][27]
+		uint8_t  reserved_2829[2];              // [28][29]
+		uint16_t atmospheric_temperature;       // [30][31]
+		uint8_t  reserved_3235[4];              // [32][33][34][35]
+		uint16_t battery_voltage;               // [36][37]
+		uint8_t  reserved_3889[52];             // [38]...[89]
+		uint8_t  startup_success;               // [90]
+        uint8_t  reserved_91;                   // [91]
+		uint32_t engine_fuel;                   // [92][93][94][95]
+		uint16_t cylinder_1_temp;               // [96][97]
+		uint16_t cylinder_3_temp;               // [98][99]
+		uint16_t cylinder_4_temp;               // [100][101]
+		uint16_t cylinder_2_temp;               // [102][103]
+		uint8_t  reserved_104107[4];            // [104][105][106][107]
+		uint16_t rt_engine_fuel;                // [108][109]
+		uint8_t  reserved_110119[10];           // [110]...[119]
+		uint32_t runtime;                       // [120][121][122][123]
+    };                                          // [124][125]-CRC : [126][127]-frame end
     //static_assert(sizeof(Status) == 121, "incorrect Status length");
     void hexdump(void *ptr, int buflen);    // jhkang - ADD
     void check_response();

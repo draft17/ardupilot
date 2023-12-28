@@ -123,7 +123,8 @@ void AP_EFI_Serial_DLA232::check_response()
         header[1] = port->read();
 
         for (int i = 0; i < (DLA232_STATUS_PKT_SIZE - 6); i++) {
-            raw_data[i] = read_byte_CRC16();
+            // raw_data[i] = read_byte_CRC16();
+            raw_data[i] = port->read();
         }
 
 #if 0
@@ -136,11 +137,15 @@ void AP_EFI_Serial_DLA232::check_response()
 		checksum += port->read();
 
         tail[0] = port->read(); tail[1] = port->read();
+        
+        computed_checksum = crc16_ccitt_false(raw_data, DLA232_STATUS_PKT_SIZE-6, 0);
 
-        if (header[0] != 0xF1 && header[1] != 0x1F && tail[0] != 0xF2 && tail[1] != 0x2F) {
+        if (header[0] != 0xF1 || header[1] != 0x1F || tail[0] != 0xF2 || tail[1] != 0x2F) {
 			ack_fail_cnt++;
+            printf("ack_fail_cnt=%d\n", ack_fail_cnt);
 			port->discard_input();
 		}
+        #if 1
 		else if (checksum != computed_checksum) {
             crc_fail_cnt++;
             port->discard_input();
@@ -148,12 +153,15 @@ void AP_EFI_Serial_DLA232::check_response()
             if ( (dump_time == 0) || (AP_HAL::millis() - dump_time > 2000)) {
                 dump_time = AP_HAL::millis();
             #endif
-                printf("crc_fail_cnt=%d : rec_crc=0x%x : computed_crc=0x%x",crc_fail_cnt, checksum, computed_checksum);
-                hexdump(raw_data, DLA232_STATUS_PKT_SIZE);    // jhkang - dump data
+                printf("*");
+                //printf("crc_fail_cnt=%d : rec_crc=0x%x : computed_crc=0x%x\n",crc_fail_cnt, checksum, computed_checksum);
+                //hexdump(raw_data, DLA232_STATUS_PKT_SIZE);    // jhkang - dump data
             #if 0
             }
             #endif
-        } else {
+        }
+        #endif
+         else {
             uptime = now - last_packet_ms;
             last_packet_ms = now;
             internal_state.last_updated_ms = now;
@@ -269,7 +277,7 @@ void AP_EFI_Serial_DLA232::send_request()
         last_req_send_throttle_ms = now;
     }
 	// send engine status request
-	else if (now - last_req_send_status_ms > 100)
+	else if (now - last_req_send_status_ms > 150)
 	{
        	send_request_status();
         waiting_response = true;
@@ -401,6 +409,8 @@ void AP_EFI_Serial_DLA232::decode_data()
     internal_state.fuel_pressure 					= (float)status->cylinder_2_temp*0.1;
     internal_state.estimated_consumed_fuel_volume_cm3 = (float)status->rt_engine_fuel*0.1;
     internal_state.spark_dwell_time_ms 				= status->runtime;
+
+    printf("startup_s=%x\n",status->startup_success);
 }
 
 uint8_t AP_EFI_Serial_DLA232::read_byte_CRC16()
@@ -413,9 +423,9 @@ uint8_t AP_EFI_Serial_DLA232::read_byte_CRC16()
 
 uint16_t AP_EFI_Serial_DLA232::CRC16_compute_byte(uint16_t crc, uint8_t data)
 {
-	    crc ^= ~0U;
+	    //crc ^= ~0U;
 		crc = crc16_ccitt_false(&data, 1, crc);
-		crc ^= ~0U;
+		//crc ^= ~0U;
 		return crc;
 }
 

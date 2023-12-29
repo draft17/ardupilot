@@ -34,7 +34,7 @@ const AP_FWVersion AP_FWVersion::fwver{
     .middleware_name = nullptr,
     .middleware_hash_str = nullptr,
 #ifdef CHIBIOS_GIT_VERSION
-    .os_name = "ChibiOS",
+    .os_name = "Soomvi SW",
     .os_hash_str = CHIBIOS_GIT_VERSION,
 #else
     .os_name = nullptr,

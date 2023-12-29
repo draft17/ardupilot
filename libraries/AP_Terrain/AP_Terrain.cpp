@@ -354,6 +354,13 @@ void AP_Terrain::log_terrain_data()
         // we don't know where we are
         return;
     }
+
+ #if 1 // jhkang - ADD
+     if (gcs().is_gps_failsafe) {
+         return;
+     }
+ #endif
+
     float terrain_height = 0;
     float current_height = 0;
     uint16_t pending, loaded;

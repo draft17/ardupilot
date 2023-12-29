@@ -14,6 +14,19 @@ bool ModeAltHold::init(bool ignore_checks)
         pos_control->set_desired_velocity_z(inertial_nav.get_velocity_z());
     }
 
+	// YIG-ADD
+    if(copter.control_mode_reason == ModeReason::EKF_FAILSAFE)
+    {
+        //rtl_bearing = home_bearing();
+
+        _state = SubMode::GlitchAltHold_Starting;
+        gcs().send_text(MAV_SEVERITY_INFO, "AltHold on GPS Fail");
+        gcs().send_text(MAV_SEVERITY_INFO, "home bearing = %ld", (long)copter.rtl_bearing);
+    }
+    else
+        _state = SubMode::GlitchAltHold_None;
+    //
+
     return true;
 }
 
@@ -40,6 +53,32 @@ void ModeAltHold::run()
     // get pilot desired climb rate
     float target_climb_rate = get_pilot_desired_climb_rate(channel_throttle->get_control_in());
     target_climb_rate = constrain_float(target_climb_rate, -get_pilot_speed_dn(), g.pilot_speed_up);
+
+	// YIG-ADD
+    if(copter.control_mode_reason == ModeReason::EKF_FAILSAFE)
+    {
+        switch (_state) {
+
+        case SubMode::GlitchAltHold_None:
+            break;
+
+        case SubMode::GlitchAltHold_Starting:
+        case SubMode::GlitchAltHold_RotateToHome:
+            target_roll = 0; target_pitch = 0; target_yaw_rate = 0; target_climb_rate = 0;
+            break;
+
+        case SubMode::GlitchAltHold_Climb:
+            target_roll = 0; target_pitch = 0; target_yaw_rate = 0;
+            target_climb_rate = g.pilot_speed_up * 0.5f;
+            break;
+
+        case SubMode::GlitchAltHold_ReturnToHome:
+            target_yaw_rate = 0; target_climb_rate = 0;
+            auto_get_pilot_desired_lean_angles(target_roll, target_pitch, copter.aparm.angle_max, attitude_control->get_althold_lean_angle_max(), _yaw_direc);
+            break;
+        }
+    }
+	//
 
     // Alt Hold State Machine Determination
     AltHoldModeState althold_state = get_alt_hold_state(target_climb_rate);
@@ -82,25 +121,125 @@ void ModeAltHold::run()
     case AltHold_Flying:
         motors->set_desired_spool_state(AP_Motors::DesiredSpoolState::THROTTLE_UNLIMITED);
 
+		// YIG-ADD : for GPS_Glitch
+        if(copter.control_mode_reason == ModeReason::EKF_FAILSAFE)
+        {
+            switch (_state) {
+
+            case SubMode::GlitchAltHold_None:
+                break;
+
+            case SubMode::GlitchAltHold_Starting:
+                //auto_yaw.set_yaw_angle_rate(copter.rtl_bearing * 0.01f, 0.0f);        // 2nd argument 0.0f 일때 ATC_SLEW_YAW 값을 사용 함
+                auto_yaw.set_fixed_yaw(copter.rtl_bearing * 0.01f, 0.0f, 0, 0);     // jhkang
+                _state = SubMode::GlitchAltHold_RotateToHome;
+                gcs().send_text(MAV_SEVERITY_INFO, "starting RotateToHome");
+                break;
+
+            case SubMode::GlitchAltHold_RotateToHome:
+                //pos_control->set_pos_target_z_from_climb_rate_cm(target_climb_rate);
+                pos_control->set_alt_target_from_climb_rate_ff(target_climb_rate, G_Dt, false); // jhkang
+
+                attitude_control->input_euler_angle_roll_pitch_yaw(target_roll, target_pitch, auto_yaw.yaw(), true);
+
+#if 0
+                /*
+                yaw (-) : clockwise
+                yaw (+) : count clockwise
+                roll (-) : go left
+                roll (+) : go right
+                */
+
+                if (!_adj_yaw) {
+                    // jhkang-ADD
+                    _yaw_direc = wrap_180_cd(ahrs.yaw_sensor-copter.rtl_bearing);
+                    if (_yaw_direc >= 0) {
+                        copter.rtl_bearing -= 3000;
+                        auto_yaw.set_fixed_yaw(copter.rtl_bearing * 0.01f, 0.0f, 0, 0);
+                        attitude_control->input_euler_angle_roll_pitch_yaw(target_roll, target_pitch, auto_yaw.yaw(), true);
+                    }
+                    else {
+                        copter.rtl_bearing += 3000;
+                        auto_yaw.set_fixed_yaw(copter.rtl_bearing * 0.01f, 0.0f, 0, 0);
+                        attitude_control->input_euler_angle_roll_pitch_yaw(target_roll, target_pitch, auto_yaw.yaw(), true);
+                    }
+                    _adj_yaw = 1;
+                }
+#endif
+                if (((abs(wrap_180_cd(ahrs.yaw_sensor-copter.rtl_bearing))) > 40) && ((abs(wrap_180_cd(ahrs.yaw_sensor-copter.rtl_bearing))) < 200))
+                {
+                    _yaw_direc = wrap_180_cd(ahrs.yaw_sensor-copter.rtl_bearing);
+                }
+
+				if ((abs(wrap_180_cd(ahrs.yaw_sensor-copter.rtl_bearing))) <= 30)   // 0.3 degree
+                {
+#if 0
+                    takeoff.gps_glitch_start(constrain_float(1000.0f,0.0f,10000.0f));
+                    _state = SubMode::GlitchAltHold_Climb;
+                    gcs().send_text(MAV_SEVERITY_INFO, "starting Climb");
+#else
+                    _state = SubMode::GlitchAltHold_ReturnToHome;
+                    _loop_timer = AP_HAL::millis();
+                    gcs().send_text(MAV_SEVERITY_INFO, "starting ReturnToHome");
+#endif
+                }
+                break;
+
+            case SubMode::GlitchAltHold_Climb:
+
+#if 0
+                takeoff.do_pilot_gps_glitch_takeoff(target_climb_rate);
+
+                attitude_control->input_euler_angle_roll_pitch_euler_rate_yaw(target_roll, target_pitch, target_yaw_rate);
+
+                if(takeoff.gps_glitch_running() == false)
+                {
+                    _state = SubMode::GlitchAltHold_ReturnToHome;
+                    gcs().send_text(MAV_SEVERITY_INFO, "starting ReturnToHome");
+                }
+#endif
+                break;
+
+            case SubMode::GlitchAltHold_ReturnToHome:
+            //  if(AP_HAL::millis() - _loop_timer > 3000)
+                {
+                    pos_control->set_alt_target_from_climb_rate_ff(target_climb_rate, G_Dt, false); // jhkang
+                    attitude_control->input_euler_angle_roll_pitch_euler_rate_yaw(target_roll, target_pitch, target_yaw_rate);
+                }
+#if 0
+                else
+                {
+                    pos_control->set_alt_target_from_climb_rate_ff(0, G_Dt, false); // jhkang
+                    attitude_control->input_euler_angle_roll_pitch_euler_rate_yaw(0, 0, 0);
+                }
+#endif
+                break;
+            }
+
+            pos_control->update_z_controller();
+
+        } // for GPS Glitch
+        else
+        {
 #if AC_AVOID_ENABLED == ENABLED
-        // apply avoidance
-        copter.avoid.adjust_roll_pitch(target_roll, target_pitch, copter.aparm.angle_max);
+        	// apply avoidance
+        	copter.avoid.adjust_roll_pitch(target_roll, target_pitch, copter.aparm.angle_max);
 #endif
 
-        // adjust climb rate using rangefinder
-        target_climb_rate = copter.surface_tracking.adjust_climb_rate(target_climb_rate);
+        	// adjust climb rate using rangefinder
+        	target_climb_rate = copter.surface_tracking.adjust_climb_rate(target_climb_rate);
 
-        // get avoidance adjusted climb rate
-        target_climb_rate = get_avoidance_adjusted_climbrate(target_climb_rate);
+        	// get avoidance adjusted climb rate
+        	target_climb_rate = get_avoidance_adjusted_climbrate(target_climb_rate);
 
-        pos_control->set_alt_target_from_climb_rate_ff(target_climb_rate, G_Dt, false);
+        	pos_control->set_alt_target_from_climb_rate_ff(target_climb_rate, G_Dt, false);
+
+			// call attitude controller
+        	attitude_control->input_euler_angle_roll_pitch_euler_rate_yaw(target_roll, target_pitch, target_yaw_rate);
+
+        	// call z-axis position controller
+        	pos_control->update_z_controller();
+		}
         break;
     }
-
-    // call attitude controller
-    attitude_control->input_euler_angle_roll_pitch_euler_rate_yaw(target_roll, target_pitch, target_yaw_rate);
-
-    // call z-axis position controller
-    pos_control->update_z_controller();
-
 }

@@ -50,7 +50,9 @@ const AP_Param::GroupInfo AP_Follow::var_info[] = {
     // @Description: Follow target's mavlink system id
     // @Range: 0 255
     // @User: Standard
-    AP_GROUPINFO("_SYSID", 3, AP_Follow, _sysid, 0),
+	// jhkang-CHG
+    //AP_GROUPINFO("_SYSID", 3, AP_Follow, _sysid, 0),
+    AP_GROUPINFO("_SYSID", 3, AP_Follow, _sysid, 100),
 
     // 4 is reserved for MARGIN parameter
 

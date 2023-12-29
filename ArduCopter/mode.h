@@ -80,6 +80,9 @@ public:
 
     // pilot input processing
     void get_pilot_desired_lean_angles(float &roll_out, float &pitch_out, float angle_max, float angle_limit) const;
+	// YIG-ADD
+	void auto_get_pilot_desired_lean_angles(float &roll_out, float &pitch_out, float angle_max, float angle_limit, int32_t _yaw_value) const;
+	//
     float get_pilot_desired_yaw_rate(int16_t stick_angle);
     float get_pilot_desired_throttle() const;
 
@@ -311,12 +314,30 @@ public:
         return !must_navigate;
     }
 
+	// YIG-ADD
+    // GPS Glitch AltHold states
+    enum class SubMode : uint8_t {
+        GlitchAltHold_None,
+        GlitchAltHold_Starting,
+        GlitchAltHold_RotateToHome,
+        GlitchAltHold_Climb,
+        GlitchAltHold_ReturnToHome
+    };
+    //
+
 protected:
 
     const char *name() const override { return "ALT_HOLD"; }
     const char *name4() const override { return "ALTH"; }
 
 private:
+	// YIG-ADD
+    int32_t _loop_timer;
+    SubMode _state = SubMode::GlitchAltHold_None;
+    bool _state_complete = false; // set to true if the current state is completed
+    int32_t _yaw_direc; // jhkang
+    int8_t _adj_yaw; //jhkang
+    //
 
 };
 

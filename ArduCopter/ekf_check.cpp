@@ -44,7 +44,12 @@ void Copter::ekf_check()
     }
 
     // compare compass and velocity variance vs threshold
+#if 1 // YIG-CHG
+	const bool has_position = ekf_position_ok();
+    if (!has_position || ekf_over_threshold()) {
+#else
     if (ekf_over_threshold()) {
+#endif
         // if compass is not yet flagged as bad
         if (!ekf_check_state.bad_variance) {
             // increase counter
@@ -64,13 +69,39 @@ void Copter::ekf_check()
                 AP::logger().Write_Error(LogErrorSubsystem::EKFCHECK, LogErrorCode::EKFCHECK_BAD_VARIANCE);
                 // send message to gcs
                 if ((AP_HAL::millis() - ekf_check_state.last_warn_time) > EKF_CHECK_WARNING_TIME) {
-                    gcs().send_text(MAV_SEVERITY_CRITICAL,"EKF variance");
+					// YIG-CHG
+					if (!has_position) {
+                    	gcs().send_text(MAV_SEVERITY_CRITICAL,"GPS Failsafe");
+					}
+					else {
+                    	gcs().send_text(MAV_SEVERITY_CRITICAL,"EKF variance");
+					}
                     ekf_check_state.last_warn_time = AP_HAL::millis();
+					gcs().is_gps_failsafe = true;	// jhkang
                 }
+				// jhkang - ADD
+				else { 
+					gcs().is_gps_failsafe = false;
+				}
+
+#if 1 // YIG-CHG
+                float position_variance, vel_variance, height_variance, tas_variance;
+                Vector3f mag_variance;
+                Vector2f offset;
+                ahrs.get_variances(vel_variance, position_variance, height_variance, mag_variance, tas_variance, offset);
+
+                //if(!has_position || (position_variance >= 0.8f))
+                if(!has_position || (position_variance >= g.fs_ekf_thresh)) // jhkang-tentative
+                    failsafe_ekf_event(true); // force althold
+                else
+                    failsafe_ekf_event(false);
+#else
                 failsafe_ekf_event();
+#endif
             }
         }
     } else {
+		gcs().is_gps_failsafe = false;
         // reduce counter
         if (ekf_check_state.fail_count > 0) {
             ekf_check_state.fail_count--;
@@ -125,6 +156,12 @@ bool Copter::ekf_over_threshold()
         return true;
     }
 
+#if 1 // YIG-ADD
+    //if (position_variance >= 0.8f)
+    if (position_variance >= g.fs_ekf_thresh)   //jhkang-tentative
+        return true;
+#endif
+
     // either optflow relative or absolute position estimate OK
     if (optflow_position_ok() || ekf_position_ok()) {
         return false;
@@ -134,7 +171,11 @@ bool Copter::ekf_over_threshold()
 
 
 // failsafe_ekf_event - perform ekf failsafe
+#if 1 // YIG-CHG
+void Copter::failsafe_ekf_event(bool force_althold)
+#else
 void Copter::failsafe_ekf_event()
+#endif
 {
     // return immediately if ekf failsafe already triggered
     if (failsafe.ekf) {
@@ -155,6 +196,16 @@ void Copter::failsafe_ekf_event()
     if (!copter.flightmode->requires_GPS() && (g.fs_ekf_action != FS_EKF_ACTION_LAND_EVEN_STABILIZE)) {
         return;
     }
+
+	// YIG-ADD
+    if(force_althold) {
+        // AltHold
+        if (!set_mode(Mode::Number::ALT_HOLD, ModeReason::EKF_FAILSAFE)) {
+            set_mode_land_with_pause(ModeReason::EKF_FAILSAFE);
+        }
+        return;
+    }
+    //
 
     // take action based on fs_ekf_action parameter
     switch (g.fs_ekf_action) {

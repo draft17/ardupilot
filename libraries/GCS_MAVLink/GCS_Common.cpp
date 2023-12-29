@@ -406,6 +406,12 @@ void GCS_MAVLINK::send_ahrs2()
 
 void GCS_MAVLINK::send_ahrs3()
 {
+#if 1 // jhkang - ADD
+	if (gcs().is_gps_failsafe) {
+		return;
+	}
+#endif
+
 #if AP_AHRS_NAVEKF_AVAILABLE
     const NavEKF2 &ekf2 = AP::ahrs_navekf().get_NavEKF2_const();
     if (ekf2.activeCores() > 0 &&
@@ -3333,7 +3339,8 @@ void GCS_MAVLINK::send_banner()
     // send system ID if we can
     char sysid[40];
     if (hal.util->get_system_id(sysid)) {
-        send_text(MAV_SEVERITY_INFO, "%s", sysid);
+        //send_text(MAV_SEVERITY_INFO, "%s", sysid);
+        send_text(MAV_SEVERITY_INFO, "Soomvi FC");
     }
 
     // send RC output mode info if available
@@ -4155,17 +4162,33 @@ void GCS_MAVLINK::send_global_position_int()
         vel.zero();
     }
 
-    mavlink_msg_global_position_int_send(
-        chan,
-        AP_HAL::millis(),
-        global_position_current_loc.lat, // in 1E7 degrees
-        global_position_current_loc.lng, // in 1E7 degrees
-        global_position_int_alt(),       // millimeters above ground/sea level
-        global_position_int_relative_alt(), // millimeters above home
-        vel.x * 100,                     // X speed cm/s (+ve North)
-        vel.y * 100,                     // Y speed cm/s (+ve East)
-        vel.z * 100,                     // Z speed cm/s (+ve Down)
-        ahrs.yaw_sensor);                // compass heading in 1/100 degree
+#if 1	// jhkang
+	if (!gcs().is_gps_failsafe) {
+		mavlink_msg_global_position_int_send(
+				chan,
+				AP_HAL::millis(),
+				global_position_current_loc.lat, // in 1E7 degrees
+				global_position_current_loc.lng, // in 1E7 degrees
+				global_position_int_alt(),       // millimeters above ground/sea level
+				global_position_int_relative_alt(), // millimeters above home
+				vel.x * 100,                     // X speed cm/s (+ve North)
+				vel.y * 100,                     // Y speed cm/s (+ve East)
+				vel.z * 100,                     // Z speed cm/s (+ve Down)
+				ahrs.yaw_sensor);                // compass heading in 1/100 degree
+	}
+#else	// jhkang - ORIGIN
+	mavlink_msg_global_position_int_send(
+			chan,
+			AP_HAL::millis(),
+			global_position_current_loc.lat, // in 1E7 degrees
+			global_position_current_loc.lng, // in 1E7 degrees
+			global_position_int_alt(),       // millimeters above ground/sea level
+			global_position_int_relative_alt(), // millimeters above home
+			vel.x * 100,                     // X speed cm/s (+ve North)
+			vel.y * 100,                     // Y speed cm/s (+ve East)
+			vel.z * 100,                     // Z speed cm/s (+ve Down)
+			ahrs.yaw_sensor);                // compass heading in 1/100 degree
+#endif
 }
 
 void GCS_MAVLINK::send_gimbal_report() const

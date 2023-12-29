@@ -343,6 +343,7 @@
 
 //////////////////////////////////////////////////////////////////////////////
 // SmartRTL - allows vehicle to retrace a (loop-eliminated) breadcrumb home
+// YIG-CHG
 #ifndef MODE_SMARTRTL_ENABLED
 # define MODE_SMARTRTL_ENABLED ENABLED
 #endif

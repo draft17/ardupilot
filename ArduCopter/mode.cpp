@@ -259,6 +259,11 @@ bool Copter::set_mode(Mode::Number mode, ModeReason reason)
         return false;
     }
 
+	// YIG-ADD
+    if (new_flightmode == &mode_althold && reason == ModeReason::EKF_FAILSAFE)
+        control_mode_reason = reason;
+    //
+
     if (!new_flightmode->init(ignore_checks)) {
         gcs().send_text(MAV_SEVERITY_WARNING,"Flight mode change failed");
         AP::logger().Write_Error(LogErrorSubsystem::FLIGHT_MODE, LogErrorCode(mode));
@@ -431,6 +436,64 @@ void Mode::get_pilot_desired_lean_angles(float &roll_out, float &pitch_out, floa
     // roll_out and pitch_out are returned
 }
 
+// YIG-ADD
+void Mode::auto_get_pilot_desired_lean_angles(float &roll_out, float &pitch_out, float angle_max, float angle_limit, int32_t _yaw_value) const
+{
+#if 0 // YIG-CHG
+    // throttle failsafe check
+    if (copter.failsafe.radio || !copter.ap.rc_receiver_present) {
+        roll_out = 0;
+        pitch_out = 0;
+        return;
+    }
+#endif
+
+#if 0
+    // fetch roll and pitch inputs
+    if(_yaw_value > 0) // 시계방향
+    {
+        roll_out = ((float)copter.parachute.alt_min());
+    }
+    else if(_yaw_value < 0) // 반시계방향
+    {
+        roll_out = -((float)copter.parachute.alt_min());
+    }
+    else
+        roll_out = 0;
+#endif
+
+    roll_out = channel_roll->get_control_in();
+
+	// YIG-ADD
+    pitch_out = -((float)copter.avoid.get_ang_max());
+
+    if(fabs(pitch_out) < 1000)
+        pitch_out = -1000;
+	//
+
+    // limit max lean angle
+    angle_limit = constrain_float(angle_limit, 1000.0f, angle_max);
+
+    // scale roll and pitch inputs to ANGLE_MAX parameter range
+    float scaler = angle_max/(float)ROLL_PITCH_YAW_INPUT_MAX;
+    roll_out *= scaler;
+    pitch_out *= scaler;
+
+    // do circular limit
+    float total_in = norm(pitch_out, roll_out);
+    if (total_in > angle_limit) {
+        float ratio = angle_limit / total_in;
+        roll_out *= ratio;
+        pitch_out *= ratio;
+    }
+
+    // do lateral tilt to euler roll conversion
+    roll_out = (18000/M_PI) * atanf(cosf(pitch_out*(M_PI/18000))*tanf(roll_out*(M_PI/18000)));
+
+    // roll_out and pitch_out are returned
+}
+//
+
 bool Mode::_TakeOff::triggered(const float target_climb_rate) const
 {
     if (!copter.ap.land_complete) {
@@ -541,6 +604,15 @@ void Mode::land_run_vertical_control(bool pause_descent)
             max_land_descent_velocity = pos_control->get_max_speed_down();
         }
 
+#if 1
+        // YIG-ADD , 0.9 = 2.7, 0.8 = 2.4, 0.7 = 2.1, 0.6 = 1.8, 0.5 = 1.5
+        if(get_alt_above_ground_cm() < 4500.0f && get_alt_above_ground_cm() >= 3500.0f) max_land_descent_velocity = pos_control->get_max_speed_down() * 0.9;
+        else if(get_alt_above_ground_cm() < 3500.0f && get_alt_above_ground_cm() >= 2500.0f) max_land_descent_velocity = pos_control->get_max_speed_down() * 0.8;
+        else if(get_alt_above_ground_cm() < 2500.0f && get_alt_above_ground_cm() >= 1500.0f) max_land_descent_velocity = pos_control->get_max_speed_down() * 0.7;
+        else if(get_alt_above_ground_cm() < 1500.0f && get_alt_above_ground_cm() >= 1100.0f) max_land_descent_velocity = pos_control->get_max_speed_down() * 0.6;
+        else if(get_alt_above_ground_cm() < 1100.0f && get_alt_above_ground_cm() >= g2.land_alt_low) max_land_descent_velocity = pos_control->get_max_speed_down() * 0.5;
+#endif
+
         // Don't speed up for landing.
         max_land_descent_velocity = MIN(max_land_descent_velocity, -abs(g.land_speed));
 
@@ -549,6 +621,10 @@ void Mode::land_run_vertical_control(bool pause_descent)
 
         // Constrain the demanded vertical velocity so that it is between the configured maximum descent speed and the configured minimum descent speed.
         cmb_rate = constrain_float(cmb_rate, max_land_descent_velocity, -abs(g.land_speed));
+
+		// YIG-ADD
+        if(get_alt_above_ground_cm() < 100.0f) cmb_rate = -(abs(g.land_speed) * 0.6f);
+		//
 
         if (doing_precision_landing && copter.rangefinder_alt_ok() && copter.rangefinder_state.alt_cm > 35.0f && copter.rangefinder_state.alt_cm < 200.0f) {
             float max_descent_speed = abs(g.land_speed)*0.5f;

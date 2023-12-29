@@ -874,6 +874,8 @@ public:
 
     uint8_t get_channel_from_port_number(uint8_t port_num);
 
+	uint8_t is_gps_failsafe;	//jhkang
+
 protected:
 
     virtual GCS_MAVLINK *new_gcs_mavlink_backend(GCS_MAVLINK_Parameters &params,

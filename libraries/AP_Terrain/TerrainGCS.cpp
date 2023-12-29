@@ -94,6 +94,12 @@ void AP_Terrain::send_request(mavlink_channel_t chan)
         return;
     }
 
+#if 1 // jhkang - ADD
+    if (gcs().is_gps_failsafe) {
+        return;
+    }
+#endif
+
     // see if we need to schedule some disk IO
     schedule_disk_io();
 
@@ -249,6 +255,11 @@ void AP_Terrain::send_terrain_report(mavlink_channel_t chan, const Location &loc
  */
 void AP_Terrain::handle_terrain_check(mavlink_channel_t chan, const mavlink_message_t &msg)
 {
+#if 1 // jhkang - ADD
+    if (gcs().is_gps_failsafe) {
+        return;
+    }
+#endif
     mavlink_terrain_check_t packet;
     mavlink_msg_terrain_check_decode(&msg, &packet);
     Location loc;

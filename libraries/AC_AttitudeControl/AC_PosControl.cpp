@@ -1133,7 +1133,7 @@ void AC_PosControl::run_xy_controller(float dt)
 
     // Add feed forward into the target acceleration output
     _accel_target.x += _accel_desired.x;
-    _accel_target.y += _accel_desired.y;
+    _accel_target.y += _accel_desired.y;    
 
     // the following section converts desired accelerations provided in lat/lon frame to roll/pitch angles
 

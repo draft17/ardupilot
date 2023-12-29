@@ -12,6 +12,7 @@
 #include <AC_AttitudeControl/AC_PosControl.h>
 #include <AP_RSSI/AP_RSSI.h>
 #include <AP_GPS/AP_GPS.h>
+#include <GCS_MAVLink/GCS.h>	// jhkang 
 
 #include "AP_Logger.h"
 #include "AP_Logger_File.h"
@@ -497,6 +498,11 @@ void AP_Logger::Write_AHRS2()
     if (!ahrs.get_secondary_attitude(euler) || !ahrs.get_secondary_position(loc) || !ahrs.get_secondary_quaternion(quat)) {
         return;
     }
+#if 1 // jhkang - ADD
+	if (gcs().is_gps_failsafe) {
+		return;
+	}
+#endif
     const struct log_AHRS pkt{
         LOG_PACKET_HEADER_INIT(LOG_AHR2_MSG),
         time_us : AP_HAL::micros64(),
@@ -523,6 +529,11 @@ void AP_Logger::Write_POS()
     if (!ahrs.get_position(loc)) {
         return;
     }
+#if 1 // jhkang - ADD
+	if (gcs().is_gps_failsafe) {
+		return;
+	}
+#endif
     float home, origin;
     ahrs.get_relative_position_D_home(home);
     const struct log_POS pkt{

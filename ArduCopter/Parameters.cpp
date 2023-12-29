@@ -713,6 +713,14 @@ const AP_Param::Info Copter::var_info[] = {
     GOBJECT(osd, "OSD", AP_OSD),
 #endif
 
+	// jhkang - ADD
+	// @Param: UNLOCK_HOME
+	// @DisplayName: home location unlock
+	// @Description:
+	// @Values : 0: Disabled, 1: Enabled
+	// @User: Standard
+	GSCALAR(unlock_home, "UNLOCK_HOME", 1),
+
     // @Group:
     // @Path: Parameters.cpp
     GOBJECT(g2, "",  ParametersG2),
@@ -961,6 +969,15 @@ const AP_Param::GroupInfo ParametersG2::var_info[] = {
     AP_SUBGROUPINFO(arot, "AROT_", 37, ParametersG2, AC_Autorotation),
 #endif
 
+    // jhkang - ADD
+    // @Param: FS_GCS_TIMEOUT
+    // @DisplayName: GCS failsafe timeout
+    // @Description: Timeout before triggering the GCS failsafe
+    // @Units: s
+    // @Range: 2 120
+    // @Increment: 1
+    // @User: Standard
+    AP_GROUPINFO("GCS_TIMEOUT", 38, ParametersG2, fs_gcs_timeout, 10),
 
 
     AP_GROUPEND

@@ -373,6 +373,11 @@ public:
 
         // 254,255: reserved
 
+		//
+		// 256: Soomvi Privat Parameters
+		//
+		k_param_unlock_home = 256,		// jhkang- unlock home
+
         // the k_param_* space is 9-bits in size
         // 511: reserved
     };
@@ -467,6 +472,9 @@ public:
 
     // Note: keep initializers here in the same order as they are declared
     // above.
+
+	AP_Int8					unlock_home; 	// jhkang 
+
     Parameters()
     {
     }
@@ -620,6 +628,8 @@ public:
     // Autonmous autorotation
     AC_Autorotation arot;
 #endif
+    // jhkang - ADD
+    AP_Float fs_gcs_timeout;
 };
 
 extern const AP_Param::Info        var_info[];

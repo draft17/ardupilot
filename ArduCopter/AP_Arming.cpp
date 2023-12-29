@@ -742,7 +742,8 @@ bool AP_Arming_Copter::arm(const AP_Arming::Method method, const bool do_arming_
 
         // we have reset height, so arming height is zero
         copter.arming_altitude_m = 0;
-    } else if (!ahrs.home_is_locked()) {
+    //} else if (!ahrs.home_is_locked()) {							// jhkang-ORG
+    } else if (!ahrs.home_is_locked() || copter.g.unlock_home) {	// jhkang-CHG
         // Reset home position if it has already been set before (but not locked)
         if (!copter.set_home_to_current_location(false)) {
             // ignore failure

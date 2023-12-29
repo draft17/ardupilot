@@ -332,6 +332,9 @@ void Copter::update_batt_compass(void)
 // should be run at 400hz
 void Copter::fourhundred_hz_logging()
 {
+#if 1	//jhkang
+    rtl_bearing = home_bearing();
+#endif
     if (should_log(MASK_LOG_ATTITUDE_FAST) && !copter.flightmode->logs_attitude()) {
         Log_Write_Attitude();
     }

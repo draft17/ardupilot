@@ -153,9 +153,8 @@ void AP_EFI_Serial_DLA232::check_response()
             if ( (dump_time == 0) || (AP_HAL::millis() - dump_time > 2000)) {
                 dump_time = AP_HAL::millis();
             #endif
-                printf("*");
-                //printf("crc_fail_cnt=%d : rec_crc=0x%x : computed_crc=0x%x\n",crc_fail_cnt, checksum, computed_checksum);
-                //hexdump(raw_data, DLA232_STATUS_PKT_SIZE);    // jhkang - dump data
+                printf("crc_fail_cnt=%d : rec_crc=0x%x : computed_crc=0x%x\n",crc_fail_cnt, checksum, computed_checksum);
+                hexdump(raw_data, DLA232_STATUS_PKT_SIZE);    // jhkang - dump data
             #if 0
             }
             #endif
@@ -253,31 +252,34 @@ void AP_EFI_Serial_DLA232::send_request()
 	//else if (internal_state.ecu_index && internal_state.engine_state   )
 	else if (internal_state.ecu_index)
 	{
-		if((new_throttle != last_throttle) || 
+		if((new_throttle != last_throttle) && 
 			(now - last_req_send_throttle_ms > 30))
 		{
         	// send new throttle value, only when ARMED
         	bool allow_throttle = hal.util->get_soft_armed();
         	if (allow_throttle)
 			{
-				if(new_throttle != last_throttle) {
+				// if(new_throttle != last_throttle) {
             		send_throttle_values(new_throttle);
+                    last_throttle = new_throttle;
+                    last_req_send_throttle_ms = now;
                     printf("Engine Throttle [%d%%] Out!", new_throttle*10);
                     GCS_SEND_TEXT(MAV_SEVERITY_WARNING, "Engine Throttle [%d%%] Out!", new_throttle*10);
-                }
-        		else {
-            		send_throttle_values(last_throttle);
-                }
+                // }
+        		// else {
+            		// send_throttle_values(last_throttle);
+                // }
         	}
 		}
-
+        #if 0
 		if(new_throttle != last_throttle)
         	last_throttle = new_throttle;
 
         last_req_send_throttle_ms = now;
+        #endif
     }
 	// send engine status request
-	else if (now - last_req_send_status_ms > 150)
+	else if (now - last_req_send_status_ms > 100)
 	{
        	send_request_status();
         waiting_response = true;
@@ -313,16 +315,16 @@ bool AP_EFI_Serial_DLA232::send_throttle_values(uint16_t thr)
 		0xF2, 0x2F                              // [18,19] frame tail
 	};
 
-	if(thr == 1) { d[14] = 0x64; d[15] = 0x00; d[16] = 0x98; d[17] = 0x12; }
-	else if(thr == 2) { d[14] = 0xC8; d[15] = 0x00; d[16] = 0xC0; d[17] = 0x01; }
-	else if(thr == 3) { d[14] = 0x2C; d[15] = 0x01; d[16] = 0x0C; d[17] = 0x56; }
-	else if(thr == 4) { d[14] = 0x90; d[15] = 0x01; d[16] = 0x57; d[17] = 0x36; }
-	else if(thr == 5) { d[14] = 0xF4; d[15] = 0x01; d[16] = 0x90; d[17] = 0xD8; }
-	else if(thr == 6) { d[14] = 0x58; d[15] = 0x02; d[16] = 0xF8; d[17] = 0xA8; }
-	else if(thr == 7) { d[14] = 0xBC; d[15] = 0x02; d[16] = 0x24; d[17] = 0xDE; }
-	else if(thr == 8) { d[14] = 0x20; d[15] = 0x03; d[16] = 0x69; d[17] = 0x79; }
-	else if(thr == 9) { d[14] = 0x84; d[15] = 0x03; d[16] = 0xB8; d[17] = 0xC3; }
-	else if(thr == 10) { d[14] = 0xE8; d[15] = 0x03; d[16] = 0xF6; d[17] = 0x84; }
+	if(thr == 1) { d[14] = 0x64; d[15] = 0x00; d[16] = 0x98; d[17] = 0x12; }            // 10%
+	else if(thr == 2) { d[14] = 0xC8; d[15] = 0x00; d[16] = 0xC0; d[17] = 0x01; }       // 20%
+	else if(thr == 3) { d[14] = 0x2C; d[15] = 0x01; d[16] = 0x0C; d[17] = 0x56; }       // 30%
+	else if(thr == 4) { d[14] = 0x90; d[15] = 0x01; d[16] = 0x57; d[17] = 0x36; }       // 40%
+	else if(thr == 5) { d[14] = 0xF4; d[15] = 0x01; d[16] = 0x90; d[17] = 0xD8; }       // 50%
+	else if(thr == 6) { d[14] = 0x58; d[15] = 0x02; d[16] = 0xF8; d[17] = 0xA8; }       // 60%
+	else if(thr == 7) { d[14] = 0xBC; d[15] = 0x02; d[16] = 0x24; d[17] = 0xDE; }       // 70%
+	else if(thr == 8) { d[14] = 0x20; d[15] = 0x03; d[16] = 0x69; d[17] = 0x79; }       // 80%
+	else if(thr == 9) { d[14] = 0x84; d[15] = 0x03; d[16] = 0xB8; d[17] = 0xC3; }       // 90%
+	else if(thr == 10) { d[14] = 0xE8; d[15] = 0x03; d[16] = 0xF6; d[17] = 0x84; }      // 100%
 
     port->write(d, sizeof(d));
 

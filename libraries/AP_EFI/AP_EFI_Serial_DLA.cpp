@@ -250,7 +250,7 @@ void AP_EFI_Serial_DLA232::send_request()
 #endif
     // check for change or timeout for throttle value
 	//else if (internal_state.ecu_index && internal_state.engine_state   )
-	else if (internal_state.ecu_index)
+    else if (internal_state.ecu_index)
 	{
 		if((new_throttle != last_throttle) && 
 			(now - last_req_send_throttle_ms > 30))
@@ -278,14 +278,14 @@ void AP_EFI_Serial_DLA232::send_request()
         last_req_send_throttle_ms = now;
         #endif
     }
-	// send engine status request
-	else if (now - last_req_send_status_ms > 100)
+    
+    // send engine status request
+	if (now - last_req_send_status_ms > 100)
 	{
        	send_request_status();
         waiting_response = true;
 		last_req_send_status_ms = now;
 	}
-
     last_request_ms = now;
 }
 

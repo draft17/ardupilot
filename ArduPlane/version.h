@@ -6,7 +6,7 @@
 
 #include "ap_version.h"
 
-#define THISFIRMWARE "ArduPlane V4.2.2"
+#define THISFIRMWARE "SoomVi AF-BirdControl Plne V4.2.2.1"
 
 // the following line is parsed by the autotest scripts
 #define FIRMWARE_VERSION 4,2,2,FIRMWARE_VERSION_TYPE_OFFICIAL

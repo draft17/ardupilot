@@ -690,6 +690,27 @@ uint16_t RangeFinder::distance_cm_orient(enum Rotation orientation) const
     return backend->distance_cm();
 }
 
+#if 0
+// YIG-ADD
+uint16_t RangeFinder::round_distance_cm_orient(enum Rotation orientation, uint8_t sector) const      
+{
+    AP_RangeFinder_Backend *backend = find_instance(orientation);
+    if (backend == nullptr) {
+        return 0;
+    }
+    return backend->round_distance_cm(sector);
+}
+
+void RangeFinder::distance_cm_set_orient(enum Rotation orientation, uint16_t dist) const             
+{   
+    AP_RangeFinder_Backend *backend = find_instance(orientation);
+    if (backend != nullptr) {
+        backend->distance_cm_set(dist);
+    }
+}   
+// End
+#endif
+
 int16_t RangeFinder::max_distance_cm_orient(enum Rotation orientation) const
 {
     AP_RangeFinder_Backend *backend = find_instance(orientation);

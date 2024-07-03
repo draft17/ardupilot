@@ -1192,4 +1192,9 @@ private:
     void Log_Write_Beacon(uint64_t time_us);
     void Log_Write_Timing(uint64_t time_us);
     void Log_Write_GSF(uint64_t time_us) const;
+
+	// YIG
+	uint32_t _loop_timer = AP_HAL::millis();
+	uint32_t _loop_timer2 = AP_HAL::millis();
+	uint32_t _loop_timer3 = AP_HAL::millis();
 };

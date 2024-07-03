@@ -86,6 +86,10 @@ void AP_Logger_File::Init()
 
     hal.console->printf("AP_Logger_File: buffer size=%u\n", (unsigned)bufsize);
 
+    // jhkang-ADD
+    uint8_t sign_key=constrain_int16(_front._params.signing_key, 0, 255);
+    _writebuf.set_signing((uint8_t)sign_key);
+
     _initialised = true;
 
     const char* custom_dir = hal.util->get_custom_log_directory();
@@ -499,7 +503,7 @@ bool AP_Logger_File::_WritePrioritisedBlock(const void *pBuffer, uint16_t size, 
         return false;
     }
 
-    _writebuf.write((uint8_t*)pBuffer, size);
+    _writebuf.write1((uint8_t*)pBuffer, size);
     df_stats_gather(size, _writebuf.space());
     return true;
 }

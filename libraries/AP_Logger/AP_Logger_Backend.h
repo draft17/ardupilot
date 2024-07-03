@@ -143,6 +143,11 @@ public:
     // Returns true if the FMT message has ever been written.
     bool Write_Emit_FMT(uint8_t msg_type);
 
+    // jhkang-ADD
+    //void* sv_encode(void*, void*, uint8_t, size_t);
+    //void* sv_encode(void *dest, const void *src, uint8_t key, size_t cnt);
+    void* sv_encode(void *dest, const void *src, uint8_t key, size_t cnt);
+
     // write a log message out to the log of msg_type type, with
     // values contained in arg_list:
     bool Write(uint8_t msg_type, va_list arg_list, bool is_critical=false, bool is_streaming=false);

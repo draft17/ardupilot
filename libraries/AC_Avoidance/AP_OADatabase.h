@@ -89,6 +89,8 @@ private:
     AP_Float        _beam_width;                            // beam width used when converting lidar readings to object radius
     AP_Float        _radius_min;                            // objects minimum radius (in meters)
     AP_Float        _dist_max;                              // objects maximum distance (in meters)
+    AP_Float        _from_home;                             // jhkang - from_home_radius (in meters)
+    AP_Float        _to_obs;                                // jhkang - min_distance obstacle
     AP_Float        _min_alt;                               // OADatabase minimum vehicle height check (in meters)
 
     struct {

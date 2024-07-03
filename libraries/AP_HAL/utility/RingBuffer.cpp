@@ -83,6 +83,26 @@ bool ByteBuffer::is_empty(void) const
     return head == tail;
 }
 
+#if 1   // jhkang-ADD
+//void* AP_Logger_Backend::sv_encode(void *dest, const void *src, uint8_t key, size_t cnt)
+void* ByteBuffer::sv_encode2(void *dest, const void *src, const uint8_t key, volatile size_t cnt)
+{
+    uint8_t *tmp = (uint8_t *)dest;
+    uint8_t *s = (uint8_t *)src;
+
+    while(cnt--) {
+#if 0
+        *tmp = 0x11;  // test pattern
+#else
+        *tmp = *s^key;
+#endif
+        tmp++;
+        s++;
+    }
+    return dest;
+}
+#endif
+
 uint32_t ByteBuffer::write(const uint8_t *data, uint32_t len)
 {
     ByteBuffer::IoVec vec[2];
@@ -93,7 +113,51 @@ uint32_t ByteBuffer::write(const uint8_t *data, uint32_t len)
         memcpy(vec[i].data, data + ret, vec[i].len);
         ret += vec[i].len;
     }
+    commit(ret);
+    return ret;
+}
 
+// jhkang - ADD
+void ByteBuffer::set_signing(const uint8_t key)
+{
+    signing_key = key;
+}
+
+
+uint32_t ByteBuffer::write1(const uint8_t *data, uint32_t len)
+{
+    ByteBuffer::IoVec vec[2];
+#if 0
+    ByteBuffer::IoVec tmp[2]={0,};
+#endif
+    const auto n_vec = reserve(vec, len);
+    uint32_t ret = 0;
+
+// jhkang - ADD
+#if 1   // jhkang - ORG
+    for (int i = 0; i < n_vec; i++) {
+        memcpy(vec[i].data, data + ret, vec[i].len);
+        ret += vec[i].len;
+    }
+#else
+    // if (signing_key) {
+        for (int i = 0; i < n_vec; i++) {
+            // sv_encode2(tmp[i].data, data+ret, 0xff, vec[i].len);
+            sv_encode2(tmp[i].data, data+ret, signing_key, vec[i].len);
+            memcpy(vec[i].data, tmp[i].data + ret, vec[i].len);
+            //memcpy(vec[i].data, &tmp[i].data + ret, vec[i].len);
+            ret += vec[i].len;
+        }
+        /*
+    }
+    else {
+        for (int i = 0; i < n_vec; i++) {
+            memcpy(vec[i].data, data + ret, vec[i].len);
+            ret += vec[i].len;
+        }
+    }
+    */
+#endif
     commit(ret);
     return ret;
 }

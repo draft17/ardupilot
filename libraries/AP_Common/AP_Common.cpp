@@ -71,9 +71,45 @@ bool hex_to_uint8(uint8_t a, uint8_t &res)
     return true;
 }
 
+#if 1   // jhkang-ADD
+//void* AP_Logger_Backend::sv_encode(void *dest, const void *src, uint8_t key, size_t cnt)
+void* sv_encode1(void *dest, const void *src, uint8_t key, size_t cnt)
+{
+#if 0
+    int8_t *tmp = static_cast<int8_t *>(dest);
+    //const int8_t *s = static_cast<const int8_t *>(src);
+    int8_t *s = static_cast<int8_t *>(src);
+#endif
+    int8_t *tmp = (int8_t *)dest;
+    //int8_t *s = (int8_t *)src;
+
+    while(cnt--) {
+        //*s = 0xff;
+        //*tmp++ = *s++;
+        *tmp++ = 0xee;
+    }
+    return dest;
+}
+#endif
+
 /*
   strncpy without the warning for not leaving room for nul termination
  */
+void strncpy_noterm1(char *dest, const char *src, size_t n)
+{
+    size_t len = strnlen(src, n);
+    if (len < n) {
+        // include nul term if it fits
+        len++;
+    }
+    // jhkang-ADD
+    char temp[n];
+    sv_encode1(temp, src, 0xFF, n);
+    //memcpy(dest, src, len);
+    // memcpy(dest, temp, len);
+    memcpy(dest, temp, n);
+}
+
 void strncpy_noterm(char *dest, const char *src, size_t n)
 {
     size_t len = strnlen(src, n);

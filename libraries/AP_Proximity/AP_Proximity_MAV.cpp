@@ -14,6 +14,7 @@
  */
 
 #include "AP_Proximity_MAV.h"
+#include <GCS_MAVLink/GCS.h>    // YIG
 
 #if HAL_PROXIMITY_ENABLED
 #include <AP_HAL/AP_HAL.h>
@@ -72,7 +73,8 @@ void AP_Proximity_MAV::handle_distance_sensor_msg(const mavlink_message_t &msg)
     mavlink_msg_distance_sensor_decode(&msg, &packet);
 
     // store distance to appropriate sector based on orientation field
-    if (packet.orientation <= MAV_SENSOR_ROTATION_YAW_315) {
+    //if (packet.orientation <= MAV_SENSOR_ROTATION_YAW_315)    // YIG
+    {
         const uint32_t previous_sys_time = _last_update_ms;
         _last_update_ms = AP_HAL::millis();
 
@@ -91,18 +93,48 @@ void AP_Proximity_MAV::handle_distance_sensor_msg(const mavlink_message_t &msg)
             temp_boundary.reset();
         }
         // store in meters
-        const float distance = packet.current_distance * 0.01f;
-        const uint8_t sector = packet.orientation;
+        // YIG
+        //const float distance = packet.current_distance * 0.01f;
+        #if 1
+        float distance = (packet.max_distance/100)*100;
+        distance += packet.min_distance/100;
+        distance /= 100;
+        #else
+        float distance = (packet.max_distance)*100;
+        distance += packet.min_distance;
+        #endif
+
+        //const uint8_t sector = packet.orientation;
+        const uint8_t sector = (packet.current_distance / 100) -1;
+        //const uint8_t sector = (packet.current_distance / 100);
         // get the face for this sector
         const float yaw_angle_deg = sector * 45;
         const AP_Proximity_Boundary_3D::Face face = boundary.get_face(yaw_angle_deg);
-        _distance_min = packet.min_distance * 0.01f;
-        _distance_max = packet.max_distance * 0.01f;
+        //_distance_min = packet.min_distance * 0.01f;
+        //_distance_max = packet.max_distance * 0.01f;
+        #if 0
+        _distance_min = 100;    // 1m = 100cm
+        _distance_max = 12000;  // 120m = 12000
+        #endif
+        
+        _distance_min = 100/100;    // 1m = 100cm
+        _distance_max = 12000/100;  // 120m = 12000
+
         const bool in_range = distance <= _distance_max && distance >= _distance_min;
+        //const bool in_range = distance <= _distance_max && distance >= _distance_min && sector==0;  //jhkang only sector0
         if (in_range && !ignore_reading(yaw_angle_deg, distance, false)) {
+#if 0
+            // YIG
+            if (AP_HAL::millis () - _dist_loop_time > 2000) {
+                _dist_loop_time = AP_HAL::millis ();
+                gcs ().send_text (MAV_SEVERITY_INFO, "[LiDAR] distance(%f) sector(%d)", distance, sector);
+            }
+#endif
             temp_boundary.add_distance(face, yaw_angle_deg, distance);
             // update OA database
-            database_push(yaw_angle_deg, distance);
+			if (sector == 0) {		// jhkang only sector0
+            	database_push(yaw_angle_deg, distance);
+			}
         }
     }
 

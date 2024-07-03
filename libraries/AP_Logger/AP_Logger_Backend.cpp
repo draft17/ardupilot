@@ -210,6 +210,28 @@ bool AP_Logger_Backend::Write_Emit_FMT(uint8_t msg_type)
     return true;
 }
 
+#if 1   // jhkang-ADD
+//void* AP_Logger_Backend::sv_encode(void *dest, const void *src, uint8_t key, size_t cnt)
+void* AP_Logger_Backend::sv_encode(void *dest, const void *src, uint8_t key, size_t cnt)
+{
+#if 0
+    int8_t *tmp = static_cast<int8_t *>(dest);
+    //const int8_t *s = static_cast<const int8_t *>(src);
+    int8_t *s = static_cast<int8_t *>(src);
+#endif
+    int8_t *tmp = (int8_t *)dest;
+    //int8_t *s = (int8_t *)src;
+
+    while(cnt--) {
+        //*s = 0xff;
+        //*tmp++ = *s++;
+        *tmp++ = 0xee;
+    }
+    return dest;
+}
+#endif
+
+#if 0
 bool AP_Logger_Backend::Write(const uint8_t msg_type, va_list arg_list, bool is_critical, bool is_streaming)
 {
     // stack-allocate a buffer so we can WriteBlock(); this could be
@@ -232,11 +254,168 @@ bool AP_Logger_Backend::Write(const uint8_t msg_type, va_list arg_list, bool is_
     if (bufferspace_available() < msg_len) {
         return false;
     }
-
     uint8_t buffer[msg_len];
     uint8_t offset = 0;
     buffer[offset++] = HEAD_BYTE1;
     buffer[offset++] = HEAD_BYTE2;
+#if 0   // jhkang - ADD
+    buffer[offset++] = HEAD_BYTE3;
+    buffer[offset++] = HEAD_BYTE4;
+#endif
+    buffer[offset++] = msg_type;
+    for (uint8_t i=0; i<strlen(fmt); i++) {
+        uint8_t charlen = 0;
+        switch(fmt[i]) {
+        case 'b': {
+            int8_t tmp = va_arg(arg_list, int);
+            int8_t _dest=0;
+            sv_encode(&_dest, &tmp, 0xFF, sizeof(int8_t));
+            memcpy(&buffer[offset], &_dest, sizeof(int8_t));
+            offset += sizeof(int8_t);
+            break;
+        }
+        case 'h':
+        case 'c': {
+            int16_t tmp = va_arg(arg_list, int);
+            int16_t _dest=0;
+            sv_encode(&_dest, &tmp, 0xFF, sizeof(int16_t));
+            memcpy(&buffer[offset], &_dest, sizeof(int16_t));
+            offset += sizeof(int16_t);
+            break;
+        }
+        case 'd': {
+            double tmp = va_arg(arg_list, double);
+            double _dest=0;
+            sv_encode(&_dest, &tmp, 0xFF, sizeof(double));
+            memcpy(&buffer[offset], &_dest, sizeof(double));
+            offset += sizeof(double);
+            break;
+        }
+        case 'i':
+        case 'L':
+        case 'e': {
+            int32_t tmp = va_arg(arg_list, int);
+            int32_t _dest=0;
+            sv_encode(&_dest, &tmp, 0xFF, sizeof(int32_t));
+            memcpy(&buffer[offset], &_dest, sizeof(int32_t));
+            offset += sizeof(int32_t);
+            break;
+        }
+        case 'f': {
+            float tmp = va_arg(arg_list, double);
+            float _dest=0;
+            sv_encode(&_dest, &tmp, 0xFF, sizeof(float));
+            memcpy(&buffer[offset], &_dest, sizeof(float));
+            offset += sizeof(float);
+            break;
+        }
+        case 'n':
+            charlen = 4;
+            break;
+        case 'M':
+        case 'B': {
+            uint8_t tmp = va_arg(arg_list, int);
+            uint8_t _dest=0;
+            sv_encode(&_dest, &tmp, 0xFF, sizeof(uint8_t));
+            memcpy(&buffer[offset], &_dest, sizeof(uint8_t));
+            offset += sizeof(uint8_t);
+            break;
+        }
+        case 'H':
+        case 'C': {
+            uint16_t tmp = va_arg(arg_list, int);
+            uint16_t _dest=0;
+            sv_encode(&_dest, &tmp, 0xFF, sizeof(uint16_t));
+            memcpy(&buffer[offset], &_dest, sizeof(uint16_t));
+            offset += sizeof(uint16_t);
+            break;
+        }
+        case 'I':
+        case 'E': {
+            uint32_t tmp = va_arg(arg_list, uint32_t);
+            uint32_t _dest=0;
+            sv_encode(&_dest, &tmp, 0xFF, sizeof(uint32_t));
+            memcpy(&buffer[offset], &_dest, sizeof(uint32_t));
+            offset += sizeof(uint32_t);
+            break;
+        }
+        case 'N':
+            charlen = 16;
+            break;
+        case 'Z':
+            charlen = 64;
+            break;
+        case 'q': {
+            int64_t tmp = va_arg(arg_list, int64_t);
+            uint64_t _dest=0;
+            sv_encode(&_dest, &tmp, 0xFF, sizeof(uint64_t));
+            memcpy(&buffer[offset], &_dest, sizeof(int64_t));
+            offset += sizeof(int64_t);
+            break;
+        }
+        case 'Q': {
+            uint64_t tmp = va_arg(arg_list, uint64_t);
+            uint64_t _dest=0;
+            sv_encode(&_dest, &tmp, 0xFF, sizeof(uint64_t));
+            memcpy(&buffer[offset], &_dest, sizeof(uint64_t));
+            offset += sizeof(uint64_t);
+            break;
+        }
+        case 'a': {
+            int16_t *tmp = va_arg(arg_list, int16_t*);
+            int16_t _dest[32];
+            const uint8_t bytes = 32*2;
+            sv_encode(_dest, tmp, 0xFF, sizeof(_dest));
+            memcpy(&buffer[offset], _dest, bytes);
+            offset += bytes;
+            break;
+        }
+        }
+        if (charlen != 0) {
+            char *tmp = va_arg(arg_list, char*);
+            uint8_t len = strnlen(tmp, charlen);
+            uint8_t _dest[len];
+            sv_encode(_dest, tmp, 0xFF, sizeof(len));
+            memcpy(&buffer[offset], _dest, len);
+            // memset(&buffer[offset+len], 0xff, charlen-len);
+            memset(&buffer[offset+len], 0xff, charlen-len); // ToDo: key ^ key
+            offset += charlen;
+        }
+    }
+
+    return WritePrioritisedBlock(buffer, msg_len, is_critical, is_streaming);
+}
+#else
+bool AP_Logger_Backend::Write(const uint8_t msg_type, va_list arg_list, bool is_critical, bool is_streaming)
+{
+    // stack-allocate a buffer so we can WriteBlock(); this could be
+    // 255 bytes!  If we were willing to lose the WriteBlock
+    // abstraction we could do WriteBytes() here instead?
+    const char *fmt  = nullptr;
+    uint8_t msg_len;
+    AP_Logger::log_write_fmt *f;
+    for (f = _front.log_write_fmts; f; f=f->next) {
+        if (f->msg_type == msg_type) {
+            fmt = f->fmt;
+            msg_len = f->msg_len;
+            break;
+        }
+    }
+    if (fmt == nullptr) {
+        INTERNAL_ERROR(AP_InternalError::error_t::logger_logwrite_missingfmt);
+        return false;
+    }
+    if (bufferspace_available() < msg_len) {
+        return false;
+    }
+    uint8_t buffer[msg_len];
+    uint8_t offset = 0;
+    buffer[offset++] = HEAD_BYTE1;
+    buffer[offset++] = HEAD_BYTE2;
+#if 1   // jhkang - ADD
+    buffer[offset++] = HEAD_BYTE3;
+    buffer[offset++] = HEAD_BYTE4;
+#endif
     buffer[offset++] = msg_type;
     for (uint8_t i=0; i<strlen(fmt); i++) {
         uint8_t charlen = 0;
@@ -328,13 +507,14 @@ bool AP_Logger_Backend::Write(const uint8_t msg_type, va_list arg_list, bool is_
             char *tmp = va_arg(arg_list, char*);
             uint8_t len = strnlen(tmp, charlen);
             memcpy(&buffer[offset], tmp, len);
-            memset(&buffer[offset+len], 0, charlen-len);
+            memset(&buffer[offset+len], 0, charlen-len); // ToDo: key ^ key
             offset += charlen;
         }
     }
 
     return WritePrioritisedBlock(buffer, msg_len, is_critical, is_streaming);
 }
+#endif
 
 bool AP_Logger_Backend::StartNewLogOK() const
 {

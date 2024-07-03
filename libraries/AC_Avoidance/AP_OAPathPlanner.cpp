@@ -18,6 +18,7 @@
 #include <AP_AHRS/AP_AHRS.h>
 #include <AC_Fence/AC_Fence.h>
 #include <AP_Logger/AP_Logger.h>
+#include <AP_RangeFinder/AP_RangeFinder.h> // YIG-ADD
 #include "AP_OABendyRuler.h"
 #include "AP_OADijkstra.h"
 
@@ -195,6 +196,39 @@ AP_OAPathPlanner::OA_RetState AP_OAPathPlanner::mission_avoidance(const Location
         return OA_NOT_REQUIRED;
     }
 
+#if 0 // YIG-ADD
+	const float ground_spd = AP::ahrs().groundspeed();
+	if(ground_spd > 3.0f)
+	{
+		if(AP_HAL::millis() - _oa_timer1 > 3000)
+		{
+			gcs().send_text(MAV_SEVERITY_INFO, "Not Bendy");
+			_oa_timer1 = AP_HAL::millis();
+		}
+        return OA_NOT_REQUIRED;
+	}
+#endif
+
+#if 0
+	AP_Proximity *proximity = AP::proximity();
+    if (proximity != nullptr) 
+	{
+		AP_Proximity &_proximity = *proximity;
+		if (_proximity.get_status() == AP_Proximity::Status::Good) 
+		{
+			float ang_deg, dist_m;
+            if (_proximity.get_object_angle_and_distance(0, ang_deg, dist_m)) 
+			{
+			    if (dist_m > 14)
+				{
+					return OA_NOT_REQUIRED;
+				}
+			}
+		}
+	}
+#endif
+
+	
     const uint32_t now = AP_HAL::millis();
     WITH_SEMAPHORE(_rsem);
 

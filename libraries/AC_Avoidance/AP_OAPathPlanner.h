@@ -119,6 +119,8 @@ private:
 
     bool proximity_only = true;
     static AP_OAPathPlanner *_singleton;
+
+	int32_t _oa_timer1 = AP_HAL::millis();
 };
 
 namespace AP {

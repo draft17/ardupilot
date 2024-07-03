@@ -1408,7 +1408,7 @@ void GCS_MAVLINK::send_message(enum ap_message id)
     }
 
     pushed_ap_message_ids.set(id);
-}
+  }
 
 void GCS_MAVLINK::packetReceived(const mavlink_status_t &status,
                                  const mavlink_message_t &msg)

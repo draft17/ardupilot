@@ -38,6 +38,7 @@ protected:
 
     // oa path planning variables
     AP_OAPathPlanner::OA_RetState _oa_state;    // state of object avoidance, if OA_SUCCESS we use _oa_destination to avoid obstacles
+    uint8_t comp_state = 4; // jhkang
     Vector3f    _origin_oabak;          // backup of _origin so it can be restored when oa completes
     Vector3f    _destination_oabak;     // backup of _destination so it can be restored when oa completes
     bool        _terrain_alt_oabak;     // true if backup origin and destination z-axis are terrain altitudes

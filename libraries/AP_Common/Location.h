@@ -81,6 +81,7 @@ public:
     
     // extrapolate latitude/longitude given bearing, pitch and distance
     void offset_bearing_and_pitch(ftype bearing_deg, ftype pitch_deg, ftype distance);
+    void offset_bearing_and_pitch_2(ftype bearing_deg, ftype pitch_deg, ftype distance);
 
     // longitude_scale - returns the scaler to compensate for
     // shrinking longitude as you move north or south from the equator

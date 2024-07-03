@@ -8,5 +8,6 @@ public:
     using AP_RangeFinder_Benewake::AP_RangeFinder_Benewake;
 
 protected:
-    float model_dist_max_cm() const override { return 18000; }
+    //float model_dist_max_cm() const override { return 18000; }	// YIG-CHG
+    float model_dist_max_cm() const override { return 13000; }		// YIG-CHG
 };

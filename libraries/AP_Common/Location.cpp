@@ -329,8 +329,18 @@ void Location::offset_bearing_and_pitch(ftype bearing_deg, ftype pitch_deg, ftyp
     const ftype ofs_north =  cosF(radians(pitch_deg)) * cosF(radians(bearing_deg)) * distance;
     const ftype ofs_east  =  cosF(radians(pitch_deg)) * sinF(radians(bearing_deg)) * distance;
     offset(ofs_north, ofs_east);
-    const int32_t dalt =  sinF(radians(pitch_deg)) * distance *100.0f;
-    alt += dalt; 
+    //const int32_t dalt =  sinF(radians(pitch_deg)) * distance *100.0f;
+    //alt += dalt; 
+    int32_t dalt =  sinF(radians(pitch_deg)) * distance *100.0f;
+    alt += dalt * 3; 
+}
+
+void Location::offset_bearing_and_pitch_2(ftype bearing_deg, ftype pitch_deg, ftype distance)
+{
+    const ftype ofs_north =  cosF(radians(pitch_deg)) * cosF(radians(bearing_deg)) * distance;
+    const ftype ofs_east  =  cosF(radians(pitch_deg)) * sinF(radians(bearing_deg)) * distance;
+    offset(ofs_north, ofs_east);
+    alt += 700; 
 }
 
 

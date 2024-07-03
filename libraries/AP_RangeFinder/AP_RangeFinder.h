@@ -109,6 +109,8 @@ public:
     // The RangeFinder_State structure is filled in by the backend driver
     struct RangeFinder_State {
         float distance_m;               // distance in meters
+        //uint16_t distance_cm;           // 0 sector distance: in cm
+        //uint16_t round_distance_cm[8];
         uint16_t voltage_mv;            // voltage in millivolts, if applicable, otherwise 0
         enum RangeFinder::Status status; // sensor status
         uint8_t  range_valid_count;     // number of consecutive valid readings (maxes out at 10)
@@ -172,7 +174,9 @@ public:
     // methods to return a distance on a particular orientation from
     // any sensor which can current supply it
     float distance_orient(enum Rotation orientation) const;
+    //void distance_cm_set_orient(enum Rotation orientation, uint16_t dist) const; // YIG-ADD
     uint16_t distance_cm_orient(enum Rotation orientation) const;
+    //uint16_t round_distance_cm_orient(enum Rotation orientation, uint8_t sector) const;
     int16_t max_distance_cm_orient(enum Rotation orientation) const;
     int16_t min_distance_cm_orient(enum Rotation orientation) const;
     int16_t ground_clearance_cm_orient(enum Rotation orientation) const;

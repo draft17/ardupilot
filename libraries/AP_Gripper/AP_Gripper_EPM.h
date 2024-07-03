@@ -59,4 +59,8 @@ private:
 
     // internal variables
     uint32_t    _last_grab_or_release;
+
+    // jhkang - ADD
+    bool enable_light;  // enable light on/off
+    bool light_status;  // status of light on/off
 };

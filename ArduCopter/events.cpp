@@ -59,7 +59,7 @@ void Copter::failsafe_radio_on_event()
 
     } else if (flightmode->mode_number() == Mode::Number::AUTO && failsafe_option(FailsafeOption::RC_CONTINUE_IF_AUTO)) {
         // Allow mission to continue when FS_OPTIONS is set to continue mission
-        gcs().send_text(MAV_SEVERITY_WARNING, "Radio Failsafe - Continuing Auto Mode");       
+        gcs().send_text(MAV_SEVERITY_WARNING, "Radio Failsafe - Continuing Auto Mode");
         desired_action = FailsafeAction::NONE;
 
     } else if ((flightmode->in_guided_mode()) &&

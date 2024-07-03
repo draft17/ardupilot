@@ -90,6 +90,22 @@ void Copter::read_rangefinder(void)
             rf_state.last_healthy_ms = now;
         }
 
+#if 0
+		// YIG-ADD
+		if (copter.avoid.proximity_avoidance_enabled())
+	    {
+		    float ang_deg, dist_m_0, dist_m_1, dist_m_7;
+	        if(AP_HAL::millis() - dist_loop_time > 2000)
+	        {   
+		        gcs().send_text(MAV_SEVERITY_INFO, "[LiDAR]\n");
+	            copter.g2.proximity.get_object_angle_and_distance(0, ang_deg, dist_m_0);
+	            copter.g2.proximity.get_object_angle_and_distance(1, ang_deg, dist_m_1);
+	            copter.g2.proximity.get_object_angle_and_distance(7, ang_deg, dist_m_7);
+	            gcs().send_text(MAV_SEVERITY_INFO, "  %4.1f  %4.1f  %4.1f", dist_m_7, dist_m_0, dist_m_1);
+	            dist_loop_time = AP_HAL::millis();
+	        }
+	    }
+#endif
         // send downward facing lidar altitude and health to the libraries that require it
         if (rf_orient == ROTATION_PITCH_270) {
             if (rangefinder_state.alt_healthy || timed_out) {

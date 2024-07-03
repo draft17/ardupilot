@@ -86,6 +86,13 @@ bool AC_WPNav_OA::update_wpnav()
         AP_OAPathPlanner::OAPathPlannerUsed path_planner_used = AP_OAPathPlanner::OAPathPlannerUsed::None;
         const AP_OAPathPlanner::OA_RetState oa_retstate = oa_ptr->mission_avoidance(current_loc, origin_loc, destination_loc, oa_origin_new, oa_destination_new, path_planner_used);
 
+#if 0
+        // jhkang add
+        if(comp_state != oa_retstate) {
+            gcs ().send_text (MAV_SEVERITY_INFO, "oa_retstate=(%u)", oa_retstate);
+            comp_state = oa_retstate;
+        }
+#endif
         switch (oa_retstate) {
 
         case AP_OAPathPlanner::OA_NOT_REQUIRED:
@@ -175,6 +182,8 @@ bool AC_WPNav_OA::update_wpnav()
             case AP_OAPathPlanner::OAPathPlannerUsed::BendyRulerVertical: {
                 _oa_state = oa_retstate;
                 _oa_destination = oa_destination_new;
+
+				//gcs().send_text(MAV_SEVERITY_INFO, "OA_SUCCESS"); // YIG-ADD
 
                 // calculate final destination as an offset from EKF origin in NEU
                 Vector3f dest_NEU;

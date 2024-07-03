@@ -3,6 +3,7 @@
 #include "AP_NavEKF2.h"
 #include "AP_NavEKF2_core.h"
 #include <AP_DAL/AP_DAL.h>
+#include <GCS_MAVLink/GCS.h>
 
 extern const AP_HAL::HAL& hal;
 
@@ -994,6 +995,16 @@ void NavEKF2_core::selectHeightForFusion()
             * which cannot be assumed if the vehicle is moving horizontally.
         */
         if ((aboveUpperSwHgt || dontTrustTerrain) && (activeHgtSource == HGT_SOURCE_RNG)) {
+#if 0
+			// YIG-ADD
+			if (dontTrustTerrain) {
+				gcs().send_text(MAV_SEVERITY_WARNING, "Swhgt(%d),less(%d),h_vel(%d),THgtStable(%d)",
+									aboveUpperSwHgt, (horizSpeed > frontend->_useRngSwSpd), filterStatus.flags.horiz_vel, terrainHgtStable);
+			} else {
+				gcs().send_text(MAV_SEVERITY_WARNING, "aboveUpperSwHgt = [%d]", aboveUpperSwHgt);
+			}
+			// end of YIG-ADD
+#endif
             // cannot trust terrain or range finder so stop using range finder height
             if (frontend->_altSource == 0) {
                 activeHgtSource = HGT_SOURCE_BARO;
@@ -1003,9 +1014,56 @@ void NavEKF2_core::selectHeightForFusion()
         } else if (belowLowerSwHgt && trustTerrain && (prevTnb.c.z >= 0.7f)) {
             // reliable terrain and range finder so start using range finder height
             activeHgtSource = HGT_SOURCE_RNG;
+
+			if(AP_HAL::millis() - _loop_timer > 3000)
+			{
+				gcs().send_text(MAV_SEVERITY_INFO, "RNG_Alt");
+				_loop_timer = AP_HAL::millis();
+			}
         }
     } else if (frontend->_altSource == 0) {
         activeHgtSource = HGT_SOURCE_BARO;
+
+#if 0
+    	if (_rng && rangeFinderDataIsFresh) 
+		{
+#if 1
+			const auto &baro = dal.baro();
+		    float b_alt = baro.get_altitude();
+			float posd;
+			getPosD(posd);
+
+#if 0
+			if(AP_HAL::millis() - _loop_timer > 2000)
+			{
+				gcs().send_text(MAV_SEVERITY_INFO, "_alt %4.2f %4.2f", -posd*100, b_alt);
+				_loop_timer = AP_HAL::millis();
+			}
+#endif
+			if(b_alt < 4.0f)
+			{
+        		activeHgtSource = HGT_SOURCE_RNG;
+				if(AP_HAL::millis() - _loop_timer2 > 2000)
+				{
+					gcs().send_text(MAV_SEVERITY_INFO, "RNG b_alt %4.2f", b_alt);
+					_loop_timer2 = AP_HAL::millis();
+				}
+			}
+#else
+			float posd;
+			getPosD(posd);
+			if((-posd * 100) < 400)
+			{
+        		activeHgtSource = HGT_SOURCE_RNG;
+				if(AP_HAL::millis() - _loop_timer > 2000)
+				{
+					gcs().send_text(MAV_SEVERITY_INFO, "RNG posD %4.2f", -posd*100);
+					_loop_timer = AP_HAL::millis();
+				}
+			}
+#endif
+		}
+#endif
     } else if ((frontend->_altSource == 2) && ((imuSampleTime_ms - lastTimeGpsReceived_ms) < 500) && validOrigin && gpsAccuracyGood) {
         activeHgtSource = HGT_SOURCE_GPS;
     } else if ((frontend->_altSource == 3) && validOrigin && rngBcnGoodToAlign) {

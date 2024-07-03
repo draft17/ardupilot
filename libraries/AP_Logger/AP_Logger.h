@@ -385,6 +385,8 @@ public:
         AP_Float file_ratemax;
         AP_Float mav_ratemax;
         AP_Float blk_ratemax;
+        // jhkang-ADD
+        AP_Int16 signing_key;
     } _params;
 
     const struct LogStructure *structure(uint16_t num) const;

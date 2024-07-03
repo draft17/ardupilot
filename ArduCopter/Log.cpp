@@ -577,6 +577,7 @@ void Copter::Log_Write_Vehicle_Startup_Messages()
 
 void Copter::log_init(void)
 {
+    // b_buffer.sign_key=copter.g.signing_key;
     logger.Init(log_structure, ARRAY_SIZE(log_structure));
 }
 

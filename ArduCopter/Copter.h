@@ -70,6 +70,9 @@
 #include <AP_ADSB/AP_ADSB.h>                // ADS-B RF based collision avoidance module library
 #include <AP_Proximity/AP_Proximity.h>      // ArduPilot proximity sensor library
 
+//jhkang
+#include <AP_HAL/utility/RingBuffer.h>
+
 // Configuration
 #include "defines.h"
 #include "config.h"
@@ -428,6 +431,9 @@ private:
 
     // Stores initial bearing when armed - initial simple bearing is modified in super simple mode so not suitable
     int32_t initial_armed_bearing;
+
+	// YIG-ADD
+	uint32_t dist_loop_time = AP_HAL::millis();
 
     // Battery Sensors
     AP_BattMonitor battery{MASK_LOG_CURRENT,

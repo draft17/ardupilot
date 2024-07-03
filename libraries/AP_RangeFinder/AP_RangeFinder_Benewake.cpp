@@ -125,7 +125,8 @@ bool AP_RangeFinder_Benewake::get_reading(float &reading_m)
     if (count_out_of_range > 0) {
         // if only out of range readings return larger of
         // driver defined maximum range for the model and user defined max range + 1m
-        reading_m = MAX(model_dist_max_cm(), max_distance_cm() + BENEWAKE_OUT_OF_RANGE_ADD_CM) * 0.01f;
+        //reading_m = MAX(model_dist_max_cm(), max_distance_cm() + BENEWAKE_OUT_OF_RANGE_ADD_CM) * 0.01f;	// YIG - CHG
+        reading_m = model_dist_max_cm() * 0.01f;	// YIG - out of range rngfnd is 130m
         return true;
     }
 

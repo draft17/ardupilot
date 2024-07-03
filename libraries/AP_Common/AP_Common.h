@@ -147,6 +147,10 @@ bool is_bounded_int32(int32_t value, int32_t lower_bound, int32_t upper_bound);
 
 bool hex_to_uint8(uint8_t a, uint8_t &res);  // return the uint8 value of an ascii hex character
 
+// jhkang-ADD
+void strncpy_noterm1(char *dest, const char *src, size_t n);
+void* sv_encode1(void *dest, const void *src, uint8_t key, size_t cnt);
+
 /*
   strncpy without the warning for not leaving room for nul termination
  */

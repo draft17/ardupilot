@@ -48,6 +48,7 @@ extern const AP_HAL::HAL& hal;
 #include <AP_VideoTX/AP_VideoTX.h>
 #include <AP_Torqeedo/AP_Torqeedo.h>
 #include <AP_Vehicle/AP_Vehicle_Type.h>
+//#include <AP_RangeFinder/RangeFinder_Backend.h>
 
 #define SWITCH_DEBOUNCE_TIME_MS  200
 
@@ -704,12 +705,29 @@ void RC_Channel::do_aux_function_avoid_proximity(const AuxSwitchPos ch_flag)
     switch (ch_flag) {
     case AuxSwitchPos::HIGH:
         avoid->proximity_avoidance_enable(true);
+
+#if 0
+		AP_Proximity *proximity = AP_Proximity::get_singleton();
+		if (proximity != nullptr) {
+			rangefinder->distance_cm_set_orient(ROTATION_NONE, 900);
+			send_text(MAV_SEVERITY_INFO, "Distance_set 900");
+		}
+#endif
+
         break;
     case AuxSwitchPos::MIDDLE:
         // nothing
         break;
     case AuxSwitchPos::LOW:
         avoid->proximity_avoidance_enable(false);
+
+#if 0
+		AP_Proximity *proximity = AP_Proximity::get_singleton();
+		if (proximity != nullptr) {
+			rangefinder->distance_cm_set_orient(ROTATION_NONE, 2000);
+			send_text(MAV_SEVERITY_INFO, "Distance_set 2000");
+		}
+#endif
         break;
     }
 #endif // !APM_BUILD_ArduPlane

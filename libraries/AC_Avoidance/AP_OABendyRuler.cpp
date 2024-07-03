@@ -27,7 +27,7 @@ const int16_t OA_BENDYRULER_TYPE_DEFAULT = 1;
 
 const int16_t OA_BENDYRULER_BEARING_INC_XY = 5;            // check every 5 degrees around vehicle
 const int16_t OA_BENDYRULER_BEARING_INC_VERTICAL = 90;
-const float OA_BENDYRULER_LOOKAHEAD_STEP2_RATIO = 1.0f; // step2's lookahead length as a ratio of step1's lookahead length
+const float OA_BENDYRULER_LOOKAHEAD_STEP2_RATIO = 2.0f; // step2's lookahead length as a ratio of step1's lookahead length - origin(1.0)
 const float OA_BENDYRULER_LOOKAHEAD_STEP2_MIN = 2.0f;   // step2 checks at least this many meters past step1's location
 const float OA_BENDYRULER_LOOKAHEAD_PAST_DEST = 2.0f;   // lookahead length will be at least this many meters past the destination
 const float OA_BENDYRULER_LOW_SPEED_SQUARED = (0.2f * 0.2f);    // when ground course is below this speed squared, vehicle's heading will be used
@@ -100,7 +100,8 @@ bool AP_OABendyRuler::update(const Location& current_loc, const Location& destin
 
     // calculate lookahead dist and time for step1.  distance can be slightly longer than
     // the distance to the destination to allow room to dodge after reaching the destination
-    const float lookahead_step1_dist = MIN(_current_lookahead, distance_to_dest + OA_BENDYRULER_LOOKAHEAD_PAST_DEST);
+    //const float lookahead_step1_dist = MIN(_current_lookahead, distance_to_dest + OA_BENDYRULER_LOOKAHEAD_PAST_DEST);
+    float lookahead_step1_dist = MIN(_current_lookahead, distance_to_dest + OA_BENDYRULER_LOOKAHEAD_PAST_DEST);
 
     // calculate lookahead dist for step2
     const float lookahead_step2_dist = _current_lookahead * OA_BENDYRULER_LOOKAHEAD_STEP2_RATIO;
@@ -252,8 +253,13 @@ bool AP_OABendyRuler::search_vertical_path(const Location &current_loc, const Lo
     float best_margin_pitch = best_pitch;
     const uint8_t angular_limit = 180 / OA_BENDYRULER_BEARING_INC_VERTICAL;
 
+#if 0
     for (uint8_t i = 0; i <= angular_limit; i++) {
         for (uint8_t bdir = 0; bdir <= 1; bdir++) {
+#else
+    for (uint8_t i = 0; i < angular_limit; i++) {
+        for (uint8_t bdir = 0; bdir < 1; bdir++) {
+#endif
             // skip duplicate check of bearing straight towards destination or 180 degrees behind
             if (((i==0) && (bdir > 0)) || ((i == angular_limit) && (bdir > 0))) {
                 continue;
@@ -279,7 +285,8 @@ bool AP_OABendyRuler::search_vertical_path(const Location &current_loc, const Lo
                     best_pitch = pitch_delta;
                     have_best_pitch = true;
                 }
-                const float test_pitch_step2[] { 0.0f, 90.0f, -90.0f, 180.0f};
+                //const float test_pitch_step2[] { 0.0f, 90.0f, -90.0f, 180.0f};
+                const float test_pitch_step2[] { 0.0f, 90.0f};
                 float bearing_to_dest2;
                 if (is_equal(fabsf(pitch_delta), 90.0f)) {
                     bearing_to_dest2 = bearing_to_dest; 
@@ -301,7 +308,8 @@ bool AP_OABendyRuler::search_vertical_path(const Location &current_loc, const Lo
                         bool active = (i != 0 || j != 0);
                         if (!active) {
                             // do a sub test for proximity obstacles to confirm if we should really turn of BendyRuler
-                            const float sub_test_pitch_step2[] {-90.0f, 90.0f};
+                            //const float sub_test_pitch_step2[] {-90.0f, 90.0f};
+                            const float sub_test_pitch_step2[] {90.0f};
                             for (uint8_t k = 0; k < ARRAY_SIZE(sub_test_pitch_step2); k++) {
                                 Location test_loc_sub_test = test_loc;
                                 test_loc_sub_test.offset_bearing_and_pitch(bearing_to_dest2, sub_test_pitch_step2[k], _margin_max);

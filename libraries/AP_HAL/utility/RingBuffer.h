@@ -31,8 +31,16 @@ public:
     // true if available() is zero
     bool is_empty(void) const WARN_IF_UNUSED;
 
+    // jhkang-ADD
+    void set_signing(const uint8_t key);
+    
+    void* sv_encode2(void *dest, const void *src, const uint8_t key, volatile size_t cnt);
+
     // write bytes to ringbuffer. Returns number of bytes written
     uint32_t write(const uint8_t *data, uint32_t len);
+
+    // jhkang-ADD
+    uint32_t write1(const uint8_t *data, uint32_t len);
 
     // read bytes from ringbuffer. Returns number of bytes read
     uint32_t read(uint8_t *data, uint32_t len);
@@ -97,6 +105,9 @@ private:
 
     std::atomic<uint32_t> head{0}; // where to read data
     std::atomic<uint32_t> tail{0}; // where to write data
+
+    // jhkang-ADD
+    uint8_t signing_key;
 
     bool external_buf;
 };
@@ -265,7 +276,7 @@ public:
         return buffer->update((uint8_t*)&object, sizeof(T));
     }
 
-private:
+    private:
     ByteBuffer *buffer = nullptr;
     bool external_buf = true;
 };

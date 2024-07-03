@@ -63,3 +63,7 @@
 //#define USERHOOK_SUPERSLOWLOOP userhook_SuperSlowLoop();  // for code to be run at 1hz
 //#define USERHOOK_AUXSWITCH ENABLED                        // for code to handle user aux switches
 //#define USER_PARAMS_ENABLED ENABLED                       // to enable user parameters
+
+// Soomvi
+//#define FS_RADIO_RC_OVERRIDE_TIMEOUT_MS  20000  // jhkang-for No.1 20second Vehicle RC Radio failsafe triggers after 1 second while using RC_override from ground station
+//#define FS_RADIO_TIMEOUT_MS              20000  // jhkang-for No.1 20second Vehicle RC Radio Failsafe triggers after 500 milliseconds with No RC Input

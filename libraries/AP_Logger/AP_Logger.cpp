@@ -150,6 +150,14 @@ const AP_Param::GroupInfo AP_Logger::var_info[] = {
     // @User: Standard
     AP_GROUPINFO("_BLK_RATEMAX", 10, AP_Logger, _params.blk_ratemax, 0),
 #endif
+
+    // jhkang - ADD
+    // @Param: _SIGN_KEY
+    // @DisplayName: FC log Signing Key
+    // @Description: FC log Signing Key
+    // @Range: 0 255
+    // @User: Standard
+    AP_GROUPINFO("_SIGNING", 11, AP_Logger, _params.signing_key, 0),
     
     AP_GROUPEND
 };

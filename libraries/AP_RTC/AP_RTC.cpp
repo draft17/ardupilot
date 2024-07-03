@@ -34,7 +34,9 @@ const AP_Param::GroupInfo AP_RTC::var_info[] = {
     // @Description: Adds offset in +- minutes from UTC to calculate local time
     // @Range: -720 +840
     // @User: Advanced
-    AP_GROUPINFO("_TZ_MIN",  2, AP_RTC, tz_min, 0),
+	// jhkang-chg
+    //AP_GROUPINFO("_TZ_MIN",  2, AP_RTC, tz_min, 0),
+    AP_GROUPINFO("_TZ_MIN",  2, AP_RTC, tz_min, 540),
     
     AP_GROUPEND
 };

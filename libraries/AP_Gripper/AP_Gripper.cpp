@@ -9,7 +9,9 @@ extern const AP_HAL::HAL& hal;
 #define GRIPPER_RELEASE_PWM_DEFAULT     1100
 // EPM PWM definitions
 #define GRIPPER_NEUTRAL_PWM_DEFAULT     1500
-#define GRIPPER_REGRAB_DEFAULT          0           // default re-grab interval (in seconds) to ensure cargo is securely held
+// jhkagn - CHG
+//#define GRIPPER_REGRAB_DEFAULT          0           // default re-grab interval (in seconds) to ensure cargo is securely held
+#define GRIPPER_REGRAB_DEFAULT          7           // default re-grab interval (in seconds) to ensure cargo is securely held
 
 const AP_Param::GroupInfo AP_Gripper::var_info[] = {
     // @Param: ENABLE

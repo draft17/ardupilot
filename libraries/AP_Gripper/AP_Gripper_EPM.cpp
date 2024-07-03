@@ -40,6 +40,8 @@ struct UAVCANCommand {
     uint16_t command = 0;
 };
 
+#if 0
+// jhkang-CHG
 // grab - move the epm pwm output to the grab position
 void AP_Gripper_EPM::grab()
 {
@@ -60,10 +62,29 @@ void AP_Gripper_EPM::grab()
         // move the servo output to the grab position
         SRV_Channels::set_output_pwm(SRV_Channel::k_gripper, config.grab_pwm);
     }
+    config.flash_on = true;
     gcs().send_text(MAV_SEVERITY_INFO, "Gripper load grabbing");
     AP::logger().Write_Event(LogEvent::GRIPPER_GRAB);
 }
+#else
+void AP_Gripper_EPM::grab()
+{
+    // flag we are active and grabbing cargo
+    enable_light = true;
+    light_status = false;
 
+    // capture time
+    _last_grab_or_release = AP_HAL::millis();
+
+    {
+        // move the servo output to the grab position
+        SRV_Channels::set_output_pwm(SRV_Channel::k_gripper, config.grab_pwm);
+    }
+}
+#endif
+
+#if 0
+// jhkang - CHG
 // release - move epm pwm output to the release position
 void AP_Gripper_EPM::release()
 {
@@ -84,9 +105,25 @@ void AP_Gripper_EPM::release()
         // move the servo to the release position
         SRV_Channels::set_output_pwm(SRV_Channel::k_gripper, config.release_pwm);
     }
+    config.flash_on = false;
     gcs().send_text(MAV_SEVERITY_INFO, "Gripper load releasing");
     AP::logger().Write_Event(LogEvent::GRIPPER_RELEASE);
 }
+#else
+void AP_Gripper_EPM::release()
+{
+    // flag we are releasing cargo
+    enable_light = false;
+    light_status = true;
+    // capture time
+    _last_grab_or_release = AP_HAL::millis();
+
+    {
+        // move the servo to the release position
+        SRV_Channels::set_output_pwm(SRV_Channel::k_gripper, config.release_pwm);
+    }
+}
+#endif
 
 // neutral - return the epm pwm output to the neutral position
 void AP_Gripper_EPM::neutral()
@@ -99,6 +136,8 @@ void AP_Gripper_EPM::neutral()
 
 // update - moves the pwm back to neutral after the timeout has passed
 // should be called at at least 10hz
+// jhkang - CHG
+#if 0
 void AP_Gripper_EPM::update_gripper()
 {
     // move EPM PWM output back to neutral after the last grab or release
@@ -119,6 +158,28 @@ void AP_Gripper_EPM::update_gripper()
         grab();
     }
 }
+#else
+void AP_Gripper_EPM::update_gripper()
+{
+    if(enable_light)
+    {
+         if (light_status &&
+         (config.regrab_interval) > 0 &&
+         (AP_HAL::millis() - _last_grab_or_release > ((uint32_t)config.regrab_interval * 100))) {   // * 100-milliseconds eg, 5 => 0.5 sec
+            SRV_Channels::set_output_pwm(SRV_Channel::k_gripper, config.grab_pwm);
+            _last_grab_or_release = AP_HAL::millis();
+            light_status = false;
+         }
+        else if (!light_status &&
+        (config.regrab_interval) > 0 &&
+        (AP_HAL::millis() - _last_grab_or_release > ((uint32_t)config.regrab_interval * 100))) {    // * 100-milliseconds eg, 5 => 0.5 sec
+            SRV_Channels::set_output_pwm(SRV_Channel::k_gripper, config.release_pwm);
+            _last_grab_or_release = AP_HAL::millis();
+            light_status = true;
+        }
+    }
+}
+#endif
 
 UAVCANCommand AP_Gripper_EPM::make_uavcan_command(uint16_t command) const
 {

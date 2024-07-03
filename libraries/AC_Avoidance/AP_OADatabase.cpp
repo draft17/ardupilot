@@ -16,6 +16,7 @@
 #include <AP_AHRS/AP_AHRS.h>
 #include <GCS_MAVLink/GCS.h>
 #include <AP_Math/AP_Math.h>
+#include <AC_WPNav/AC_Circle.h> // YIG-ADD
 
 extern const AP_HAL::HAL& hal;
 
@@ -32,7 +33,8 @@ extern const AP_HAL::HAL& hal;
 #endif
 
 #ifndef AP_OADATABASE_DISTANCE_FROM_HOME
-    #define AP_OADATABASE_DISTANCE_FROM_HOME 3
+    //#define AP_OADATABASE_DISTANCE_FROM_HOME 10
+    #define AP_OADATABASE_DISTANCE_FROM_HOME 5
 #endif
 
 const AP_Param::GroupInfo AP_OADatabase::var_info[] = {
@@ -102,6 +104,22 @@ const AP_Param::GroupInfo AP_OADatabase::var_info[] = {
     // @User: Advanced
     AP_GROUPINFO_FRAME("ALT_MIN", 8, AP_OADatabase, _min_alt, 0.0f, AP_PARAM_FRAME_COPTER | AP_PARAM_FRAME_HELI | AP_PARAM_FRAME_TRICOPTER),
 
+    // @Param: FROM_HOME YIG-ADD
+    // @DisplayName: OADatabase Distance From Home
+    // @Description: Maximum distance of objects held in database.
+    // @Units: m
+    // @Range: 0 10
+    // @User: Advanced
+    AP_GROUPINFO("FROM_HOME", 9, AP_OADatabase, _from_home, 10.0f),
+
+    // @Param: FROM_HOME YIG-ADD
+    // @DisplayName: OADatabase Distance From Home
+    // @Description: Maximum distance of objects held in database.
+    // @Units: m
+    // @Range: 0 1000
+    // @User: Advanced
+    AP_GROUPINFO("TO_OBS", 10, AP_OADatabase, _to_obs, 20.0f),
+
     AP_GROUPEND
 };
 
@@ -117,6 +135,8 @@ AP_OADatabase::AP_OADatabase()
 
 void AP_OADatabase::init()
 {
+    //AC_Circle *circle_nav;         
+
     init_database();
     init_queue();
 
@@ -156,13 +176,20 @@ void AP_OADatabase::queue_push(const Vector3f &pos, uint32_t timestamp_ms, float
             // we do not know where the vehicle is
             return;
         }
-        if (current_pos.xy().length() < AP_OADATABASE_DISTANCE_FROM_HOME) {
+
+        //if (current_pos.xy().length() < AP_OADATABASE_DISTANCE_FROM_HOME) {
+        if (current_pos.xy().length() < MAX(AP_OADATABASE_DISTANCE_FROM_HOME, _from_home)) {	// YIG
             // vehicle is within a small radius of home 
+			return;	// YIG - AP_OADATABASE_DISTANCE_FROM_HOME or _from_home 안에서는 push하지 않음.
+
             if (-current_pos.z < _min_alt) {
                 // vehicle is below the minimum alt
                 return;
             }
         }
+
+		if(distance > _to_obs) // 장애물 거리 (distance) 가 _to_obs (e.g 20m)보다 크면 리턴
+			return;
     }
 #endif
     

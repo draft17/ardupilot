@@ -1108,6 +1108,8 @@ public:
 
     uint8_t get_channel_from_port_number(uint8_t port_num);
 
+	bool lock_mot;		// jhkang-ADD
+
 protected:
 
     virtual uint8_t sysid_this_mav() const = 0;

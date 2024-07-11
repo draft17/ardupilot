@@ -207,6 +207,20 @@ const AP_Param::GroupInfo AP_MotorsMulticopter::var_info[] = {
     // @User: Advanced
     AP_GROUPINFO("SAFE_TIME", 42, AP_MotorsMulticopter, _safe_time, AP_MOTORS_SAFE_TIME_DEFAULT),
 
+	// jhkang - ADD
+	// @Param: HS_MOT_NUM
+	// @DisplayName: Hellow HS.
+	// @Description: What Motor's?
+	// @User: Advanced
+	AP_GROUPINFO("HS_NUM", 43, AP_MotorsMulticopter, _hs_mot_num, 0),
+
+	// jhkang ADD
+	// @Param: HS_MOT_PWM
+	// @DisplayName: Hi HS.
+	// @Description: PWM
+	// @User: Advanced
+	AP_GROUPINFO("HS_PWM", 44, AP_MotorsMulticopter, _hs_mot_pwm, 0),
+
     AP_GROUPEND
 };
 

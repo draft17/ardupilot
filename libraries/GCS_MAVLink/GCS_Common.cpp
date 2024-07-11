@@ -4487,6 +4487,16 @@ MAV_RESULT GCS_MAVLINK::handle_command_long_packet(const mavlink_command_long_t 
         result = handle_fixed_mag_cal_yaw(packet);
         break;
 
+// jhkang-ADD : set mot pwm
+	case MAV_CMD_VIDEO_START_CAPTURE:
+		gcs().lock_mot = true;
+		break;
+
+// jhkang-ADD : release kill-motor
+	case MAV_CMD_VIDEO_STOP_CAPTURE:
+		gcs().lock_mot = false;
+		break;
+
     default:
         result = MAV_RESULT_UNSUPPORTED;
         break;

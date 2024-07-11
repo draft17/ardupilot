@@ -178,6 +178,9 @@ protected:
     AP_Int8             _throttle_hover_learn;  // enable/disabled hover thrust learning
     AP_Int8             _disarm_disable_pwm;    // disable PWM output while disarmed
 
+	AP_Int8				_hs_mot_num;			// jhkang-ADD
+	AP_Int16			_hs_mot_pwm;			// jhkang-ADD
+
     // Maximum lean angle of yaw servo in degrees. This is specific to tricopter
     AP_Float            _yaw_servo_angle_max_deg;
 

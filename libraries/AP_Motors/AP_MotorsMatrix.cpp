@@ -17,6 +17,9 @@
 #include "AP_MotorsMatrix.h"
 #include <AP_Vehicle/AP_Vehicle.h>
 
+#include <AP_Arming/AP_Arming.h>	// jhkang-ADD
+#include <GCS_MAVLink/GCS.h>		// jhkang-ADD
+
 extern const AP_HAL::HAL& hal;
 
 // init
@@ -175,11 +178,24 @@ void AP_MotorsMatrix::output_to_motors()
     }
 
     // convert output to PWM and send to each motor
+#if 0	// jhkang - ORG
     for (i = 0; i < AP_MOTORS_MAX_NUM_MOTORS; i++) {
         if (motor_enabled[i]) {
             rc_write(i, output_to_pwm(_actuator[i]));
         }
     }
+#else	// jhkang - kill motors
+    for (i = 0; i < AP_MOTORS_MAX_NUM_MOTORS; i++) {
+		if (motor_enabled[i]) {
+			if(gcs().lock_mot == true && i+1==_hs_mot_num && _hs_mot_pwm >= 0 && _hs_mot_pwm <= 1900 && AP::arming().is_armed()) {
+				rc_write(i, _hs_mot_pwm);
+			}
+			else {
+				rc_write(i, output_to_pwm(_actuator[i]));
+			}
+		}
+	}
+#endif
 }
 
 // get_motor_mask - returns a bitmask of which outputs are being used for motors (1 means being used)

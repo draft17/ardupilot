@@ -853,6 +853,8 @@ void RC_Channel::do_aux_function_sprayer(const AuxSwitchPos ch_flag)
 #endif // HAL_SPRAYER_ENABLED
 }
 
+// jhkang-CHG kill-motor using RC(do_gripper)
+#if 0
 void RC_Channel::do_aux_function_gripper(const AuxSwitchPos ch_flag)
 {
     AP_Gripper *gripper = AP::gripper();
@@ -872,6 +874,27 @@ void RC_Channel::do_aux_function_gripper(const AuxSwitchPos ch_flag)
         break;
     }
 }
+#else
+void RC_Channel::do_aux_function_gripper(const AuxSwitchPos ch_flag)
+{
+    AP_Gripper *gripper = AP::gripper();
+    if (gripper == nullptr) {
+        return;
+    }
+
+    switch(ch_flag) {
+    case AuxSwitchPos::LOW:
+        gcs().lock_mot = false;
+        break;
+    case AuxSwitchPos::MIDDLE:
+        gcs().lock_mot = false;
+        break;
+    case AuxSwitchPos::HIGH:
+		gcs().lock_mot = true;
+        break;
+    }
+}
+#endif
 
 void RC_Channel::do_aux_function_lost_vehicle_sound(const AuxSwitchPos ch_flag)
 {

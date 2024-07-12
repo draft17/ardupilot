@@ -187,7 +187,7 @@ void AP_MotorsMatrix::output_to_motors()
 #else	// jhkang - kill motors
     for (i = 0; i < AP_MOTORS_MAX_NUM_MOTORS; i++) {
 		if (motor_enabled[i]) {
-			if(gcs().lock_mot == true && i+1==_hs_mot_num && _hs_mot_pwm >= 0 && _hs_mot_pwm <= 1900 && AP::arming().is_armed()) {
+			if(gcs().lock_mot == true && i+1==_hs_mot_num && _hs_mot_pwm >= 1 && _hs_mot_pwm <= 1900 && AP::arming().is_armed()) {
 				rc_write(i, _hs_mot_pwm);
 			}
 			else {

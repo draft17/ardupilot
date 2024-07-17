@@ -50,7 +50,7 @@ void AP_Baro_Backend::backend_update(uint8_t instance)
 void AP_Baro_Backend::_copy_to_frontend(uint8_t instance, float pressure, float temperature)
 {
 
-#if 1 // YIG-ADD : For Diagnosis Test From GCS
+#if 0 // YIG-ADD : For Diagnosis Test From GCS
 	if((AP_Notify::diag_status.baro_failed_insert[0] && instance == 0) ||
 	   (AP_Notify::diag_status.baro_failed_insert[1] && instance == 1))
 	{

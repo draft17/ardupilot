@@ -250,6 +250,10 @@ public:
     ///     set_leash_length() should have been called before this method
     void get_stopping_point_xy(Vector3f &stopping_point) const;
 
+	// YIG-ADD : AVOID_AUTO
+	void get_stopping_dist_xy(float &stopping_dist) const;
+	//
+
     /// get_distance_to_target - get horizontal distance to position target in cm (used for reporting)
     float get_distance_to_target() const;
 

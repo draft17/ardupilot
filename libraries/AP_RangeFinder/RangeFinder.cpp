@@ -573,6 +573,16 @@ uint16_t RangeFinder::distance_cm_orient(enum Rotation orientation) const
     return backend->distance_cm();
 }
 
+// YIG-ADD
+void RangeFinder::distance_cm_set_orient(enum Rotation orientation, uint16_t dist) const
+{
+    AP_RangeFinder_Backend *backend = find_instance(orientation);
+    if (backend == nullptr) {
+		backend->distance_cm_set(dist);
+    }
+}
+//
+
 uint16_t RangeFinder::left_distance_cm_orient(enum Rotation orientation) const
 {
     AP_RangeFinder_Backend *backend = find_instance(orientation);
@@ -684,11 +694,18 @@ void RangeFinder::Log_RFND()
         return;
     }
 
+	uint8_t use = 0;
+
     for (uint8_t i=0; i<RANGEFINDER_MAX_INSTANCES; i++) {
         const AP_RangeFinder_Backend *s = get_backend(i);
         if (s == nullptr) {
             continue;
         }
+
+#if 1 // YIG-ADD
+		if(AP_Notify::diag_status.lidar_failed[0]) use = 1;
+		else use = 0;
+#endif
 
         const struct log_RFND pkt = {
                 LOG_PACKET_HEADER_INIT(LOG_RFND_MSG),
@@ -696,7 +713,7 @@ void RangeFinder::Log_RFND()
                 instance     : i,
                 dist         : s->distance_cm(),
                 status       : (uint8_t)s->status(),
-                orient       : s->orientation(),
+                used       	 : use,
         };
         AP::logger().WriteBlock(&pkt, sizeof(pkt));
     }

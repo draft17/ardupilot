@@ -25,6 +25,9 @@
 #endif
 #define MSC_ESC_BM 0x000000FF
 
+// YIG-ADD
+// #define MSC_MULTI_X
+
 class AP_MSC {
 public:
     AP_MSC();
@@ -38,8 +41,11 @@ public:
     ///// SRV output /////
     void SRV_push_servos(void);
 	bool motor_status_check(uint8_t num, uint32_t &error_code);
-	void switch_over(int a);
+	uint8_t is_active();
+	void switch_over(uint8_t a);
+	void switch_over_run(uint8_t a);
 	void motor_fail(uint8_t num, uint8_t percentage);
+	void motor_success();
 
     void loop(void);
 
@@ -54,7 +60,9 @@ public:
 
     char _thread_name[13] = "msc_01";
     bool _initialized;
-	char activeflag;
+	uint8_t activeflag;
+	uint8_t activeflag_run;
+	uint16_t activeflag_run_cnt;
 	char motorfailflag;
 	char motorfailperc;
     static AP_MSC *msc_singleton;
@@ -75,7 +83,43 @@ public:
 
     AP_HAL::OwnPtr<AP_HAL::Device> _dev;
 
-    uint8_t msc_spidata[8];
+#ifdef MSC_MULTI_X
+
+    uint8_t msc_spidata_tx[16];
+    uint8_t msc_spidata_rx[16];
+
+    struct spitx
+    {
+        uint64_t active : 1;
+        uint64_t channel : 3;
+        uint64_t rpm0 : 12;
+        uint64_t rpm1 : 12;
+        uint64_t rpm2 : 12;
+        uint64_t rpm3 : 12;
+        uint64_t reserved : 12;
+        uint64_t spiCRC : 64;
+    } *spitxdata;
+
+    struct spirx
+    {
+        uint64_t channel : 3;
+        uint64_t rpm0 : 12;
+        uint64_t rpm1 : 12;
+        uint64_t rpm2 : 12;
+        uint64_t rpm3 : 12;
+        uint64_t err0 : 3;
+        uint64_t err1 : 3;
+        uint64_t err2 : 3;
+        uint64_t err3 : 3;
+        uint64_t reserved : 1;
+        uint64_t spiCRC : 64;
+    } *spirxdata;
+
+#else // MSC_UNIX_X
+
+    uint8_t msc_spidata_tx[8];
+    uint8_t msc_spidata_rx[8];
+
     struct spitx
     {
         uint32_t active : 1;
@@ -84,6 +128,7 @@ public:
         uint32_t reserved : 16;
         uint32_t spiCRC : 32;
     } *spitxdata;
+
     struct spirx
     {
         uint32_t channel : 3;
@@ -93,7 +138,11 @@ public:
         uint32_t spiCRC : 32;
     } *spirxdata;
 
+#endif
+
 	uint32_t _test_timer1 = 0;
+	uint32_t _test_timer2 = 0;
+	uint32_t _test_timer3 = 0;
 };
 
 #endif /* AP_MSC_H_ */

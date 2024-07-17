@@ -137,7 +137,7 @@ void Copter::thrust_loss_check()
         // send message to gcs
         gcs().send_text(MAV_SEVERITY_EMERGENCY, "Potential Thrust Loss (%d)", (int)motors->get_lost_motor() + 1);
         // enable thrust loss handling
-#if 0 // YIG-IMSI for PAV #3
+#if 1 // YIG-IMSI for PAV #3
         motors->set_thrust_boost(true);
 #endif
         // the motors library disables this when it is no longer needed to achieve the commanded output

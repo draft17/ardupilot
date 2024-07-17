@@ -7,6 +7,7 @@
 #include <AP_Scheduler/AP_Scheduler.h>
 #include <AP_Baro/AP_Baro.h>
 #include <AP_AHRS/AP_AHRS.h>
+#include <AP_Notify/AP_Notify.h>
 
 extern const AP_HAL::HAL& hal;
 
@@ -43,6 +44,13 @@ void GCS::send_textv(MAV_SEVERITY severity, const char *fmt, va_list arg_list)
 
 void GCS::send_text(MAV_SEVERITY severity, const char *fmt, ...)
 {
+	// YIG-IMSI
+	if(AP_Notify::diag_status.deadlock_insert)
+	{
+		if(!AP_Notify::diag_status.ot)
+			return;
+	}
+
     va_list arg_list;
     va_start(arg_list, fmt);
     send_textv(severity, fmt, arg_list);

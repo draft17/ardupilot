@@ -887,7 +887,7 @@ bool AP_Arming::system_checks(bool report)
 #endif
     }
     if (AP::internalerror().errors() != 0) {
-        check_failed(report, "DEADLOCK :: Watchdog timeout (0x%x)", (unsigned int)AP::internalerror().errors());
+        //check_failed(report, "DEADLOCK :: Watchdog timeout (0x%x)", (unsigned int)AP::internalerror().errors());
         passed = false;
     }
 

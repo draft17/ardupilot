@@ -19,8 +19,11 @@
 #include "GCS.h"
 #include <AP_Logger/AP_Logger.h>
 #include <AP_Notify/AP_Notify.h> // YIG
+#include <AP_RangeFinder/RangeFinder_Backend.h> // YIG
+#include <AP_MSC/AP_MSC.h> // YIG
 
 extern const AP_HAL::HAL& hal;
+
 
 // queue of pending parameter requests and replies
 ObjectBuffer<GCS_MAVLINK::pending_param_request> GCS_MAVLINK::param_requests(20);
@@ -300,82 +303,87 @@ void GCS_MAVLINK::handle_param_set(const mavlink_message_t &msg)
 			else if(packet.param_value == 7) AP_Notify::diag_status.motor_failed[6] = true;
 			else if(packet.param_value == 8) AP_Notify::diag_status.motor_failed[7] = true;
 
-    		gcs().send_text(MAV_SEVERITY_INFO, "Motor #%d Error Insert", packet.param_value);
+    		gcs().send_text(MAV_SEVERITY_INFO, "Motor #%d Stop", packet.param_value);
 		}
 	}
 
-	// Deadlock 
-	if(!strcmp(key, "PRX_IGN_ANG3") && packet.param_value == 4)
+	// FC 
+	if(!strcmp(key, "PRX_IGN_ANG2") && packet.param_value == 4 && !AP_Notify::diag_status.deadlock_insert) // 4 : deadlock
 	{
+    	gcs().send_text(MAV_SEVERITY_WARNING, "Main Loop Stuck");
 		AP_Notify::diag_status.deadlock_insert = true;
-    	gcs().send_text(MAV_SEVERITY_INFO, "Deadlock Error Insert");
+		AP_Notify::diag_status.ot = true; // imsi
 	}
 
-	// Gyro
+	// IMU
+	if(!strcmp(key, "PRX_IGN_ANG3"))
+	{
+		if(packet.param_value == 1) {
+			AP_Notify::diag_status.gyro_failed_insert[0] = true;
+			AP_Notify::diag_status.accel_failed_insert[0] = true;
+			AP_Notify::diag_status.compass_failed_insert[0] = true;
+			AP_Notify::diag_status.baro_failed_insert[0] = true;
+			AP_Notify::diag_status.gps_failed_insert[0] = true;
+
+    		gcs().send_text(MAV_SEVERITY_INFO, "Error Inserted");
+    		gcs().send_text(MAV_SEVERITY_INFO, "	Gyro#[1]");
+    		gcs().send_text(MAV_SEVERITY_INFO, "	Accel#[1]");
+    		gcs().send_text(MAV_SEVERITY_INFO, "	Compass#[1]");
+    		gcs().send_text(MAV_SEVERITY_INFO, "	Baro#[1]");
+    		gcs().send_text(MAV_SEVERITY_INFO, "	GPS#[1]");
+		}
+		else if(packet.param_value == 2) 
+		{
+			AP_Notify::diag_status.gyro_failed_insert[1] = true;
+			AP_Notify::diag_status.accel_failed_insert[1] = true;
+			AP_Notify::diag_status.compass_failed_insert[1] = true;
+			AP_Notify::diag_status.gps_failed_insert[1] = true;
+
+    		gcs().send_text(MAV_SEVERITY_INFO, "Error Inserted");
+    		gcs().send_text(MAV_SEVERITY_INFO, "	Gyro#[2]");
+    		gcs().send_text(MAV_SEVERITY_INFO, "	Accel#[2]");
+    		gcs().send_text(MAV_SEVERITY_INFO, "	Compass#[2]");
+    		gcs().send_text(MAV_SEVERITY_INFO, "	GPS#[2]");
+		}
+	}
+
+	// GPS
 	if(!strcmp(key, "PRX_IGN_ANG4"))
 	{
-		if(packet.param_value == 1) {
-    		gcs().send_text(MAV_SEVERITY_INFO, "Gyro #1 Error Insert");
-			AP_Notify::diag_status.gyro_failed_insert[0] = true;
+		if(packet.param_value == 1) 
+		{
+			AP_Notify::diag_status.gps_failed_insert[0] = true;
+    		//gcs().send_text(MAV_SEVERITY_INFO, "GPS #[1] not healthy");
+    		//gcs().send_text(MAV_SEVERITY_INFO, "Primary changed to GPS #[2]");
 		}
-		else if(packet.param_value == 2) AP_Notify::diag_status.gyro_failed_insert[1] = true;
+		else if(packet.param_value == 2) 
+		{
+			AP_Notify::diag_status.gps_failed_insert[1] = true;
+    		//gcs().send_text(MAV_SEVERITY_INFO, "GPS #[2] not healthy");
+    		//gcs().send_text(MAV_SEVERITY_INFO, "Primary changed to GPS #[3]");
+		}
+#if 0
 		else if(packet.param_value == 3) 
 		{
-			AP_Notify::diag_status.gyro_failed_insert[2] = true;
-    		gcs().send_text(MAV_SEVERITY_CRITICAL, "SWITCH OVER FC #2");
+    		//gcs().send_text(MAV_SEVERITY_CRITICAL, "SWITCH OVER FC #2");
+			AP_Notify::diag_status.gps_failed_insert[2] = false;
 		}
 
-    	gcs().send_text(MAV_SEVERITY_INFO, "Gyro #%1.0f Error Insert", packet.param_value);
+    	//gcs().send_text(MAV_SEVERITY_INFO, "Accel #%1.0f Error Insert", packet.param_value);
+#endif
 	}
-	// Accel
+
+	// LiDAR
 	if(!strcmp(key, "PRX_IGN_ANG5"))
 	{
-		if(packet.param_value == 1) AP_Notify::diag_status.accel_failed_insert[0] = true;
-		else if(packet.param_value == 2) AP_Notify::diag_status.accel_failed_insert[1] = true;
-		else if(packet.param_value == 3) 
+		if(packet.param_value == 1) 
 		{
-    		gcs().send_text(MAV_SEVERITY_CRITICAL, "SWITCH OVER FC #2");
-			AP_Notify::diag_status.accel_failed_insert[2] = true;
+			AP_Notify::diag_status.storage_failed_insert[0] = true;
 		}
-
-    	gcs().send_text(MAV_SEVERITY_INFO, "Accel #%1.0f Error Insert", packet.param_value);
-	}
-	// Compass
-	if(!strcmp(key, "PRX_IGN_ANG6"))
-	{
-		if(packet.param_value == 1) AP_Notify::diag_status.compass_failed_insert[0] = true;
-		else if(packet.param_value == 2) AP_Notify::diag_status.compass_failed_insert[1] = true;
-		else if(packet.param_value == 3) AP_Notify::diag_status.compass_failed_insert[2] = true;
-
-    	gcs().send_text(MAV_SEVERITY_INFO, "Compass #%1.0f Error Insert", packet.param_value);
-	}
-	// Baro
-	if(!strcmp(key, "PRX_IGN_WID1"))
-	{
-		if(packet.param_value == 1) {
-    		gcs().send_text(MAV_SEVERITY_INFO, "Baro #1 Error Insert");
-			AP_Notify::diag_status.baro_failed_insert[0] = true;
+		else if(packet.param_value == 2) 
+		{
+			AP_Notify::diag_status.storage_failed_insert[0] = false;
 		}
-		else if(packet.param_value == 2) AP_Notify::diag_status.baro_failed_insert[1] = true;
-
-    	gcs().send_text(MAV_SEVERITY_INFO, "Baro #%1.0f Error Insert", packet.param_value);
-	}
-	// GPS
-	if(!strcmp(key, "PRX_IGN_WID2"))
-	{
-		if(packet.param_value == 1) AP_Notify::diag_status.gps_failed_insert[0] = true;
-		else if(packet.param_value == 2) AP_Notify::diag_status.gps_failed_insert[1] = true;
-		else if(packet.param_value == 3) AP_Notify::diag_status.gps_failed_insert[2] = true;
-
-    	gcs().send_text(MAV_SEVERITY_INFO, "GPS #%1.0f Error Insert", packet.param_value);
-	}
-	// LiDAR
-	if(!strcmp(key, "PRX_IGN_WID3"))
-	{
-		if(packet.param_value == 1) AP_Notify::diag_status.lidar_failed_insert[0] = true;
-		else if(packet.param_value == 2) AP_Notify::diag_status.lidar_failed_insert[1] = true;
-
-    	gcs().send_text(MAV_SEVERITY_INFO, "LiDAR #%1.0f Error Insert", packet.param_value);
 	}
 #endif
 
@@ -419,6 +427,11 @@ void GCS_MAVLINK::send_parameter_value(const char *param_name, ap_var_type param
  */
 void GCS::send_parameter_value(const char *param_name, ap_var_type param_type, float param_value)
 {
+	// YIG-IMSI
+	if(AP_Notify::diag_status.deadlock_insert)
+		return;
+	//
+
     mavlink_param_value_t packet{};
     const uint8_t to_copy = MIN(ARRAY_SIZE(packet.param_id), strlen(param_name));
     memcpy(packet.param_id, param_name, to_copy);

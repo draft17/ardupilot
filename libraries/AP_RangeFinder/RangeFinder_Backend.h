@@ -36,6 +36,7 @@ public:
     enum Rotation orientation() const { return (Rotation)params.orientation.get(); }
     uint16_t distance_cm() const { return state.distance_cm; }
 	// YIG-ADD
+    void distance_cm_set(uint16_t dist) const { state.distance_cm = dist; }
     uint16_t left_distance_cm() const { return state.left_distance_cm; }
     uint16_t right_distance_cm() const { return state.right_distance_cm; }
 	//

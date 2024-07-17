@@ -5,6 +5,7 @@
 #include <AP_Terrain/AP_Terrain.h>
 #include <GCS_MAVLink/GCS.h>
 #include <AP_AHRS/AP_AHRS.h>
+#include <AP_GPS/AP_GPS.h>
 
 const AP_Param::GroupInfo AP_Mission::var_info[] = {
 
@@ -81,6 +82,59 @@ void AP_Mission::stop()
 {
     _flags.state = MISSION_STOPPED;
 }
+
+// YIG-ADD : AVOID_AUTO
+float AP_Mission::nav_loc_alt()
+{
+	return _nav_cmd.content.location.alt;
+}
+
+uint16_t AP_Mission::curr_nav_idx()
+{
+	return _nav_cmd.index;
+}
+
+bool AP_Mission::mode_for_avoid()
+{
+    if(_nav_cmd.id == MAV_CMD_NAV_WAYPOINT)
+        return true;
+    else
+        return false;
+}
+
+void AP_Mission::assert_for_avoid(float yaw_head, float avoid_len, float avoid_alt)
+{
+	_flags.need_avoid = true;
+
+	yaw_avoid = yaw_head;
+	alt_avoid = avoid_alt;
+	length_avoid = avoid_len;
+}
+
+bool AP_Mission::get_avoid_flag()
+{
+	return _flags.need_avoid;
+}
+
+void AP_Mission::get_origin(Vector3f& Origin)
+{
+	Origin = _origin_avoid;
+}
+
+void AP_Mission::location_for_avoid(Location& Loc)
+{
+	gcs().send_text(MAV_SEVERITY_INFO, "[AVOID] yaw=%4.2f	%4.2f	Alt=%u", yaw_avoid, wrap_180(yaw_avoid), (unsigned)Loc.alt);
+
+#if 1
+	Loc.offset_bearing(yaw_avoid, length_avoid);
+#else
+	Loc.offset_bearing(wrap_180(yaw_avoid), length_avoid);
+#endif
+	Loc.alt += (alt_avoid * 100);
+
+	gcs().send_text(MAV_SEVERITY_INFO, "[AVOID] WP Alt=%u", (unsigned)Loc.alt);
+}
+//
 
 /// resume - continues the mission execution from where we last left off
 ///     previous running commands will be re-initialized
@@ -176,6 +230,9 @@ void AP_Mission::reset()
     _flags.nav_cmd_loaded  = false;
     _flags.do_cmd_loaded   = false;
     _flags.do_cmd_all_done = false;
+	// YIG-ADD : AVOID_AUTO
+	_flags.need_avoid = false;
+	//
     _nav_cmd.index         = AP_MISSION_CMD_INDEX_NONE;
     _do_cmd.index          = AP_MISSION_CMD_INDEX_NONE;
     _prev_nav_cmd_index    = AP_MISSION_CMD_INDEX_NONE;
@@ -201,6 +258,9 @@ bool AP_Mission::clear()
     _do_cmd.index = AP_MISSION_CMD_INDEX_NONE;
     _flags.nav_cmd_loaded = false;
     _flags.do_cmd_loaded = false;
+	// YIG-ADD : AVOID_AUTO
+	_flags.need_avoid = false;
+	//
 
     // return success
     return true;
@@ -238,6 +298,23 @@ void AP_Mission::update()
     }else{
         // run the active nav command
         if (verify_command(_nav_cmd)) {
+
+			// YIG-ADD : AVOID_AUTO
+			if(_flags.need_avoid)
+			{
+				_nav_cmd.index--;
+				//gcs().send_text(MAV_SEVERITY_INFO, "[AVOID] avoid nav idx (%d)", _nav_cmd.index);
+				const AP_GPS &_gps = AP::gps();
+				_nav_cmd.content.location = _gps.location();
+				_nav_cmd.content.location.alt = 0;
+				_cmd_start_fn(_nav_cmd);
+
+				_flags.need_avoid = false;
+
+				return;
+			}
+			//
+
             // market _nav_cmd as complete (it will be started on the next iteration)
             _flags.nav_cmd_loaded = false;
             // immediately advance to the next mission command

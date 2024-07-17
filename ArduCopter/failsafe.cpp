@@ -106,7 +106,7 @@ void Copter::enable_diagnosis()
 	AP_Notify::diag_status.storage_failed[0] =   0;
 	AP_Notify::diag_status.storage_failed[1] =   0; // not used :  FC#2에 동시 저장됨
 	AP_Notify::diag_status.motor_status_failed = 0;
-	for(int i=0;i<8;i++) AP_Notify::diag_status.motor_failed[i] = 0;
+	for(int i=0;i<9;i++) AP_Notify::diag_status.motor_failed[i] = 0;
 
 #if 1 // YIG : For Diagnosis SW Insert
 	AP_Notify::diag_status.ov_insert = 				   0;
@@ -133,7 +133,7 @@ void Copter::enable_diagnosis()
 	AP_Notify::diag_status.lte_link_failed_insert[1] = 0;
 	AP_Notify::diag_status.storage_failed_insert[0] =  0;
 	AP_Notify::diag_status.storage_failed_insert[1] =  0;
-	for(int i=0;i<8;i++) AP_Notify::diag_status.motor_failed_insert[i] = 0;
+	for(int i=0;i<9;i++) AP_Notify::diag_status.motor_failed_insert[i] = 0;
 #endif
 
 	AP_Notify::diag_status.watchdog_on = false;
@@ -145,7 +145,57 @@ void Copter::enable_diagnosis()
 
 bool Copter::check_diagnosis()
 {
-    if( AP_Notify::diag_status.ov || AP_Notify::diag_status.oc || AP_Notify::diag_status.ot || AP_Notify::diag_status.deadlock 			  ||
+#if 1 // YIG-IMSI
+
+	if(AP_Notify::events.user_mode_change)
+	{
+		AP_Notify::events.user_mode_change = 0;
+		Log_Write_Event(DATA_GRIPPER_GRAB);
+	}
+	if(AP_Notify::events.user_mode_change_failed)
+	{
+		AP_Notify::events.user_mode_change_failed = 0;
+		Log_Write_Event(DATA_GRIPPER_RELEASE);
+	}
+
+
+	if(AP_Notify::events.autotune_failed)
+	{
+		AP_Notify::events.autotune_failed = 0;
+		gcs().send_text(MAV_SEVERITY_CRITICAL, "Avoidance Event");
+		Log_Write_Event(DATA_FLIP_START);
+	}
+	if(AP_Notify::flags.parachute_release)
+	{
+		AP_Notify::flags.parachute_release = 0;
+		Log_Write_Event(DATA_FLIP_END);
+	}
+
+	if(AP_Notify::diag_status.ot) // deadlock imsi
+	{
+		AP::logger().Write_Error(LogErrorSubsystem::CPU, LogErrorCode::FAILSAFE_OCCURRED);
+		AP_Notify::diag_status.ot = false;
+		//AP::internalerror().error(AP_InternalError::error_t::main_loop_stuck);
+
+		Log_Write_Event(DATA_SWITCH_OVER_RELEASED);
+#if 0
+		msc.switch_over(0);
+#else // YIG-IMSI for Jawol 평가
+		msc.switch_over_run(1);
+#endif
+		gcs().send_text(MAV_SEVERITY_CRITICAL, "Switch-Over to FC#2");
+		AP_Notify::diag_status.oc = true; // failsafe 에서 활용
+
+		// YIG-IMSI
+		//set_mode(Mode::Number::LAND, ModeReason::FAILSAFE);
+		//AP::logger().StopLogging();
+		loop_time_1 = AP_HAL::millis(); // failsafe 에서 활용
+		//
+	}
+#endif
+
+    //if( AP_Notify::diag_status.ov || AP_Notify::diag_status.oc || AP_Notify::diag_status.ot || AP_Notify::diag_status.deadlock 			  ||
+    if( AP_Notify::diag_status.ov || AP_Notify::diag_status.oc || AP_Notify::diag_status.deadlock 			  ||
 	   (AP_Notify::diag_status.baro_failed[0]    && AP_Notify::diag_status.baro_failed[1]) 												  ||
 	   (AP_Notify::diag_status.gyro_failed[0]    && AP_Notify::diag_status.gyro_failed[1]    && AP_Notify::diag_status.gyro_failed[2])    ||
 	   (AP_Notify::diag_status.accel_failed[0]   && AP_Notify::diag_status.accel_failed[1]   && AP_Notify::diag_status.accel_failed[2])   ||
@@ -155,16 +205,18 @@ bool Copter::check_diagnosis()
 	{
 		if(!AP_Notify::diag_status.fc_switch_over)
 		{
-			gcs().send_text(MAV_SEVERITY_CRITICAL, "Switch-Over to FC #2");
 			AP_Notify::diag_status.fc_switch_over = true;
+#if 0 // YIG-IMSI
 			msc.switch_over(0);
-			Log_Write_Event(DATA_SWITCHOVER_HAPPENED);
+			Log_Write_Event(DATA_SWITCHOVER_RELEASE);
+			gcs().send_text(MAV_SEVERITY_CRITICAL, "SWITCHOVER TO FC#2");
+#endif
 		}
 	}
 
 	// Motor Fail
-	if(AP_Notify::diag_status.motor_failed[0] == true) failed_motor = 0;
-	else if(AP_Notify::diag_status.motor_failed[1] == true) failed_motor = 1;
+	if     (AP_Notify::diag_status.motor_failed[0] == true) failed_motor = 0;
+	//else if(AP_Notify::diag_status.motor_failed[1] == true) failed_motor = 1;
 	else if(AP_Notify::diag_status.motor_failed[2] == true) failed_motor = 2;
 	else if(AP_Notify::diag_status.motor_failed[3] == true) failed_motor = 3;
 	else if(AP_Notify::diag_status.motor_failed[4] == true) failed_motor = 4;
@@ -172,15 +224,42 @@ bool Copter::check_diagnosis()
 	else if(AP_Notify::diag_status.motor_failed[6] == true) failed_motor = 6;
 	else if(AP_Notify::diag_status.motor_failed[7] == true) failed_motor = 7;
 
-	if(failed_motor < 9)
-	{
-		motors->set_thrust_boost(true);
-	//	motors->set_lost_motor(failed_motor);
-		msc.motor_fail(0, (failed_motor * 10));
-		AP_Notify::diag_status.motor_status_failed = true;
+	else if(AP_Notify::diag_status.motor_failed[8] == true) failed_motor = 8;
 
-		//gcs().senu_text(MAV_SEVERITY_CRITICAL, "MotorFail (%d)", failed_motor);
-		//failed_motor = 9;
+	if(failed_motor < 8 && AP_Notify::diag_status.motor_failed[1] == false)
+	{
+		//motors->set_lost_motor(failed_motor);
+		//msc.motor_fail(0, (failed_motor * 10));
+
+		uint8_t perc = (uint8_t)copter.fence.get_margin();
+		msc.motor_fail(6, perc * 10);
+
+		gcs().send_text(MAV_SEVERITY_INFO, "Motor (#7) Loss");
+		AP::logger().Write_Error(LogErrorSubsystem::THRUST_LOSS_CHECK, LogErrorCode::FAILSAFE_OCCURRED);
+
+		//motors->set_thrust_boost(true);
+		AP_Notify::diag_status.motor_status_failed = true;
+		//set_mode(Mode::Number::LAND, ModeReason::FAILSAFE);
+
+		gcs().send_text(MAV_SEVERITY_INFO, "Thrust Boost Mode triggered");
+
+		AP_Notify::diag_status.motor_failed[2] = false;
+		AP_Notify::diag_status.motor_failed[1] = true;
+
+		failed_motor = 9;
+	}
+	else if(failed_motor == 8 && AP_Notify::diag_status.motor_failed[1] == true)
+	{
+		msc.motor_success();
+
+		gcs().send_text(MAV_SEVERITY_INFO, "motor #7");
+
+		//motors->set_thrust_boost(false);
+		AP_Notify::diag_status.motor_status_failed = false;
+		AP_Notify::diag_status.motor_failed[8] = false;
+		AP_Notify::diag_status.motor_failed[1] = false;
+
+		failed_motor = 9;
 	}
 	//
 

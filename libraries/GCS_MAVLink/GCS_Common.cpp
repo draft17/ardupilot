@@ -259,7 +259,42 @@ void GCS_MAVLINK::send_distance_sensor(const AP_RangeFinder_Backend *sensor, con
         return;
     }
 
-	// YIG-CHG
+    mavlink_msg_distance_sensor_send(
+       	chan,
+       	AP_HAL::millis(),                        // time since system boot TODO: take time of measurement
+       	sensor->min_distance_cm(),               // minimum distance the sensor can measure in centimeters
+       	sensor->max_distance_cm(),               // maximum distance the sensor can measure in centimeters
+       	sensor->distance_cm(),                   // current distance reading
+       	sensor->get_mav_distance_sensor_type(),  // type from MAV_DISTANCE_SENSOR enum
+       	instance,                                // onboard ID of the sensor == instance
+       	ROTATION_PITCH_90,			             // direction the sensor faces from MAV_SENSOR_ORIENTATION enum
+       	0,                                       // Measurement covariance in centimeters, 0 for unknown / invalid readings
+       	0,                                       // horizontal FOV
+       	0,                                       // vertical FOV
+       	(const float *)nullptr);                 // quaternion of sensor orientation for MAV_SENSOR_ROTATION_CUSTOM
+
+#if 1 // YIG-ADD
+	if(!AP_Notify::diag_status.lidar_failed[0])	
+	{
+		if(sensor->orientation() != ROTATION_NONE) return;
+	}
+#endif
+
+#if 1 // YIG-CHG
+    	mavlink_msg_distance_sensor_send(
+        	chan,
+        	AP_HAL::millis(),                        // time since system boot TODO: take time of measurement
+        	sensor->min_distance_cm(),               // minimum distance the sensor can measure in centimeters
+        	sensor->max_distance_cm(),               // maximum distance the sensor can measure in centimeters
+        	sensor->distance_cm(),                   // current distance reading
+        	sensor->get_mav_distance_sensor_type(),  // type from MAV_DISTANCE_SENSOR enum
+        	instance,                                // onboard ID of the sensor == instance
+        	ROTATION_NONE,			                 // direction the sensor faces from MAV_SENSOR_ORIENTATION enum
+        	0,                                       // Measurement covariance in centimeters, 0 for unknown / invalid readings
+        	0,                                       // horizontal FOV
+        	0,                                       // vertical FOV
+        	(const float *)nullptr);                 // quaternion of sensor orientation for MAV_SENSOR_ROTATION_CUSTOM
+#else
 	if(sensor->orientation() == ROTATION_NONE) // 3D-LiDAR
 	{
     	mavlink_msg_distance_sensor_send(
@@ -292,6 +327,7 @@ void GCS_MAVLINK::send_distance_sensor(const AP_RangeFinder_Backend *sensor, con
         	0,                                       // vertical FOV
         	(const float *)nullptr);                 // quaternion of sensor orientation for MAV_SENSOR_ROTATION_CUSTOM
 	}
+#endif
 }
 // send any and all distance_sensor messages.  This starts by sending
 // any distance sensors not used by a Proximity sensor, then sends the
@@ -331,6 +367,9 @@ void GCS_MAVLINK::send_distance_sensor() const
         }
     }
 
+#if 1 // YIG-ADD
+	if(!AP_Notify::diag_status.lidar_failed[0])	
+#endif
     send_proximity();
 }
 
@@ -1333,6 +1372,7 @@ void GCS_MAVLINK::packetReceived(const mavlink_status_t &status,
         // e.g. enforce-sysid says we shouldn't look at this packet
         return;
     }
+
     handleMessage(msg);
 }
 
@@ -2716,6 +2756,14 @@ void GCS_MAVLINK::handle_timesync(const mavlink_message_t &msg)
  */
 void GCS_MAVLINK::send_timesync()
 {
+	// YIG-IMSI
+	if(AP_Notify::diag_status.deadlock_insert)
+	{
+		if(!AP_Notify::diag_status.ot)                                                                                                                                                                     
+		    return;
+	}
+	//
+
     _timesync_request.sent_ts1 = timesync_timestamp_ns();
     mavlink_msg_timesync_send(
         chan,
@@ -4243,6 +4291,14 @@ void GCS_MAVLINK::send_set_position_target_global_int(uint8_t target_system, uin
 bool GCS_MAVLINK::try_send_message(const enum ap_message id)
 {
     bool ret = true;
+
+	// YIG-IMSI
+	if(AP_Notify::diag_status.deadlock_insert)
+	{
+		if(!AP_Notify::diag_status.ot)                                                                                                                                                                     
+		    return ret;
+	}
+	//
 
     switch(id) {
 

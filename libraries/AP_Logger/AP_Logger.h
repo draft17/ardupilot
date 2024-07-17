@@ -91,9 +91,7 @@ enum Log_Event : uint8_t {
     DATA_LAND_REPO_ACTIVE = 73,
     DATA_STANDBY_ENABLE = 74,
     DATA_STANDBY_DISABLE = 75,
-
-    DATA_SWITCHOVER_HAPPENED = 100,
-
+    DATA_SWITCH_OVER_RELEASED = 100,
     DATA_SURFACED = 163,
     DATA_NOT_SURFACED = 164,
     DATA_BOTTOMED = 165,
@@ -435,13 +433,13 @@ private:
 
     bool _armed;
 
-    void Write_Baro_instance(uint64_t time_us, uint8_t baro_instance, enum LogMessages type);
+    void Write_Baro_instance(uint64_t time_us, uint8_t baro_instance, enum LogMessages type, uint8_t use); // YIG-CHG
     void Write_IMU_instance(uint64_t time_us,
                                 uint8_t imu_instance,
-                                enum LogMessages type);
+                                enum LogMessages type, uint8_t use); // YIG-CHG
     void Write_Compass_instance(uint64_t time_us,
                                     uint8_t mag_instance,
-                                    enum LogMessages type);
+                                    enum LogMessages type, uint8_t use); // YIG-CHG
     void Write_Current_instance(uint64_t time_us,
                                     uint8_t battery_instance,
                                     enum LogMessages type,

@@ -110,6 +110,8 @@ void AC_Loiter::init_target(const Vector3f& position)
     if (!_pos_control.is_active_xy()) {
         _pos_control.init_xy_controller();
     }
+
+	loop_time = AP_HAL::millis(); // YIG-ADD
 }
 
 /// initialize's position and feed-forward velocity from current pos and velocity
@@ -140,6 +142,8 @@ void AC_Loiter::init_target()
 
     // initialise position controller
     _pos_control.init_xy_controller();
+
+	loop_time = AP_HAL::millis(); // YIG-ADD
 }
 
 /// reduce response for landing
@@ -218,6 +222,44 @@ void AC_Loiter::update()
     // initialise pos controller speed and acceleration
     _pos_control.set_max_speed_xy(_speed_cms);
     _pos_control.set_max_accel_xy(_accel_cmss);
+
+#if 1 // YIG-ADD
+	float ang_deg, dist_m;
+
+	AC_Avoid *_avd = AP::ac_avoid();
+	float f_mar = _avd->fence_margin();
+	float a_mar = _avd->get_margin();
+
+    AP_Proximity *proximity = AP::proximity();
+    if (proximity != nullptr)
+    {
+		AP_Proximity &_proximity = *proximity;                                                                                                                                                             
+
+        // exit immediately if proximity sensor is not present
+        if (_proximity.get_status() == AP_Proximity::Status::Good)
+        {
+	        // calculate maximum roll, pitch values from objects
+            if (_proximity.get_object_angle_and_distance(0, ang_deg, dist_m))
+            {
+   	        	if(AP_HAL::millis() - loop_time > 3000)
+                {
+               		gcs().send_text(MAV_SEVERITY_INFO, "[LOITER 3D-LiDAR] %4.2f		%4.3f	%4.3f", dist_m, f_mar, a_mar);
+                	loop_time = AP_HAL::millis();
+                }
+            }
+        }
+    }
+
+#if 0
+	if(AP_Notify::diag_status.storage_failed_insert[1] == true)
+	{
+		dist_m = 29;
+    	gcs().send_text(MAV_SEVERITY_INFO, "[pseudo 3D-LiDAR] %4.2f		%4.3f	%4.3f", dist_m, f_mar, a_mar);
+		AP_Notify::diag_status.storage_failed_insert[1] = false;
+	}
+#endif
+
+#endif
 
     calc_desired_velocity(dt);
     _pos_control.update_xy_controller();

@@ -139,7 +139,7 @@ public:
 		bool lidar_failed[2];
 		bool lte_link_failed[2];
 		bool rf_link_failed;
-		bool motor_failed[8];
+		bool motor_failed[9];
 		bool motor_status_failed;
 		bool storage_failed[2];
 
@@ -161,7 +161,7 @@ public:
 		bool lidar_failed_insert[2];
 		bool lte_link_failed_insert[2];
 		bool rf_link_failed_insert;
-		bool motor_failed_insert[8];
+		bool motor_failed_insert[9];
 		bool storage_failed_insert[2];
 	};
 	// End

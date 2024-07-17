@@ -214,6 +214,13 @@ void I2CBus::dma_deallocate(Shared_DMA *)
 {
 }
 
+// YIG-ADD
+bool I2CDevice::transfer_fullduplex(const uint8_t *send, uint8_t *recv, uint32_t len)
+{
+	return true;
+}
+//
+
 bool I2CDevice::transfer(const uint8_t *send, uint32_t send_len,
                          uint8_t *recv, uint32_t recv_len)
 {

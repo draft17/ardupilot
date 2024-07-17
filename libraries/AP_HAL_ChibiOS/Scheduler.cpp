@@ -342,11 +342,14 @@ void Scheduler::_timer_thread(void *arg)
 		if (AP_Notify::diag_status.watchdog_on == true && AP_HAL::millis() - AP_Notify::diag_status.watchdog_pat_time > 800) 
 		{
 			if(!AP_Notify::diag_status.deadlock) {
+#if 0
 				AP_Notify::diag_status.deadlock = true; // true 설정하면 failsafe 에서 switch over 시킴
-
+#else // for for for for
+				//AP_Notify::diag_status.deadlock = true; // true 설정하면 failsafe 에서 switch over 시킴
+#endif
 				//AP_Notify::diag_status.fc_switch_over = true;
 
-				gcs().send_text(MAV_SEVERITY_CRITICAL, "Watchdog Triggered");
+				//gcs().send_text(MAV_SEVERITY_CRITICAL, "Watchdog Triggered");
 
 				//AP_MSC *ap_msc = AP_MSC::get_msc();
 				//ap_msc->switch_over(0);

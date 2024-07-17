@@ -244,6 +244,7 @@ struct PACKED log_IMU {
     float temperature;
     uint8_t gyro_health, accel_health;
     uint16_t gyro_rate, accel_rate;
+	uint8_t used;
 };
 
 struct PACKED log_IMUDT {
@@ -359,6 +360,7 @@ struct PACKED log_RCOUT {
     uint16_t chan12;
     uint16_t chan13;
     uint16_t chan14;
+	uint8_t  active;
 };
 
 struct PACKED log_MAV {
@@ -387,6 +389,7 @@ struct PACKED log_BARO {
     float   drift_offset;
     float   ground_temp;
     uint8_t healthy;
+    uint8_t used;
 };
 
 struct PACKED log_Optflow {
@@ -808,8 +811,7 @@ struct PACKED log_Compass {
     int16_t  motor_offset_x;
     int16_t  motor_offset_y;
     int16_t  motor_offset_z;
-    uint8_t  health;
-    uint32_t SUS;
+    uint8_t  used;
 };
 
 struct PACKED log_Mode {
@@ -829,7 +831,7 @@ struct PACKED log_RFND {
     uint8_t instance;
     uint16_t dist;
     uint8_t status;
-    uint8_t orient;
+    uint8_t used;
 };
 
 /*
@@ -1133,7 +1135,7 @@ struct PACKED log_Beacon {
 struct PACKED log_Proximity {
     LOG_PACKET_HEADER;
     uint64_t time_us;
-    uint8_t health;
+    uint8_t used;
     float dist0;
     float dist45;
     float dist90;
@@ -1236,10 +1238,10 @@ struct PACKED log_Arm_Disarm {
 #define ACC_MULTS "FF000"
 
 // see "struct sensor" in AP_Baro.h and "Write_Baro":
-#define BARO_LABELS "TimeUS,Alt,Press,Temp,CRt,SMS,Offset,GndTemp,Health"
-#define BARO_FMT   "QffcfIffB"
-#define BARO_UNITS "smPOnsmO-"
-#define BARO_MULTS "F00B0C?0-"
+#define BARO_LABELS "TimeUS,Alt,Press,Temp,CRt,SMS,Offset,GndTemp,Health,Used"
+#define BARO_FMT   "QffcfIffBB"
+#define BARO_UNITS "smPOnsmO--"
+#define BARO_MULTS "F00B0C?0--"
 
 #define ESC_LABELS "TimeUS,RPM,Volt,Curr,Temp,CTot"
 #define ESC_FMT   "QeCCcH"
@@ -1252,7 +1254,7 @@ struct PACKED log_Arm_Disarm {
 #define GPA_MULTS "FBBBB0-CC"
 
 // see "struct GPS_State" and "Write_GPS":
-#define GPS_LABELS "TimeUS,Status,GMS,GWk,NSats,HDop,Lat,Lng,Alt,Spd,GCrs,VZ,Yaw,U"
+#define GPS_LABELS "TimeUS,Status,GMS,GWk,NSats,HDop,Lat,Lng,Alt,Spd,GCrs,VZ,Yaw,Used"
 #define GPS_FMT   "QBIHBcLLeffffB"
 #define GPS_UNITS "s---SmDUmnhnh-"
 #define GPS_MULTS "F---0BGGB000--"
@@ -1277,15 +1279,15 @@ struct PACKED log_Arm_Disarm {
 #define ISBD_UNITS  "s--ooo"
 #define ISBD_MULTS  "F--???"
 
-#define IMU_LABELS "TimeUS,GyrX,GyrY,GyrZ,AccX,AccY,AccZ,EG,EA,T,GH,AH,GHz,AHz"
-#define IMU_FMT   "QffffffIIfBBHH"
-#define IMU_UNITS "sEEEooo--O--zz"
-#define IMU_MULTS "F000000-----00"
+#define IMU_LABELS "TimeUS,GyrX,GyrY,GyrZ,AccX,AccY,AccZ,EG,EA,T,GH,AH,GHz,AHz,Used"
+#define IMU_FMT   "QffffffIIfBBHHB"
+#define IMU_UNITS "sEEEooo--O--zz-"
+#define IMU_MULTS "F000000-----00-"
 
-#define MAG_LABELS "TimeUS,MagX,MagY,MagZ,OfsX,OfsY,OfsZ,MOfsX,MOfsY,MOfsZ,Health,S"
-#define MAG_FMT   "QhhhhhhhhhBI"
-#define MAG_UNITS "sGGGGGGGGG-s"
-#define MAG_MULTS "FCCCCCCCCC-F"
+#define MAG_LABELS "TimeUS,MagX,MagY,MagZ,OfsX,OfsY,OfsZ,MOfsX,MOfsY,MOfsZ,Used"
+#define MAG_FMT   "QhhhhhhhhhB"
+#define MAG_UNITS "sGGGGGGGGG-"
+#define MAG_MULTS "FCCCCCCCCC-"
 
 #define PID_LABELS "TimeUS,Tar,Act,Err,P,I,D,FF"
 #define PID_FMT    "Qfffffff"
@@ -1328,14 +1330,14 @@ struct PACKED log_Arm_Disarm {
       "GPS",  GPS_FMT, GPS_LABELS, GPS_UNITS, GPS_MULTS }, \
     { LOG_GPS2_MSG, sizeof(log_GPS), \
       "GPS2", GPS_FMT, GPS_LABELS, GPS_UNITS, GPS_MULTS }, \
-    { LOG_GPSB_MSG, sizeof(log_GPS), \
-      "GPSB", GPS_FMT, GPS_LABELS, GPS_UNITS, GPS_MULTS }, \
+    { LOG_GPS3_MSG, sizeof(log_GPS), \
+      "GPS3", GPS_FMT, GPS_LABELS, GPS_UNITS, GPS_MULTS }, \
     { LOG_GPA_MSG,  sizeof(log_GPA), \
       "GPA",  GPA_FMT, GPA_LABELS, GPA_UNITS, GPA_MULTS }, \
     { LOG_GPA2_MSG, sizeof(log_GPA), \
       "GPA2", GPA_FMT, GPA_LABELS, GPA_UNITS, GPA_MULTS }, \
-    { LOG_GPAB_MSG, sizeof(log_GPA), \
-      "GPAB", GPA_FMT, GPA_LABELS, GPA_UNITS, GPA_MULTS }, \
+    { LOG_GPA3_MSG, sizeof(log_GPA), \
+      "GPA3", GPA_FMT, GPA_LABELS, GPA_UNITS, GPA_MULTS }, \
     { LOG_IMU_MSG, sizeof(log_IMU), \
       "IMU",  IMU_FMT,     IMU_LABELS, IMU_UNITS, IMU_MULTS }, \
     { LOG_MESSAGE_MSG, sizeof(log_Message), \
@@ -1343,7 +1345,7 @@ struct PACKED log_Arm_Disarm {
     { LOG_RCIN_MSG, sizeof(log_RCIN), \
       "RCIN",  "QHHHHHHHHHHHHHH",     "TimeUS,C1,C2,C3,C4,C5,C6,C7,C8,C9,C10,C11,C12,C13,C14", "sYYYYYYYYYYYYYY", "F--------------" }, \
     { LOG_RCOUT_MSG, sizeof(log_RCOUT), \
-      "RCOU",  "QHHHHHHHHHHHHHH",     "TimeUS,C1,C2,C3,C4,C5,C6,C7,C8,C9,C10,C11,C12,C13,C14", "sYYYYYYYYYYYYYY", "F--------------"  }, \
+      "RCOU",  "QHHHHHHHHHHHHHHB",     "TimeUS,C1,C2,C3,C4,C5,C6,C7,C8,C9,C10,C11,C12,C13,C14,active", "sYYYYYYYYYYYYYY-", "F---------------"  }, \
     { LOG_RSSI_MSG, sizeof(log_RSSI), \
       "RSSI",  "Qf",     "TimeUS,RXRSSI", "s-", "F-"  }, \
     { LOG_BARO_MSG, sizeof(log_BARO), \
@@ -1405,13 +1407,13 @@ struct PACKED log_Arm_Disarm {
     { LOG_MODE_MSG, sizeof(log_Mode), \
       "MODE", "QMBB",         "TimeUS,Mode,ModeNum,Rsn", "s---", "F---" }, \
     { LOG_RFND_MSG, sizeof(log_RFND), \
-      "RFND", "QBCBB", "TimeUS,Instance,Dist,Stat,Orient", "s#m--", "F-B--" }, \
+      "RFND", "QBCBB", "TimeUS,Instance,Dist,Stat,Used", "s#m--", "F-B--" }, \
     { LOG_MAV_STATS, sizeof(log_MAV_Stats), \
       "DMS", "IIIIIBBBBBBBBB",         "TimeMS,N,Dp,RT,RS,Fa,Fmn,Fmx,Pa,Pmn,Pmx,Sa,Smn,Smx", "s-------------", "C-------------" }, \
     { LOG_BEACON_MSG, sizeof(log_Beacon), \
       "BCN", "QBBfffffff",  "TimeUS,Health,Cnt,D0,D1,D2,D3,PosX,PosY,PosZ", "s--mmmmmmm", "F--BBBBBBB" }, \
     { LOG_PROXIMITY_MSG, sizeof(log_Proximity), \
-      "PRX", "QBfffffffffff", "TimeUS,Health,D0,D45,D90,D135,D180,D225,D270,D315,DUp,CAn,CDis", "s-mmmmmmmmmhm", "F-00000000000" }, \
+      "PRX", "QBfffffffffff", "TimeUS,Used,D0,D45,D90,D135,D180,D225,D270,D315,DUp,CAn,CDis", "s-mmmmmmmmmhm", "F-00000000000" }, \
     { LOG_PERFORMANCE_MSG, sizeof(log_Performance),                     \
       "PM",  "QHHIIHIIIIII", "TimeUS,NLon,NLoop,MaxT,Mem,Load,IntE,IntEC,SPIC,I2CC,I2CI,ExUS", "s---b%-----s", "F---0A-----F" }, \
     { LOG_SRTL_MSG, sizeof(log_SRTL), \
@@ -1676,7 +1678,7 @@ enum LogMessages : uint8_t {
     LOG_PARAMETER_MSG,
     LOG_GPS_MSG,
     LOG_GPS2_MSG,
-    LOG_GPSB_MSG,
+    LOG_GPS3_MSG,
     LOG_IMU_MSG,
     LOG_MESSAGE_MSG,
     LOG_RCIN_MSG,
@@ -1758,7 +1760,7 @@ enum LogMessages : uint8_t {
     LOG_RPM_MSG,
     LOG_GPA_MSG,
     LOG_GPA2_MSG,
-    LOG_GPAB_MSG,
+    LOG_GPA3_MSG,
     LOG_RFND_MSG,
     LOG_BAR3_MSG,
     LOG_MAV_STATS,

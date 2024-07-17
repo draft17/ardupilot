@@ -484,6 +484,10 @@ private:
     // Updated with the fast loop
     float G_Dt;
 
+	// YIG-ADD : AVOID_AUTO
+	autopilot_yaw_mode save_auto_yaw_mode;
+	//
+
     // Inertial Navigation
     AP_InertialNav_NavEKF inertial_nav;
 
@@ -677,6 +681,7 @@ private:
     void ten_hz_logging_loop();
     void twentyfive_hz_logging();
     void three_hz_loop();
+    void ooo_hz_loop();
     void one_hz_loop();
     void update_GPS(void);
     void init_simple_bearing();
@@ -904,7 +909,8 @@ private:
     void init_ardupilot();
     void startup_INS_ground();
     void update_dynamic_notch();
-    bool position_ok() const;
+    //bool position_ok() const;
+    bool position_ok();
     bool ekf_position_ok() const;
     bool optflow_position_ok() const;
 	bool ekf_alt_ok() const; // YIG-ADD

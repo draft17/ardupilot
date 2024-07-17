@@ -679,7 +679,7 @@ void AP_GPS::update_instance(uint8_t instance)
     bool result = drivers[instance]->read();
     uint32_t tnow = AP_HAL::millis();
 
-#if 1 // YIG-DIAG
+#if 0 // YIG-DIAG
 	if((AP_Notify::diag_status.gps_failed_insert[0] && instance == 0) ||
 	   (AP_Notify::diag_status.gps_failed_insert[1] && instance == 1) ||
 	   (AP_Notify::diag_status.gps_failed_insert[2] && instance == 2))
@@ -995,6 +995,17 @@ void AP_GPS::send_mavlink_gps_raw(mavlink_channel_t chan)
     static uint32_t last_send_time_ms[MAVLINK_COMM_NUM_BUFFERS];
 	static uint32_t gps_3rd=0;
 
+#if 0 // YIG-ADD
+	if(AP_Notify::diag_status.gps_failed_insert[0] && !AP_Notify::diag_status.gps_failed_insert[1] && !AP_Notify::diag_status.gps_failed_insert[2])
+	{
+		if(inst == 0) return;
+	}
+	else if(AP_Notify::diag_status.gps_failed_insert[0] && AP_Notify::diag_status.gps_failed_insert[1] && !AP_Notify::diag_status.gps_failed_insert[2])
+	{
+		if(inst == 0 || inst == 1) return;
+	}
+#endif
+
 	// YIG-ADD
 	//if(primary_instance == 0) 
 	{
@@ -1020,6 +1031,10 @@ void AP_GPS::send_mavlink_gps_raw(mavlink_channel_t chan)
     horizontal_accuracy(0, hacc);
     vertical_accuracy(0, vacc);
     speed_accuracy(0, sacc);
+#if 1 // YIG
+	if(!AP_Notify::diag_status.gps_failed_insert[0])
+	{
+#endif
     mavlink_msg_gps_raw_int_send(
         chan,
         //last_fix_time_ms(0)*(uint64_t)1000,	//YIG-CHECK
@@ -1038,6 +1053,9 @@ void AP_GPS::send_mavlink_gps_raw(mavlink_channel_t chan)
         vacc * 1000,          // one-sigma standard deviation in mm
         sacc * 1000,          // one-sigma standard deviation in mm/s
         0);                   // TODO one-sigma heading accuracy standard deviation
+#if 1 // YIG
+	}
+#endif
 
 
 	}
@@ -1071,6 +1089,7 @@ void AP_GPS::send_mavlink_gps_raw(mavlink_channel_t chan)
 		horizontal_accuracy(2, hacc);
 		vertical_accuracy(2, vacc);
 		speed_accuracy(2, sacc);
+
 		mavlink_msg_gps_raw_int_send(
 				chan,
 				last_fix_time_ms(2)*(uint64_t)1000,	//YIG-CHECK
@@ -1108,6 +1127,12 @@ void AP_GPS::send_mavlink_gps2_raw(mavlink_channel_t chan)
     last_send_time_ms[chan] = last_message_time_ms(1);
 
     const Location &loc = location(1);
+
+#if 1 // YIG
+	if(!AP_Notify::diag_status.gps_failed_insert[1])
+	{
+#endif
+
     mavlink_msg_gps2_raw_send(
         chan,
         last_fix_time_ms(1)*(uint64_t)1000,
@@ -1122,6 +1147,9 @@ void AP_GPS::send_mavlink_gps2_raw(mavlink_channel_t chan)
         num_sats(1),
         state[1].rtk_num_sats,
         state[1].rtk_age_ms);
+#if 1
+	}
+#endif
 }
 #endif // GPS_MAX_RECEIVERS
 
@@ -1130,6 +1158,19 @@ void AP_GPS::send_mavlink_gps_rtk(mavlink_channel_t chan, uint8_t inst)
     if (inst >= GPS_MAX_RECEIVERS) {
         return;
     }
+
+#if 1 // YIG-ADD
+	if (inst == 1 || inst == 2) return; // No RTK-GPS
+
+	if(AP_Notify::diag_status.gps_failed_insert[0] && !AP_Notify::diag_status.gps_failed_insert[1] && !AP_Notify::diag_status.gps_failed_insert[2])
+	{
+		if(inst == 0) return;
+	}
+	else if(AP_Notify::diag_status.gps_failed_insert[0] && AP_Notify::diag_status.gps_failed_insert[1] && !AP_Notify::diag_status.gps_failed_insert[2])
+	{
+		if(inst == 0 || inst == 1) return;
+	}
+#endif
     if (drivers[inst] != nullptr && drivers[inst]->supports_mavlink_gps_rtk_message()) {
         drivers[inst]->send_mavlink_gps_rtk(chan);
     }

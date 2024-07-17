@@ -427,7 +427,7 @@ int16_t AP_MotorsMulticopter::output_to_pwm(float actuator)
 
 #if 0 // YIG-IMSI : For GTB
 	//if(pwm_output > 1550) pwm_output = 1550;
-	if(pwm_output > 1600) pwm_output = 1600;
+	if(pwm_output > 1100) pwm_output = 1100;
 #endif
 
     return pwm_output;
@@ -689,8 +689,10 @@ void AP_MotorsMulticopter::output_logic()
         }
 
 		// YIG-ADD :: for Motor boost
-        if (_thrust_boost && AP_Notify::diag_status.motor_status_failed) {
-            _thrust_boost_ratio = 1.0f;
+        //if (_thrust_boost && AP_Notify::diag_status.motor_status_failed) {
+        if (AP_Notify::diag_status.motor_status_failed) {
+            _thrust_boost_ratio = 0.2f;
+            //_thrust_boost_ratio = 1.0f;
 		}
 		//
 

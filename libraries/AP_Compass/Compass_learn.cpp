@@ -7,6 +7,7 @@
 
 #include "Compass_learn.h"
 #include <GCS_MAVLink/GCS.h>
+#include <AP_Notify/AP_Notify.h>
 
 #include <stdio.h>
 
@@ -26,6 +27,7 @@ CompassLearn::CompassLearn(Compass &_compass) :
             compass.set_and_save_scale_factor(i, 0.0);
         }
     }
+	compass_loop_time_1 = AP_HAL::millis();
 }
 
 /*
@@ -132,6 +134,14 @@ void CompassLearn::update(void)
             Vector3f new_offsets = compass.get_offsets(i) + (field_primary - field2);
             compass.set_offsets(i, new_offsets);
         }
+
+#if 1 // YIG-ADD
+		if((AP_HAL::millis() - compass_loop_time_1) > 2000)
+		{
+            gcs().send_text(MAV_SEVERITY_INFO, "Flight-Learn: %ld %4.0f %4.0f", num_samples, best_error, worst_error);
+			compass_loop_time_1 = AP_HAL::millis();
+		}
+#endif
 
         // stop updating the offsets once converged
         if (num_samples > 30 && best_error < 50 && worst_error > 65) {

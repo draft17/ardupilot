@@ -16,6 +16,8 @@
 #include <AP_HAL/AP_HAL.h>
 #include "AP_Proximity_MAV.h"
 #include <AP_SerialManager/AP_SerialManager.h>
+#include <AP_Notify/AP_Notify.h> // YIG-ADD
+#include <GCS_MAVLink/GCS.h> // YIG-ADD
 #include <ctype.h>
 #include <stdio.h>
 
@@ -30,8 +32,10 @@ void AP_Proximity_MAV::update(void)
     if ((_last_update_ms == 0 || (AP_HAL::millis() - _last_update_ms > PROXIMITY_MAV_TIMEOUT_MS)) &&
         (_last_upward_update_ms == 0 || (AP_HAL::millis() - _last_upward_update_ms > PROXIMITY_MAV_TIMEOUT_MS))) {
         set_status(AP_Proximity::Status::NoData);
+		AP_Notify::diag_status.lidar_failed[0] = true; // YIG-ADD
     } else {
         set_status(AP_Proximity::Status::Good);
+		AP_Notify::diag_status.lidar_failed[0] = false;
     }
 }
 
@@ -52,6 +56,7 @@ void AP_Proximity_MAV::handle_msg(const mavlink_message_t &msg)
         mavlink_distance_sensor_t packet;
         mavlink_msg_distance_sensor_decode(&msg, &packet);
 
+#if 0
         // store distance to appropriate sector based on orientation field
         if (packet.orientation <= MAV_SENSOR_ROTATION_YAW_315) {
             uint8_t sector = packet.orientation;
@@ -63,6 +68,27 @@ void AP_Proximity_MAV::handle_msg(const mavlink_message_t &msg)
             _last_update_ms = AP_HAL::millis();
             update_boundary_for_sector(sector, true);
         }
+#else	// jhkang - CHG
+		// store distance to appropriate sector based on orientation field
+		uint8_t sector = (packet.current_distance / 100) -1;
+		_angle[sector] = sector * 45;
+		_distance[sector] = (packet.max_distance/100)*100;
+		_distance[sector] += packet.min_distance/100;
+		_distance[sector] /= 100;
+
+		_distance_min = 100/100;		// 1m = 100cm
+		_distance_max = 12000/100;		// 120m = 12000cm
+
+		_distance_valid[sector] = _distance[sector] <= _distance_max && _distance[sector] >=_distance_min;
+		_last_update_ms = AP_HAL::millis();
+		update_boundary_for_sector(sector, true);
+
+		if(AP_HAL::millis() - _dist_loop_time > 10000)
+		{
+			gcs().send_text(MAV_SEVERITY_INFO, "3D-LiDAR %d  %4.0f", sector, _distance[sector]);
+			_dist_loop_time = AP_HAL::millis();
+		}
+#endif
 
         // store upward distance
         if (packet.orientation == MAV_SENSOR_ROTATION_PITCH_90) {

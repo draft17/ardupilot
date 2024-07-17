@@ -36,4 +36,6 @@ private:
     // upward distance support
     uint32_t _last_upward_update_ms;    // system time of last update distance
     float _distance_upward;             // upward distance in meters
+
+	uint32_t _dist_loop_time = AP_HAL::millis();
 };

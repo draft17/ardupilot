@@ -42,8 +42,10 @@ public:
      * Like #transfer(), but both @send and @recv buffers are transmitted at
      * the same time: because of this they need to be of the same size.
      */
-    virtual bool transfer_fullduplex(const uint8_t *send, uint8_t *recv,
-                                     uint32_t len) = 0;
+
+	// YIG-CHG
+    virtual bool transfer_fullduplex(const uint8_t *send, uint8_t *recv, uint32_t len) override = 0;
+	//
 
     /* 
      *  send N bytes of clock pulses without taking CS. This is used

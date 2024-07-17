@@ -279,11 +279,19 @@ static void main_loop()
 		//simple method to rest watchdog functionality
 		if (AP_Notify::diag_status.deadlock_insert) 
 		{
+			/*
+			if (AP_Logger::get_singleton()) {
+	          AP::logger().StopLogging(); 
+			}
+			*/
+#if 0 // YIG-IMSI : DUAL-NoACTION
 			AP_Notify::diag_status.deadlock_insert = false;
+
 			AP_Notify::diag_status._pat_time = AP_HAL::millis();
 
-			gcs().send_text(MAV_SEVERITY_CRITICAL, "Endless loop");
+			gcs().send_text(MAV_SEVERITY_CRITICAL, "deadlock triggered");
 			while ((AP_HAL::millis() - AP_Notify::diag_status._pat_time) < 2000);
+#endif
 		}
 #endif
 

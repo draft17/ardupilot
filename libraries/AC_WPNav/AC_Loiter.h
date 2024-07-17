@@ -86,4 +86,8 @@ protected:
     Vector2f    _predicted_euler_rate;
     float       _brake_timer;
     float       _brake_accel;
+
+	// YIG-ADD
+	uint32_t	loop_time = 0;
+	//
 };

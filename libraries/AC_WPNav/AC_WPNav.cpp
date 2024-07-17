@@ -1,6 +1,14 @@
 #include <AP_HAL/AP_HAL.h>
 #include "AC_WPNav.h"
 
+// YIG-ADD : AVOID_AUTO
+#include <GCS_MAVLink/GCS.h>
+#include <AP_Mission/AP_Mission.h>
+#include <AP_RangeFinder/RangeFinder_Backend.h>
+#include <AP_Notify/AP_Notify.h>
+#include <AC_Fence/AC_Fence.h>
+//
+
 extern const AP_HAL::HAL& hal;
 
 const AP_Param::GroupInfo AC_WPNav::var_info[] = {
@@ -74,7 +82,8 @@ const AP_Param::GroupInfo AC_WPNav::var_info[] = {
 // Note that the Vector/Matrix constructors already implicitly zero
 // their values.
 //
-AC_WPNav::AC_WPNav(const AP_InertialNav& inav, const AP_AHRS_View& ahrs, AC_PosControl& pos_control, const AC_AttitudeControl& attitude_control) :
+AC_WPNav::AC_WPNav(AP_Mission &_mission, const AP_InertialNav& inav, const AP_AHRS_View& ahrs, AC_PosControl& pos_control, const AC_AttitudeControl& attitude_control) :
+    mission(_mission),
     _inav(inav),
     _ahrs(ahrs),
     _pos_control(pos_control),
@@ -89,6 +98,12 @@ AC_WPNav::AC_WPNav(const AP_InertialNav& inav, const AP_AHRS_View& ahrs, AC_PosC
     _flags.recalc_wp_leash = false;
     _flags.new_wp_destination = false;
     _flags.segment_type = SEGMENT_STRAIGHT;
+
+	// YIG-ADD : AVOID_AUTO
+	auto_loop_time = AP_HAL::millis();
+	avoid_loop_time = AP_HAL::millis();
+	avoid_loop_time_2 = AP_HAL::millis();
+	//
 
     // sanity check some parameters
     _wp_accel_cmss = MIN(_wp_accel_cmss, GRAVITY_MSS * 100.0f * tanf(ToRad(_attitude_control.lean_angle_max() * 0.01f)));
@@ -407,6 +422,30 @@ bool AC_WPNav::advance_wp_target_along_track(float dt)
             }
         }
 
+		// YIG-ADD : AVOID_AUTO
+		if (_flags.speed_down_bf_avoid)
+	    {
+			//float _avoid_slow_down_dist = _slow_down_dist;
+		    float _avoid_dist_to_dest;
+		    float _avoid_limited_speed_xy_cms;
+
+			_avoid_track_desired += _limited_speed_xy_cms * dt; // speed down trigger 이후 지나간 거리를 축적
+            // 멈추는 곳까지의 총거리에서 지나간 거리 빼서 잔여 거리 계산함
+            _avoid_dist_to_dest = _avoid_slow_down_dist - _avoid_track_desired;
+			// 잔여거리에 따른 속도 다운
+			_avoid_limited_speed_xy_cms = MIN(_limited_speed_xy_cms, get_slow_down_speed(_avoid_dist_to_dest, _track_accel));
+
+			_limited_speed_xy_cms = _avoid_limited_speed_xy_cms;
+
+			if(!_speed_down_leash && _limited_speed_xy_cms <= 300.0f)
+			{
+				_limited_speed_xy_cms = 200.0f;
+			    _speed_down_leash = true;
+			    gcs().send_text(MAV_SEVERITY_INFO, "_speed_down_finished");
+			}
+		}
+		//
+
         // if our current velocity is within the linear velocity range limit the intermediate point's velocity to be no more than the linear_velocity above or below our current velocity
         if (fabsf(speed_along_track) < linear_velocity) {
             _limited_speed_xy_cms = constrain_float(_limited_speed_xy_cms,speed_along_track-linear_velocity,speed_along_track+linear_velocity);
@@ -440,18 +479,226 @@ bool AC_WPNav::advance_wp_target_along_track(float dt)
     final_target.z += terr_offset;
     _pos_control.set_pos_target(final_target);
 
-    // check if we've reached the waypoint
+
+// YIG-ADD : AVOID_AUTO
+	const AP_AHRS &Ahrs = AP::ahrs();
+	float alt_above_home = _inav.get_altitude() - Ahrs.get_home().alt;
+    float nav_alt = mission.nav_loc_alt();
+	bool wp_mode = mission.mode_for_avoid();
+	float stop_distance;
+    float ang_deg, dist_m = 0, dist_pseudo_m = 0;
+	//uint16_t distance_cm = 0;
+	_pos_control.get_stopping_dist_xy(stop_distance);
+
+	if(AP_HAL::millis() - auto_loop_time > 3000)
+	{
+		if(_flags.speed_down_bf_avoid) gcs().send_text(MAV_SEVERITY_INFO, "during spd dn");
+	    gcs().send_text(MAV_SEVERITY_INFO, "[Sat %4.2f, Lspd %4.2f, Alt %4.2f]", speed_along_track, _limited_speed_xy_cms, alt_above_home);
+	    gcs().send_text(MAV_SEVERITY_INFO, "[%d, NAlt %4.2f] stop_dist %4.2f", mission.curr_nav_idx(), nav_alt, stop_distance);
+
+        auto_loop_time = AP_HAL::millis();
+    }
+
+	AP_Proximity *proximity = AP::proximity();
+    if (proximity != nullptr) 
+	{
+    	AP_Proximity &_proximity = *proximity;
+
+      	// exit immediately if proximity sensor is not present
+      	if (_proximity.get_status() == AP_Proximity::Status::Good) 
+		{
+       		// calculate maximum roll, pitch values from objects
+       		if (_proximity.get_object_angle_and_distance(0, ang_deg, dist_m)) 
+			{
+				if(AP_HAL::millis() - avoid_loop_time > 2000)
+           		{
+       				gcs().send_text(MAV_SEVERITY_INFO, "[3D-LiDAR] %4.2f", dist_m);
+               		avoid_loop_time = AP_HAL::millis();
+           		}
+			}
+		}
+	}
+
+	if(AP_Notify::diag_status.storage_failed_insert[1] == true)
+	{
+		AP_Notify::diag_status.storage_failed_insert[1] = false;
+		dist_pseudo_m = 29;
+       	gcs().send_text(MAV_SEVERITY_INFO, "(3D-LiDAR) %4.2f", dist_pseudo_m);
+	}
+
+
+	//if (wp_mode && current_alt >= 300.0f && mission.curr_nav_idx() > 2) // no takeoff
+	//if (wp_mode && alt_above_home >= 200.0f && mission.curr_nav_idx() > 1 && avoid_count == 0) // 성능평가 장소 제한
+	if (wp_mode && mission.curr_nav_idx() > 1 && avoid_count == 0) // 성능평가 장소 제한
+	{
+		float fence_distance = 200.0f;
+		AC_Avoid *_avd = AP::ac_avoid();
+		if(_avd != nullptr) fence_distance = _avd->fence_margin();
+	    //if(fence_distance <= 3000.0f) goto avoid_pass;
+
+		// home 에서부터 일정거리 이후 동작하도록
+		Vector2f current_pos_xy;
+		if(AP::ahrs().get_relative_position_NE_home(current_pos_xy))
+		{
+			float dist_from_home = current_pos_xy.length();
+			if(dist_from_home < 10.0f) goto avoid_pass;
+		}
+
+#if 1 // 3D-LiDAR
+        if (fence_distance >= 3000.0f && dist_m > 20.0f && (dist_m * 100) <= fence_distance)
+		{
+			do_avoid = 3;
+			if(!_flags.processing_avoidance)
+			{
+           		gcs().send_text(MAV_SEVERITY_CRITICAL, "Obstacle !! [%4.2f cm]", dist_m);
+			}
+		}
+#if 1
+        else if(fence_distance >= 3000.0f && (dist_m * 100) <= fence_distance + stop_distance)
+        {
+        	do_avoid = 2; // speed down
+           	if(!_flags.speed_down_bf_avoid)
+           		gcs().send_text(MAV_SEVERITY_INFO, "FAR-Obstacle (%d)", dist_m);
+        }
+#endif
+		else if (dist_pseudo_m > 25 && dist_pseudo_m * 100 <= fence_distance) // 가상 LiDAR 시험
+		{
+			do_avoid = 3;
+			if(!_flags.processing_avoidance)
+           		gcs().send_text(MAV_SEVERITY_CRITICAL, "obstacle !!");
+		}
+		else do_avoid = 0;
+
+#else // SP_LiDAR
+
+        if (distance_cm <= fence_distance)
+		{
+			do_avoid = 3;
+			if(!_flags.processing_avoidance)
+           		gcs().send_text(MAV_SEVERITY_CRITICAL, "Obstacle !! [%d cm]", distance_cm);
+		}
+        else if(distance_cm > fence_distance && distance_cm <= (fence_distance + stop_distance))
+        {
+        	do_avoid = 2; // speed down
+           	if(!_flags.speed_down_bf_avoid)
+           		gcs().send_text(MAV_SEVERITY_INFO, "FAR-Obstacle (%d)", distance_cm);
+        }
+        else do_avoid = 0;
+#endif
+
+		if(!_flags.processing_avoidance)
+	    {
+		    if(do_avoid > 2)
+		    {
+		        float avoid_distance = 0;
+		        AC_Avoid *avoid = AP::ac_avoid();
+				if(avoid != nullptr)
+		        	avoid_distance = avoid->get_margin();
+
+	            float avoid_len;
+	            float avoid_alt;
+	            float avoid_yaw;
+				
+	            //avoid_len = (avoid_distance * 10) + 5; // 직진거리
+	            avoid_len = 35; // 직진거리
+	            avoid_alt = avoid_distance; // 고도
+#if 1
+				avoid_yaw = ((_ahrs.yaw_sensor / 100) % 360); // 직진상승
+#else
+				avoid_yaw = _ahrs.yaw_sensor * 0.01f;
+				//avoid_yaw = ((get_bearing_cd(_inav.get_position(), _destination) / 100) % 360);
+#endif
+
+				if(!mission.get_avoid_flag())
+				{
+				    _flags.processing_avoidance = true;
+				    mission.assert_for_avoid(avoid_yaw, avoid_len, avoid_alt);
+				    _track_desired = _track_length + 1;
+				    _flags.speed_down_bf_avoid = false;
+				    _speed_down_leash = false;
+				    slowing_down_avoidance_time = 0;
+				    gcs().send_text(MAV_SEVERITY_CRITICAL, "[AVOID] FLIP Flight Start");
+
+					avoid_count++; // 성능평가 장소 제한
+					AP_Notify::events.autotune_failed = 1;
+				}
+			}
+			else if(do_avoid == 2) // speed down
+			{
+			    if(!_flags.speed_down_bf_avoid)
+			    {
+				    slowing_down_avoidance_time = AP_HAL::millis();
+			        _flags.speed_down_bf_avoid = true;
+			        _avoid_track_desired = 0;
+			        _speed_down_leash = false;
+			        _pos_control.get_stopping_dist_xy(_avoid_slow_down_dist);
+			        gcs().send_text(MAV_SEVERITY_INFO, "[AVOID] Speed down (%4.2f cm)", _avoid_slow_down_dist);
+			        AP_Notify::events.waypoint_complete = 1; // beep alarm
+			    }
+			}
+			else // do_avoid == 0
+		    {
+				if(_flags.speed_down_bf_avoid)
+			    {
+				    uint32_t tnow = AP_HAL::millis();
+			        if ((tnow - slowing_down_avoidance_time) > 7000)
+			        {
+				       _flags.speed_down_bf_avoid = false;
+			           slowing_down_avoidance_time = 0;
+			           _speed_down_leash = false;
+			           gcs().send_text(MAV_SEVERITY_INFO, "[Avoid] Timeout");
+			        }
+			    }
+			}
+		}
+		else  // During avoidance.
+		{
+			if(!_flags.reached_destination)
+		    {
+			    if(_track_desired >= _track_length)
+		        {
+			    	_flags.processing_avoidance = false;
+					AP_Notify::flags.parachute_release = 1;
+				    gcs().send_text(MAV_SEVERITY_INFO, "[Avoid] Finished");
+				}
+		    }
+		}
+    }
+avoid_pass:
+	//
+
+
+	// check if we've reached the waypoint
     if( !_flags.reached_destination ) {
         if( _track_desired >= _track_length ) {
             // "fast" waypoints are complete once the intermediate point reaches the destination
             if (_flags.fast_waypoint) {
                 _flags.reached_destination = true;
-            }else{ // 고도까지 확인
+				// YIG-ADD : AVOID_AUTO
+				if(_flags.processing_avoidance && !AP_Notify::events.autotune_failed)
+				{
+					gcs().send_text(MAV_SEVERITY_INFO, "[AVOID] Stop WP(Fast)");
+					//_flags.processing_avoidance = false;
+					//AP_Notify::flags.parachute_release = 1;
+				}
+				else gcs().send_text(MAV_SEVERITY_INFO, "WP(Fast) Reached");
+				//
+            }else{ // Hold 하는 웨이포인트에서는 고도까지 확인
                 // regular waypoints also require the copter to be within the waypoint radius
                 Vector3f dist_to_dest = (curr_pos - Vector3f(0,0,terr_offset)) - _destination;
                 if( dist_to_dest.length() <= _wp_radius_cm ) {
                     _flags.reached_destination = true;
+					gcs().send_text(MAV_SEVERITY_INFO, "WP(Hold) Reached");
                 }
+				// YIG-ADD : AVOID_AUTO
+				if(_flags.processing_avoidance)
+				{
+					_flags.reached_destination = true;
+					//_flags.processing_avoidance = false;
+					//AP_Notify::flags.parachute_release = 1;
+					gcs().send_text(MAV_SEVERITY_INFO, "[AVOID] Stop WP(Hold)");
+				}
+				//
             }
         }
     }

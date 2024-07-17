@@ -78,11 +78,18 @@ void Copter::update_land_detector()
         bool rangefinder_check = (!rangefinder_alt_ok() || rangefinder_state.alt_cm_filt.get() < LAND_RANGEFINDER_MIN_ALT_CM);
 
 		// YIG-ADD
-		if(AP_HAL::millis() - copter.loop_time_2 > 1500)
-        {
-        	gcs().send_text(MAV_SEVERITY_INFO,"land detect : %2d %2d %2d %2d", motor_at_lower_limit, accel_stationary, descent_rate_low, rangefinder_check);
+		if (copter.control_mode == Mode::Number::AUTO && mode_auto.mode() == Auto_Land)
+		{
+		  if(AP_HAL::millis() - copter.loop_time_2 > 500)
+          {
+        	Vector3f accel_ef = ahrs.get_accel_ef_blended();
+        	accel_ef.z += GRAVITY_MSS;
+
+        	gcs().send_text(MAV_SEVERITY_INFO,"land detect : %2d(%d) %2d %2d", motor_at_lower_limit, motors->limit.throttle_lower, accel_stationary, descent_rate_low);
+        	gcs().send_text(MAV_SEVERITY_INFO,"%4.2f %4.2f %4.2f %4.2f", attitude_control->get_throttle_mix(), accel_ef.length(), land_accel_ef_filter.get(), inertial_nav.get_velocity_z());
             copter.loop_time_2 = AP_HAL::millis();                                                                                                                                                     
-        }
+          }
+		}
 
 #if 0 // YIG-ADD for Jawoldo
         if (!motor_at_lower_limit && (accel_stationary && descent_rate_low && rangefinder_check)) 

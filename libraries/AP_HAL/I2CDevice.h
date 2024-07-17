@@ -40,6 +40,10 @@ public:
     virtual bool transfer(const uint8_t *send, uint32_t send_len,
                           uint8_t *recv, uint32_t recv_len) override = 0;
 
+	// YIG-ADD
+    virtual bool transfer_fullduplex(const uint8_t *send, uint8_t *recv, uint32_t len) override = 0;
+	//
+
     /*
      * Read location from device multiple times, advancing the buffer each
      * time

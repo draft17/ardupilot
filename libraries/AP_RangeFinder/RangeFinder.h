@@ -145,6 +145,7 @@ public:
     // any sensor which can current supply it
     uint16_t distance_cm_orient(enum Rotation orientation) const;
 	// YIG-ADD
+    void distance_cm_set_orient(enum Rotation orientation, uint16_t dist) const;
     uint16_t left_distance_cm_orient(enum Rotation orientation) const;
     uint16_t right_distance_cm_orient(enum Rotation orientation) const;
 	//

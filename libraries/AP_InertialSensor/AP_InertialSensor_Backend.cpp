@@ -149,7 +149,7 @@ void AP_InertialSensor_Backend::_notify_new_gyro_raw_sample(uint8_t instance,
                                                             const Vector3f &gyro,
                                                             uint64_t sample_us)
 {
-#if 1 // YIG-ADD : DIAGNOSIS TEST from GCS
+#if 0 // YIG-ADD : DIAGNOSIS TEST from GCS
 	if((AP_Notify::diag_status.gyro_failed_insert[0] && instance == 0) ||
 	   (AP_Notify::diag_status.gyro_failed_insert[1] && instance == 1) ||
 	   (AP_Notify::diag_status.gyro_failed_insert[2] && instance == 2))
@@ -335,7 +335,7 @@ void AP_InertialSensor_Backend::_notify_new_accel_raw_sample(uint8_t instance,
                                                              uint64_t sample_us,
                                                              bool fsync_set)
 {
-#if 1 // YIG-ADD : DIAGNOSIS TEST from GCS
+#if 0 // YIG-ADD : DIAGNOSIS TEST from GCS
 	if((AP_Notify::diag_status.accel_failed_insert[0] && instance == 0) ||
 	   (AP_Notify::diag_status.accel_failed_insert[1] && instance == 1) ||
 	   (AP_Notify::diag_status.accel_failed_insert[2] && instance == 2))

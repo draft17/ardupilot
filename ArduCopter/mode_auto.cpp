@@ -37,6 +37,12 @@ bool ModeAuto::init(bool ignore_checks)
             auto_yaw.set_mode(AUTO_YAW_HOLD);
         }
 
+		// YIG-ADD : AVOID_AUTO
+		copter.save_auto_yaw_mode = AUTO_YAW_NONE; // clear
+		wp_nav->processing_avoidance_clear();
+		gcs().send_text(MAV_SEVERITY_INFO, "Processing_avoidance_clear");
+		//
+
         // initialise waypoint and spline controller
         wp_nav->wp_and_spline_init();
 
@@ -47,6 +53,7 @@ bool ModeAuto::init(bool ignore_checks)
         mission.start_or_resume();
         return true;
     } else {
+		gcs().send_text(MAV_SEVERITY_INFO, "auto init failed %d %d", mission.num_commands(), ignore_checks);
         return false;
     }
 }
@@ -1119,6 +1126,30 @@ void ModeAuto::do_nav_wp(const AP_Mission::Mission_Command& cmd)
 {
     Location target_loc = loc_from_cmd(cmd);
 
+	// YIG-ADD : AVOID_AUTO
+	if(mission.get_avoid_flag()) 
+	{
+		if (target_loc.alt == 0) 
+		{
+#if 0
+          	int32_t curr_alt;
+          	if (curr_loc.get_alt_cm(target_loc.get_alt_frame(), curr_alt)) {
+              	target_loc.set_alt_cm(curr_alt, target_loc.get_alt_frame());
+          	} else {
+              	// default to current altitude as alt-above-home
+              	target_loc.set_alt_cm(curr_loc.alt, curr_loc.get_alt_frame());
+          	}
+#endif
+            target_loc.set_alt_cm(copter.current_loc.alt, copter.current_loc.get_alt_frame());
+      	}
+
+		if(target_loc.alt < 100.0f) target_loc.alt = 100.0f;
+
+		mission.location_for_avoid(target_loc);
+		gcs().send_text(MAV_SEVERITY_INFO, "[AVOID] Create avoid waypoint");
+	}
+	//
+
     // this will be used to remember the time in millis after we reach or pass the WP.
     loiter_time = 0;
     // this is the delay, stored in seconds
@@ -1821,6 +1852,15 @@ bool ModeAuto::verify_nav_wp(const AP_Mission::Mission_Command& cmd)
         gcs().send_text(MAV_SEVERITY_INFO, "Reached command #%i",cmd.index);
         return true;
     }
+
+	// YIG-ADD : AVOID_AUTO
+	if(mission.get_avoid_flag())
+	{
+		AP_Notify::events.waypoint_complete = 1;
+		//gcs().send_text(MAV_SEVERITY_INFO, "[AVOID] Reached command #%i", cmd.index);
+		return true;
+	}
+
     return false;
 }
 

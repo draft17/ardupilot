@@ -110,7 +110,7 @@ void AP_Compass_Backend::accumulate_sample(Vector3f &field, uint8_t instance,
                                            uint32_t max_samples)
 {
 
-#if 1 // YIG-ADD : For Diagnosis Test From GCS
+#if 0 // YIG-ADD : For Diagnosis Test From GCS
 	if((AP_Notify::diag_status.compass_failed_insert[0] && instance == 0) ||
 	   (AP_Notify::diag_status.compass_failed_insert[1] && instance == 1) ||
 	   (AP_Notify::diag_status.compass_failed_insert[2] && instance == 2))

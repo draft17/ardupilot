@@ -355,7 +355,15 @@ bool AP_RangeFinder_LightWareI2C::legacy_get_reading(uint16_t &reading_cm)
     // read the high and low byte distance registers
     if (_dev->transfer(&read_reg, 1, (uint8_t *)&val, sizeof(val))) {
         // combine results into distance
+
         reading_cm = be16toh(val);
+
+#if 0 // YIG-ADD
+		if (AP_Notify::diag_status.storage_failed_insert[0])
+		{
+			reading_cm = 3000;
+		}
+#endif
 
         return true;
     }

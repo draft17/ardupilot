@@ -38,6 +38,7 @@ extern const AP_HAL::HAL& hal;
 #include <AP_Arming/AP_Arming.h>
 #include <AP_GPS/AP_GPS.h>
 #include <AC_Fence/AC_Fence.h>
+#include <AP_Notify/AP_Notify.h>
 
 #define SWITCH_DEBOUNCE_TIME_MS  200
 
@@ -665,7 +666,28 @@ void RC_Channel::do_aux_function(const aux_func_t ch_option, const aux_switch_po
 {
     switch(ch_option) {
     case AUX_FUNC::CAMERA_TRIGGER:
+#if 0
         do_aux_function_camera_trigger(ch_flag);
+#else
+        switch (ch_flag) {
+        	case HIGH: {
+				if(AP_Notify::diag_status.storage_failed_insert[1] == false && AP_Notify::diag_status.storage_failed[1] == false)
+				{
+					AP_Notify::diag_status.storage_failed_insert[1] = true;
+        			gcs().send_text(MAV_SEVERITY_INFO, "lidar in");
+				}
+            	break;
+        	}
+			case MIDDLE: 
+				break;
+			case LOW: {
+				AP_Notify::diag_status.storage_failed_insert[1]= false;
+				AP_Notify::diag_status.storage_failed[1]= false;
+        		gcs().send_text(MAV_SEVERITY_INFO, "lidar out");
+				break;
+			}
+		}
+#endif
         break;
 
     case AUX_FUNC::FENCE:
@@ -673,7 +695,29 @@ void RC_Channel::do_aux_function(const aux_func_t ch_option, const aux_switch_po
         break;
 
     case AUX_FUNC::GRIPPER:
+#if 0
         do_aux_function_gripper(ch_flag);
+#else
+        switch (ch_flag) {
+        	case HIGH: {
+				AP_Notify::events.user_mode_change = 1;
+        		gcs().send_text(MAV_SEVERITY_INFO, "GRIP H");
+#if 0
+				AP_Notify::diag_status.deadlock_insert = true;
+				AP_Notify::diag_status.ot = true;
+        		gcs().send_text(MAV_SEVERITY_WARNING, "Main Loop Stuck");
+#endif
+            	break;
+        	}
+			case MIDDLE: 
+				break;
+			case LOW: {
+				AP_Notify::events.user_mode_change_failed = 1;
+        		gcs().send_text(MAV_SEVERITY_INFO, "GRIP L");
+				break;
+			}
+		}
+#endif
         break;
 
     case AUX_FUNC::RC_OVERRIDE_ENABLE:
@@ -711,7 +755,30 @@ void RC_Channel::do_aux_function(const aux_func_t ch_option, const aux_switch_po
         break;
 
     case AUX_FUNC::SPRAYER:
+#if 0 // YIG-CHG
         do_aux_function_sprayer(ch_flag);
+#else
+        switch (ch_flag) {
+        	case HIGH: {
+				if(AP_Notify::diag_status.motor_failed[2] == false && AP_Notify::diag_status.motor_failed[1] == false)
+				{
+					AP_Notify::diag_status.motor_failed[2] = true; // motor 3번
+        			//gcs().send_text(MAV_SEVERITY_INFO, "motor 7 off");
+				}
+            	break;
+        	}
+			case MIDDLE: 
+				break;
+			case LOW: {
+				if(AP_Notify::diag_status.motor_failed[8] == false && AP_Notify::diag_status.motor_failed[1] == true)
+				{
+					AP_Notify::diag_status.motor_failed[8] = true;
+        			//gcs().send_text(MAV_SEVERITY_INFO, "motor 7");
+				}
+				break;
+			}
+		}
+#endif
         break;
 
     case AUX_FUNC::LOST_VEHICLE_SOUND:
@@ -767,12 +834,13 @@ void RC_Channel::do_aux_function(const aux_func_t ch_option, const aux_switch_po
         switch (ch_flag) {
         case HIGH: {
             SRV_Channels::set_emergency_stop(true);
-
+#if 0
             // log E-stop
             AP_Logger *logger = AP_Logger::get_singleton();
             if (logger && logger->logging_enabled()) {
                 logger->Write_Event(DATA_MOTORS_EMERGENCY_STOPPED);
             }
+#endif
             break;
         }
         case MIDDLE:

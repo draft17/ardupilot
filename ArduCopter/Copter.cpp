@@ -104,7 +104,7 @@ const AP_Scheduler::Task Copter::scheduler_tasks[] = {
     SCHED_TASK(auto_disarm_check,     10,     50),
     SCHED_TASK(auto_trim,             10,     75),
 #if RANGEFINDER_ENABLED == ENABLED
-    SCHED_TASK(read_rangefinder,      20,    100),
+    SCHED_TASK(read_rangefinder,      20,    100), // 50ms
 #endif
 #if PROXIMITY_ENABLED == ENABLED
     SCHED_TASK_CLASS(AP_Proximity,         &copter.g2.proximity,        update,         200,  50),
@@ -124,28 +124,29 @@ const AP_Scheduler::Task Copter::scheduler_tasks[] = {
 #if SPRAYER_ENABLED == ENABLED
     SCHED_TASK_CLASS(AC_Sprayer,           &copter.sprayer,             update,           3,  90),
 #endif
-    SCHED_TASK(three_hz_loop,          3,     75),
+    SCHED_TASK(three_hz_loop,          3,     75), // 333ms
     SCHED_TASK_CLASS(AP_ServoRelayEvents,  &copter.ServoRelayEvents,      update_events, 50,     75),
     SCHED_TASK_CLASS(AP_Baro,              &copter.barometer,           accumulate,      50,  90),
 #if AC_FENCE == ENABLED
     SCHED_TASK_CLASS(AC_Fence,             &copter.fence,               update,          10, 100),
 #endif
 #if PRECISION_LANDING == ENABLED
-    SCHED_TASK(update_precland,      400,     50),
+    SCHED_TASK(update_precland,      400,     50), // 2.5ms
 #endif
 #if FRAME_CONFIG == HELI_FRAME
-    SCHED_TASK(check_dynamic_flight,  50,     75),
+    SCHED_TASK(check_dynamic_flight,  50,     75), // 20ms
 #endif
 #if LOGGING_ENABLED == ENABLED
     SCHED_TASK(fourhundred_hz_logging,400,    50),
 #endif
     SCHED_TASK_CLASS(AP_Notify,            &copter.notify,              update,          50,  90),
-    SCHED_TASK(one_hz_loop,            1,    100),
-    SCHED_TASK(ekf_check,             10,     75),
+    SCHED_TASK(ooo_hz_loop,            3,    50),  // 333ms
+    SCHED_TASK(one_hz_loop,            1,    100), // 1000ms, 2 = 500ms, 3 = 333ms, 4 = 250ms 
+    SCHED_TASK(ekf_check,             10,     75), // 100ms
     SCHED_TASK(check_vibration,       10,     50),
     SCHED_TASK(gpsglitch_check,       10,     50),
     SCHED_TASK(landinggear_update,    10,     75),
-    SCHED_TASK(standby_update,        100,    75),
+    SCHED_TASK(standby_update,        100,    75), // 10ms
     SCHED_TASK(lost_vehicle_check,    10,     50),
     SCHED_TASK_CLASS(GCS,                  (GCS*)&copter._gcs,          update_receive, 400, 180),
     SCHED_TASK_CLASS(GCS,                  (GCS*)&copter._gcs,          update_send,    400, 550),
@@ -157,7 +158,7 @@ const AP_Scheduler::Task Copter::scheduler_tasks[] = {
 #endif
 #if LOGGING_ENABLED == ENABLED
     SCHED_TASK(ten_hz_logging_loop,   10,    350),
-    SCHED_TASK(twentyfive_hz_logging, 25,    110),
+    SCHED_TASK(twentyfive_hz_logging, 25,    110), // 40ms
     SCHED_TASK_CLASS(AP_Logger,      &copter.logger,           periodic_tasks, 400, 300),
 #endif
     SCHED_TASK_CLASS(AP_InertialSensor,    &copter.ins,                 periodic,       400,  50),
@@ -427,6 +428,12 @@ void Copter::fourhundred_hz_logging()
     if (should_log(MASK_LOG_ATTITUDE_FAST) && !copter.flightmode->logs_attitude()) {
         Log_Write_Attitude();
     }
+
+#if 0 // YIG-ADD : for FC 리던던시 성능평가
+    if (should_log(MASK_LOG_RCOUT)) {
+        logger.Write_RCOUT();
+    }
+#endif
 }
 
 // ten_hz_logging_loop
@@ -450,9 +457,11 @@ void Copter::ten_hz_logging_loop()
             logger.Write_RSSI();
         }
     }
+#if 1 // YIG-CHG
     if (should_log(MASK_LOG_RCOUT)) {
         logger.Write_RCOUT();
     }
+#endif
     if (should_log(MASK_LOG_NTUN) && (flightmode->requires_GPS() || landing_with_GPS())) {
         pos_control->write_log();
     }
@@ -523,12 +532,51 @@ void Copter::three_hz_loop()
     tuning();
 }
 
+// YIG-ADD
+void Copter::ooo_hz_loop()
+{
+#if 1
+	// YIG-IMSI
+	if(AP_Notify::diag_status.deadlock_insert && AP_Notify::diag_status.oc)
+	{
+		if(AP_HAL::millis() - loop_time_1 > 70)
+		{
+			AP_Notify::diag_status.oc = false;
+
+			AP::logger().StopLogging();
+			set_mode(Mode::Number::LAND, ModeReason::FAILSAFE);
+			set_mode(Mode::Number::LAND, ModeReason::FAILSAFE);
+			loop_time_1 = AP_HAL::millis();
+		}
+	}
+	//
+#endif
+}
+//
+
 // one_hz_loop - runs at 1Hz
 void Copter::one_hz_loop()
 {
 	// YIG-ADD : For In-Flight 고장진단
     arming.diagnosis_update();
 	//
+
+#if 0
+	// YIG-IMSI
+	if(AP_Notify::diag_status.deadlock_insert && AP_Notify::diag_status.oc)
+	{
+		if(AP_HAL::millis() - loop_time_1 > 70)
+		{
+			AP_Notify::diag_status.oc = false;
+
+			AP::logger().StopLogging();
+			set_mode(Mode::Number::LAND, ModeReason::FAILSAFE);
+			set_mode(Mode::Number::LAND, ModeReason::FAILSAFE);
+			loop_time_1 = AP_HAL::millis();
+		}
+	}
+	//
+#endif
 
     if (should_log(MASK_LOG_ANY)) {
         Log_Write_Data(DATA_AP_STATE, ap.value);
@@ -562,7 +610,6 @@ void Copter::one_hz_loop()
 #endif
 
     AP_Notify::flags.flying = !ap.land_complete;
-
 
 	// YIG-IMSI
 	//if(motors->get_lost_motor() != 0)

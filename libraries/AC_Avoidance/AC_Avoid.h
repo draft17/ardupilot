@@ -84,6 +84,10 @@ public:
 
     static const struct AP_Param::GroupInfo var_info[];
 
+	// YIG-ADD : AVOID_AUTO
+	float fence_margin();
+	//
+
 private:
     // behaviour types (see BEHAVE parameter)
     enum BehaviourType {
@@ -95,6 +99,10 @@ private:
      * Adjusts the desired velocity for the circular fence.
      */
     void adjust_velocity_circle_fence(float kP, float accel_cmss, Vector2f &desired_vel_cms, float dt);
+
+	// YIG-ADD : AVOID_AUTO
+    float adjust_velocity_circle_fence_margin();
+	//
 
     /*
      * Adjusts the desired velocity for inclusion and exclusion polygon fences

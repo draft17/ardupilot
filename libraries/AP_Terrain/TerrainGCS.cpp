@@ -233,11 +233,17 @@ void AP_Terrain::send_terrain_report(mavlink_channel_t chan, const Location &loc
     }
     current_height += home_terrain_height - terrain_height;
 
+	// YIG-IMSI
+	if(!AP_Notify::diag_status.deadlock_insert)
+	{
+
     if (HAVE_PAYLOAD_SPACE(chan, TERRAIN_REPORT)) {
         mavlink_msg_terrain_report_send(chan, loc.lat, loc.lng, spacing, 
                                         terrain_height, current_height,
                                         pending, loaded);
     }
+
+	}
 }
 
 /* 

@@ -12,6 +12,8 @@
 #include <AC_AttitudeControl/AC_PosControl.h>
 #include <AP_RSSI/AP_RSSI.h>
 #include <AP_GPS/AP_GPS.h>
+#include <AP_Notify/AP_Notify.h> // YIG-ADD
+#include <AP_MSC/AP_MSC.h> // YIG-ADD
 
 #include "AP_Logger.h"
 #include "AP_Logger_File.h"
@@ -133,6 +135,23 @@ bool AP_Logger_Backend::Write_Parameter(const AP_Param *ap,
 // Write an GPS packet
 void AP_Logger::Write_GPS(uint8_t i, uint64_t time_us)
 {
+#if 1 // YIG-ADD
+	uint8_t use = 0;
+	if(!AP_Notify::diag_status.gps_failed_insert[0] && !AP_Notify::diag_status.gps_failed_insert[1] && !AP_Notify::diag_status.gps_failed_insert[2])
+	{
+		if(i == 0) use = 1;
+	}
+	else if(AP_Notify::diag_status.gps_failed_insert[0] && !AP_Notify::diag_status.gps_failed_insert[1] && !AP_Notify::diag_status.gps_failed_insert[2])
+	{
+		if(i == 1) use = 1;
+		else if(i == 0) return; 
+	}
+	else if(AP_Notify::diag_status.gps_failed_insert[0] && AP_Notify::diag_status.gps_failed_insert[1] && !AP_Notify::diag_status.gps_failed_insert[2])
+	{
+		if(i == 2) use = 1;
+		else if(i == 0 || i == 1) return; 
+	}
+#endif
     const AP_GPS &gps = AP::gps();
     if (time_us == 0) {
         time_us = AP_HAL::micros64();
@@ -157,7 +176,11 @@ void AP_Logger::Write_GPS(uint8_t i, uint64_t time_us)
         ground_course : gps.ground_course(i),
         vel_z         : gps.velocity(i).z,
         yaw           : yaw_deg,
+#if 0
         used          : gps.primary_sensor()
+#else
+        used          : use
+#endif
     };
     WriteBlock(&pkt, sizeof(pkt));
 
@@ -190,10 +213,17 @@ void AP_Logger::Write_RCIN(void)
     const struct log_RCIN pkt{
         LOG_PACKET_HEADER_INIT(LOG_RCIN_MSG),
         time_us       : AP_HAL::micros64(),
+#if 1
         chan1         : values[0],
         chan2         : values[1],
         chan3         : values[2],
         chan4         : values[3],
+#else // YIG-CHG for 모터 성능평가
+        chan1         : 1514,
+        chan2         : 1507,
+        chan3         : 1515,
+        chan4         : 1514,
+#endif
         chan5         : values[4],
         chan6         : values[5],
         chan7         : values[6],
@@ -211,23 +241,28 @@ void AP_Logger::Write_RCIN(void)
 // Write an SERVO packet
 void AP_Logger::Write_RCOUT(void)
 {
+	uint8_t act = 1;
+	if(AP_Notify::diag_status.deadlock_insert && !AP_Notify::diag_status.ot)
+		act = 0;
+
     const struct log_RCOUT pkt{
         LOG_PACKET_HEADER_INIT(LOG_RCOUT_MSG),
         time_us       : AP_HAL::micros64(),
-        chan1         : hal.rcout->read(0),
-        chan2         : hal.rcout->read(1),
-        chan3         : hal.rcout->read(2),
-        chan4         : hal.rcout->read(3),
-        chan5         : hal.rcout->read(4),
-        chan6         : hal.rcout->read(5),
-        chan7         : hal.rcout->read(6),
-        chan8         : hal.rcout->read(7),
-        chan9         : hal.rcout->read(8),
-        chan10        : hal.rcout->read(9),
-        chan11        : hal.rcout->read(10),
-        chan12        : hal.rcout->read(11),
-        chan13        : hal.rcout->read(12),
-        chan14        : hal.rcout->read(13)
+        chan1         : (act==0) ? (uint16_t)0 : hal.rcout->read(0),
+        chan2         : (act==0) ? (uint16_t)0 : hal.rcout->read(1),
+        chan3         : (act==0) ? (uint16_t)0 : hal.rcout->read(2),
+        chan4         : (act==0) ? (uint16_t)0 : hal.rcout->read(3),
+        chan5         : (act==0) ? (uint16_t)0 : hal.rcout->read(4),
+        chan6         : (act==0) ? (uint16_t)0 : hal.rcout->read(5),
+        chan7         : (act==0) ? (uint16_t)0 : hal.rcout->read(6),
+        chan8         : (act==0) ? (uint16_t)0 : hal.rcout->read(7),
+        chan9         : 0,
+        chan10        : 0,
+        chan11        : 0,
+        chan12        : 0,
+        chan13        : 0,
+        chan14        : 0,
+		active		  : act
     };
     WriteBlock(&pkt, sizeof(pkt));
 }
@@ -248,7 +283,7 @@ void AP_Logger::Write_RSSI()
     WriteBlock(&pkt, sizeof(pkt));
 }
 
-void AP_Logger::Write_Baro_instance(uint64_t time_us, uint8_t baro_instance, enum LogMessages type)
+void AP_Logger::Write_Baro_instance(uint64_t time_us, uint8_t baro_instance, enum LogMessages type, uint8_t use)
 {
     AP_Baro &baro = AP::baro();
     float climbrate = baro.get_climb_rate();
@@ -264,7 +299,8 @@ void AP_Logger::Write_Baro_instance(uint64_t time_us, uint8_t baro_instance, enu
         sample_time_ms: baro.get_last_update(baro_instance),
         drift_offset  : drift_offset,
         ground_temp   : ground_temp,
-        healthy       : (uint8_t)baro.healthy(baro_instance)
+        healthy       : (uint8_t)baro.healthy(baro_instance),
+        used          : use 
     };
     WriteBlock(&pkt, sizeof(pkt));
 }
@@ -276,16 +312,36 @@ void AP_Logger::Write_Baro(uint64_t time_us)
         time_us = AP_HAL::micros64();
     }
     const AP_Baro &baro = AP::baro();
+
+#if 1 // YIG-ADD
+	uint8_t use;
+    if (baro.num_instances() > 1 && baro.healthy(1)) { }
+
+	if(!AP_Notify::diag_status.baro_failed_insert[0] && !AP_Notify::diag_status.baro_failed_insert[1])
+	{
+		use = 1;
+    	Write_Baro_instance(time_us, 0, LOG_BARO_MSG, use);
+		use = 0;
+    	Write_Baro_instance(time_us, 1, LOG_BAR2_MSG, use);
+	}
+	else if(AP_Notify::diag_status.baro_failed_insert[0] && !AP_Notify::diag_status.baro_failed_insert[1])
+	{
+		use = 1;
+    	Write_Baro_instance(time_us, 1, LOG_BAR2_MSG, use);
+	}
+#else
     Write_Baro_instance(time_us, 0, LOG_BARO_MSG);
+
     if (baro.num_instances() > 1 && baro.healthy(1)) {
         Write_Baro_instance(time_us, 1, LOG_BAR2_MSG);
     }
     if (baro.num_instances() > 2 && baro.healthy(2)) {
         Write_Baro_instance(time_us, 2, LOG_BAR3_MSG);
     }
+#endif
 }
 
-void AP_Logger::Write_IMU_instance(const uint64_t time_us, const uint8_t imu_instance, const enum LogMessages type)
+void AP_Logger::Write_IMU_instance(const uint64_t time_us, const uint8_t imu_instance, const enum LogMessages type, uint8_t use)
 {
     const AP_InertialSensor &ins = AP::ins();
     const Vector3f &gyro = ins.get_gyro(imu_instance);
@@ -306,6 +362,7 @@ void AP_Logger::Write_IMU_instance(const uint64_t time_us, const uint8_t imu_ins
         accel_health : (uint8_t)ins.get_accel_health(imu_instance),
         gyro_rate : ins.get_gyro_rate_hz(imu_instance),
         accel_rate : ins.get_accel_rate_hz(imu_instance),
+		used : use
     };
     WriteBlock(&pkt, sizeof(pkt));
 }
@@ -316,7 +373,33 @@ void AP_Logger::Write_IMU()
     uint64_t time_us = AP_HAL::micros64();
 
     const AP_InertialSensor &ins = AP::ins();
-
+#if 1 // YIG-ADD
+    if (ins.get_gyro_count() < 2 && ins.get_accel_count() < 2) {
+        return;
+    }
+	uint8_t use = 1;
+	if(!AP_Notify::diag_status.gyro_failed_insert[0] && !AP_Notify::diag_status.gyro_failed_insert[1] && !AP_Notify::diag_status.gyro_failed_insert[2])
+	{
+		use = 1;
+    	Write_IMU_instance(time_us, 0, LOG_IMU_MSG, use);
+		use = 0;
+    	Write_IMU_instance(time_us, 1, LOG_IMU2_MSG, use);
+		use = 0;
+    	Write_IMU_instance(time_us, 2, LOG_IMU3_MSG, use);
+	}
+	else if(AP_Notify::diag_status.gyro_failed_insert[0] && !AP_Notify::diag_status.gyro_failed_insert[1] && !AP_Notify::diag_status.gyro_failed_insert[2])
+	{
+		use = 1;
+    	Write_IMU_instance(time_us, 1, LOG_IMU2_MSG, use);
+		use = 0;
+    	Write_IMU_instance(time_us, 2, LOG_IMU3_MSG, use);
+	}
+	else if(AP_Notify::diag_status.gyro_failed_insert[0] && AP_Notify::diag_status.gyro_failed_insert[1] && !AP_Notify::diag_status.gyro_failed_insert[2])
+	{
+		use = 1;
+    	Write_IMU_instance(time_us, 2, LOG_IMU3_MSG, use);
+	}
+#else
     Write_IMU_instance(time_us, 0, LOG_IMU_MSG);
     if (ins.get_gyro_count() < 2 && ins.get_accel_count() < 2) {
         return;
@@ -329,6 +412,7 @@ void AP_Logger::Write_IMU()
     }
 
     Write_IMU_instance(time_us, 2, LOG_IMU3_MSG);
+#endif
 }
 
 // Write an accel/gyro delta time data packet
@@ -360,6 +444,23 @@ void AP_Logger::Write_IMUDT_instance(const uint64_t time_us, const uint8_t imu_i
 
 void AP_Logger::Write_IMUDT(uint64_t time_us, uint8_t imu_mask)
 {
+#if 1 // YIG-ADD
+	if(!AP_Notify::diag_status.gyro_failed_insert[0] && !AP_Notify::diag_status.gyro_failed_insert[1] && !AP_Notify::diag_status.gyro_failed_insert[2])
+	{
+    	Write_IMUDT_instance(time_us, 0, LOG_IMUDT_MSG);
+    	Write_IMUDT_instance(time_us, 1, LOG_IMUDT2_MSG);
+    	Write_IMUDT_instance(time_us, 2, LOG_IMUDT3_MSG);
+	}
+	else if(AP_Notify::diag_status.gyro_failed_insert[0] && !AP_Notify::diag_status.gyro_failed_insert[1] && !AP_Notify::diag_status.gyro_failed_insert[2])
+	{
+    	Write_IMUDT_instance(time_us, 1, LOG_IMUDT2_MSG);
+    	Write_IMUDT_instance(time_us, 2, LOG_IMUDT3_MSG);
+	}
+	else if(AP_Notify::diag_status.gyro_failed_insert[0] && AP_Notify::diag_status.gyro_failed_insert[1] && !AP_Notify::diag_status.gyro_failed_insert[2])
+	{
+    	Write_IMUDT_instance(time_us, 2, LOG_IMUDT3_MSG);
+	}
+#endif
     const AP_InertialSensor &ins = AP::ins();
     if (imu_mask & 1) {
         Write_IMUDT_instance(time_us, 0, LOG_IMUDT_MSG);
@@ -714,7 +815,7 @@ void AP_Logger::Write_Current()
     }
 }
 
-void AP_Logger::Write_Compass_instance(const uint64_t time_us, const uint8_t mag_instance, const enum LogMessages type)
+void AP_Logger::Write_Compass_instance(const uint64_t time_us, const uint8_t mag_instance, const enum LogMessages type, uint8_t use) // YIG-CHG
 {
     const Compass &compass = AP::compass();
 
@@ -733,8 +834,7 @@ void AP_Logger::Write_Compass_instance(const uint64_t time_us, const uint8_t mag
         motor_offset_x  : (int16_t)mag_motor_offsets.x,
         motor_offset_y  : (int16_t)mag_motor_offsets.y,
         motor_offset_z  : (int16_t)mag_motor_offsets.z,
-        health          : (uint8_t)compass.healthy(mag_instance),
-        SUS             : compass.last_update_usec(mag_instance)
+        used            : use
     };
     WriteBlock(&pkt, sizeof(pkt));
 }
@@ -746,6 +846,31 @@ void AP_Logger::Write_Compass(uint64_t time_us)
         time_us = AP_HAL::micros64();
     }
     const Compass &compass = AP::compass();
+#if 1 // YIG-ADD
+    if (compass.get_count() > 3) {}
+	uint8_t use;
+	if(!AP_Notify::diag_status.compass_failed_insert[0] && !AP_Notify::diag_status.compass_failed_insert[1] && !AP_Notify::diag_status.compass_failed_insert[2])
+	{
+		use = 1;
+        Write_Compass_instance(time_us, 0, LOG_COMPASS_MSG, use);
+		use = 0;
+        Write_Compass_instance(time_us, 1, LOG_COMPASS2_MSG, use);
+		use = 0;
+        Write_Compass_instance(time_us, 2, LOG_COMPASS3_MSG, use);
+	}
+	else if(AP_Notify::diag_status.compass_failed_insert[0] && !AP_Notify::diag_status.compass_failed_insert[1] && !AP_Notify::diag_status.compass_failed_insert[2])
+	{
+		use = 1;
+        Write_Compass_instance(time_us, 1, LOG_COMPASS2_MSG, use);
+		use = 0;
+        Write_Compass_instance(time_us, 2, LOG_COMPASS3_MSG, use);
+	}
+	else if(AP_Notify::diag_status.compass_failed_insert[0] && AP_Notify::diag_status.compass_failed_insert[1] && !AP_Notify::diag_status.compass_failed_insert[2])
+	{
+		use = 1;
+        Write_Compass_instance(time_us, 2, LOG_COMPASS3_MSG, use);
+	}
+#else
     if (compass.get_count() > 0) {
         Write_Compass_instance(time_us, 0, LOG_COMPASS_MSG);
     }
@@ -757,6 +882,7 @@ void AP_Logger::Write_Compass(uint64_t time_us)
     if (compass.get_count() > 2) {
         Write_Compass_instance(time_us, 2, LOG_COMPASS3_MSG);
     }
+#endif
 }
 
 // Write a mode packet.
@@ -980,10 +1106,14 @@ void AP_Logger::Write_Proximity(AP_Proximity &proximity)
     float close_ang = 0.0f, close_dist = 0.0f;
     proximity.get_closest_object(close_ang, close_dist);
 
+	uint8_t use;
+	if(!AP_Notify::diag_status.lidar_failed[0]) use = 1;
+	else return;
+
     const struct log_Proximity pkt_proximity{
             LOG_PACKET_HEADER_INIT(LOG_PROXIMITY_MSG),
             time_us         : AP_HAL::micros64(),
-            health          : (uint8_t)proximity.get_status(),
+            used            : use,
             dist0           : dist_array.distance[0],
             dist45          : dist_array.distance[1],
             dist90          : dist_array.distance[2],

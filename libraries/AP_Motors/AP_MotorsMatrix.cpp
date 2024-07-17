@@ -159,6 +159,17 @@ void AP_MotorsMatrix::output_armed_stabilizing()
     // If thrust boost is active then do not limit maximum thrust
     throttle_thrust_max = _thrust_boost_ratio + (1.0f - _thrust_boost_ratio) * _throttle_thrust_max * compensation_gain;
 
+	//if(_thrust_boost && AP_HAL::millis() - _test_loop_timer > 2000)
+	if(AP_HAL::millis() - _test_loop_timer > 5000)
+	{
+		//gcs().send_text(MAV_SEVERITY_INFO,"%4.0f   %4.0f   %d", _thrust_boost_ratio, throttle_thrust_max, _motor_lost_index);
+		_test_loop_timer = AP_HAL::millis();
+#if 0
+    	for (i = 0; i < AP_MOTORS_MAX_NUM_MOTORS; i++)
+			gcs().send_text(MAV_SEVERITY_CRITICAL,"%d =  %4.2f", _thrust_rpyt_out[i]);
+#endif
+	}
+
     // sanity check throttle is above zero and below current limited throttle
     if (throttle_thrust <= 0.0f) {
         throttle_thrust = 0.0f;
@@ -204,7 +215,7 @@ void AP_MotorsMatrix::output_armed_stabilizing()
         if (motor_enabled[i]) {
             // calculate the thrust outputs for roll and pitch
 
-#if 1 // YIG-ADD
+#if 0 // YIG-ADD
             //if (_thrust_boost || i == _motor_lost_index)
             if (_thrust_boost && i == 5)
             	_thrust_rpyt_out[i] = roll_thrust * (_roll_factor[i] * 2) + pitch_thrust * (_pitch_factor[i] * 2);
@@ -322,7 +333,7 @@ void AP_MotorsMatrix::output_armed_stabilizing()
             thr_adj = 0.0f;
         } else if (thr_adj > 1.0f - (throttle_thrust_best_rpy + rpy_high)) {
             // Throttle can't be increased to desired value
-#if 0 // YIG-IMSI for PAV#3
+#if 0 // YIG-IMSI for PAV#3 : 고도하강 막음
             thr_adj = 1.0f - (throttle_thrust_best_rpy + rpy_high);
 #endif
             limit.throttle_upper = true;
@@ -340,16 +351,6 @@ void AP_MotorsMatrix::output_armed_stabilizing()
     const float throttle_thrust_best_plus_adj = throttle_thrust_best_rpy + thr_adj;
     // compensation_gain can never be zero
     _throttle_out = throttle_thrust_best_plus_adj / compensation_gain;
-
-	if(_thrust_boost && AP_HAL::millis() - _test_loop_timer > 2000)
-	{
-		//gcs().send_text(MAV_SEVERITY_CRITICAL,"m : %d", _motor_lost_index);
-		_test_loop_timer = AP_HAL::millis();
-#if 0
-    	for (i = 0; i < AP_MOTORS_MAX_NUM_MOTORS; i++)
-			gcs().send_text(MAV_SEVERITY_CRITICAL,"%d =  %4.2f", _thrust_rpyt_out[i]);
-#endif
-	}
 
     // check for failed motor
     check_for_failed_motor(throttle_thrust_best_plus_adj);

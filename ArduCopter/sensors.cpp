@@ -93,7 +93,7 @@ void Copter::read_rangefinder(void)
             rf_state.last_healthy_ms = now;
         }
 
-
+#if 0
 		// YIG-IMSI for GTB
 		if(copter.control_mode == Mode::Number::STABILIZE && copter.fence.get_margin() >= 3)
 		{
@@ -115,7 +115,7 @@ void Copter::read_rangefinder(void)
 			}
 	    }
 		//
-
+#endif
         // send downward facing lidar altitude and health to waypoint navigation library
         if (rf_orient == ROTATION_PITCH_270) {
             if (rangefinder_state.alt_healthy || timed_out) {

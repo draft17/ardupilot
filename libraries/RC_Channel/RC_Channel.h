@@ -213,8 +213,7 @@ protected:
     virtual void mode_switch_changed(modeswitch_pos_t new_pos) {
         // no action by default (e.g. Tracker, Sub, who do their own thing)
     };
-
-
+	
 private:
 
     // pwm is stored here

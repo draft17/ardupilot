@@ -455,6 +455,11 @@ void AP_MotorsMatrix::check_for_failed_motor(float throttle_thrust_best_plus_adj
         }
     }
 
+	// jhkang - ADD
+	if (gcs().lock_mot == true) {
+		_motor_lost_index = _hs_mot_num-1;
+	}
+
     float thrust_balance = 1.0f;
     if (rpyt_sum > 0.1f) {
         thrust_balance = rpyt_high * number_motors / rpyt_sum;
@@ -469,7 +474,8 @@ void AP_MotorsMatrix::check_for_failed_motor(float throttle_thrust_best_plus_adj
 
     // check to see if thrust boost is using more throttle than _throttle_thrust_max
     if ((_throttle_thrust_max * get_compensation_gain() > throttle_thrust_best_plus_adj) && (rpyt_high < 0.9f) && _thrust_balanced) {
-        _thrust_boost = false;
+		// jhkang-CHG
+        //_thrust_boost = false;
     }
 }
 

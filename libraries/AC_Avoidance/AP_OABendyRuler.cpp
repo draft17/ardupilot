@@ -464,6 +464,9 @@ float AP_OABendyRuler::calc_avoidance_margin(const Location &start, const Locati
 // on success returns true and updates margin
 bool AP_OABendyRuler::calc_margin_from_circular_fence(const Location &start, const Location &end, float &margin) const
 {
+	// jhkang-ADD : v4.2.2.4 ignore circular_fence
+	return false;
+
     // exit immediately if polygon fence is not enabled
     const AC_Fence *fence = AC_Fence::get_singleton();
     if (fence == nullptr) {

@@ -160,7 +160,9 @@ void Copter::thrust_loss_check()
     thrust_loss_counter++;
 
     // check if thrust loss for 1 second
-    if (thrust_loss_counter >= (THRUST_LOSS_CHECK_TRIGGER_SEC * scheduler.get_loop_rate_hz())) {
+	// jhkang-CHG
+    // if (thrust_loss_counter >= (THRUST_LOSS_CHECK_TRIGGER_SEC * scheduler.get_loop_rate_hz())) {	// jhkang-ORG
+    if ((thrust_loss_counter >= (THRUST_LOSS_CHECK_TRIGGER_SEC * scheduler.get_loop_rate_hz())) || (gcs().lock_mot == true)) {
         // reset counter
         thrust_loss_counter = 0;
         AP::logger().Write_Error(LogErrorSubsystem::THRUST_LOSS_CHECK, LogErrorCode::FAILSAFE_OCCURRED);

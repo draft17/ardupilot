@@ -6,7 +6,12 @@
 
 #include "ap_version.h"
 
-#define THISFIRMWARE "SoomVi AF-BirdControl V4.2.2.3-kill_MOTOR_rev2"
+/*
+   V4.2.2.3 - Kill Motor rev2
+   V4.2.2.4 - Ignore Circular fence in bendy-ruler
+   V4.2.2.5 - Kill Motor rev3 - immediately act thrust_boost
+*/
+#define THISFIRMWARE "SoomVi AF-BirdControl V4.2.2.5-Kill Motor rev3"
 // Enable Bendy Ruller ground speed > 3 
 
 // the following line is parsed by the autotest scripts

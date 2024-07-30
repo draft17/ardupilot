@@ -460,9 +460,9 @@ void AP_MotorsMatrix::check_for_failed_motor(float throttle_thrust_best_plus_adj
 	// jhkang - ADD
 	if (gcs().lock_mot == true) {
 		number_motors = 6;
-        rpyt_sum += _thrust_rpyt_out_filt[i];
-        if (_thrust_rpyt_out_filt[i] > rpyt_high) {
-            rpyt_high = _thrust_rpyt_out_filt[i];
+        rpyt_sum += _thrust_rpyt_out_filt[_hs_mot_num-1];
+        if (_thrust_rpyt_out_filt[_hs_mot_num-1] > rpyt_high) {
+            rpyt_high = _thrust_rpyt_out_filt[_hs_mot_num-1];
 			_motor_lost_index = _hs_mot_num-1;
 		}
 	}

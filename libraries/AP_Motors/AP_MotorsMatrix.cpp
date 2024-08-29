@@ -398,9 +398,7 @@ void AP_MotorsMatrix::output_armed_stabilizing()
             thr_adj = 0.0f;
         } else if (thr_adj > 1.0f - (throttle_thrust_best_rpy + rpy_high)) {
             // Throttle can't be increased to desired value
-#if 1	// YIG-IMSI : 고도강하 막음 111111111
             thr_adj = 1.0f - (throttle_thrust_best_rpy + rpy_high);
-#endif
             limit.throttle_upper = true;
         }
     }
@@ -457,16 +455,6 @@ void AP_MotorsMatrix::check_for_failed_motor(float throttle_thrust_best_plus_adj
         }
     }
 
-	// jhkang - ADD
-	if (gcs().lock_mot == true) {
-		number_motors = 6;
-        rpyt_sum += _thrust_rpyt_out_filt[_hs_mot_num-1];
-        if (_thrust_rpyt_out_filt[_hs_mot_num-1] > rpyt_high) {
-            rpyt_high = _thrust_rpyt_out_filt[_hs_mot_num-1];
-			_motor_lost_index = _hs_mot_num-1;
-		}
-	}
-
     float thrust_balance = 1.0f;
     if (rpyt_sum > 0.1f) {
         thrust_balance = rpyt_high * number_motors / rpyt_sum;
@@ -481,7 +469,6 @@ void AP_MotorsMatrix::check_for_failed_motor(float throttle_thrust_best_plus_adj
 
     // check to see if thrust boost is using more throttle than _throttle_thrust_max
     if ((_throttle_thrust_max * get_compensation_gain() > throttle_thrust_best_plus_adj) && (rpyt_high < 0.9f) && _thrust_balanced) {
-		// jhkang-CHG 11111111
         _thrust_boost = false;
     }
 }

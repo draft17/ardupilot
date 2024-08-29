@@ -1108,7 +1108,8 @@ public:
 
     uint8_t get_channel_from_port_number(uint8_t port_num);
 
-	bool lock_mot;		// jhkang-ADD
+	bool lock_mot;		// jhkang - ADD, motor redudancy flag
+	bool dummy_dst;		// jhkang - ADD, range finder dummy distance flag
 
 protected:
 

@@ -129,6 +129,14 @@ const AP_Param::GroupInfo AP_RangeFinder_Params::var_info[] = {
     // @User: Advanced
     AP_GROUPINFO("ORIENT", 53, AP_RangeFinder_Params, orientation, ROTATION_PITCH_270),
 
+
+    // @Param: DST_M
+    // @DisplayName: Rangefinder dummy distance
+    // @Description: dummy distance of rangefinder
+    // @Values: meter
+    // @User: Advanced
+	AP_GROUPINFO("DST_M", 54, AP_RangeFinder_Params, dummy_rng_dst, 0),
+
     AP_GROUPEND
 };
 

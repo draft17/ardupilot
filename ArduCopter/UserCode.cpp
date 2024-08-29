@@ -47,6 +47,18 @@ void Copter::userhook_SuperSlowLoop()
 void Copter::userhook_auxSwitch1(const RC_Channel::AuxSwitchPos ch_flag)
 {
     // put your aux switch #1 handler here (CHx_OPT = 47)
+	// jhkang - ADD
+	switch (ch_flag) {
+		case RC_Channel::AuxSwitchPos::LOW:
+			gcs().dummy_dst = false;
+			break;
+		case RC_Channel::AuxSwitchPos::MIDDLE:
+			gcs().dummy_dst = false;
+			break;
+		case RC_Channel::AuxSwitchPos::HIGH:
+			gcs().dummy_dst = true;
+			break;
+	}
 }
 
 void Copter::userhook_auxSwitch2(const RC_Channel::AuxSwitchPos ch_flag)

@@ -21,25 +21,20 @@ extern const AP_HAL::HAL& hal;
 void AP_Logger_Backend::Fill_Format(const struct LogStructure *s, struct log_Format &pkt)
 {
     memset(&pkt, 0, sizeof(pkt));
+#if 0	// jhkang-ORG
     pkt.head1 = HEAD_BYTE1;
     pkt.head2 = HEAD_BYTE2;
-#if 1   // jhkang-ADD
-    pkt.head3 = HEAD_BYTE3;
-    pkt.head4 = HEAD_BYTE4;
+#else   // jhkang-CHG
+    pkt.head1 = 0x37;
+    pkt.head2 = 0x28;
 #endif
     pkt.msgid = LOG_FORMAT_MSG;
     pkt.type = s->msg_type;
     pkt.length = s->msg_len;
-    // jhkang - CHG
-#if 0
-    strncpy_noterm1(pkt.name, s->name, sizeof(pkt.name));
-    strncpy_noterm1(pkt.format, s->format, sizeof(pkt.format));
-    strncpy_noterm1(pkt.labels, s->labels, sizeof(pkt.labels));
-#else
+
     strncpy_noterm(pkt.name, s->name, sizeof(pkt.name));
     strncpy_noterm(pkt.format, s->format, sizeof(pkt.format));
     strncpy_noterm(pkt.labels, s->labels, sizeof(pkt.labels));
-#endif
 }
 
 /*
@@ -48,23 +43,19 @@ void AP_Logger_Backend::Fill_Format(const struct LogStructure *s, struct log_For
 void AP_Logger_Backend::Fill_Format_Units(const struct LogStructure *s, struct log_Format_Units &pkt)
 {
     memset(&pkt, 0, sizeof(pkt));
+#if 0	// jhkang - ORG
     pkt.head1 = HEAD_BYTE1;
     pkt.head2 = HEAD_BYTE2;
-#if 1   // jhkang-ADD
-    pkt.head3 = HEAD_BYTE3;
-    pkt.head4 = HEAD_BYTE4;
+#else	// jhkang - CHG
+    pkt.head1 = 0x37;
+    pkt.head2 = 0x28;
 #endif
     pkt.msgid = LOG_FORMAT_UNITS_MSG;
     pkt.time_us = AP_HAL::micros64();
     pkt.format_type = s->msg_type;
-    // jhkang-CHG
-#if 0
-    strncpy_noterm1(pkt.units, s->units, sizeof(pkt.units));
-    strncpy_noterm1(pkt.multipliers, s->multipliers, sizeof(pkt.multipliers));
-#else
+
     strncpy_noterm(pkt.units, s->units, sizeof(pkt.units));
     strncpy_noterm(pkt.multipliers, s->multipliers, sizeof(pkt.multipliers));
-#endif
 }
 
 /*

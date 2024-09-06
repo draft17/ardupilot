@@ -412,7 +412,7 @@ bool AP_Logger_Backend::Write(const uint8_t msg_type, va_list arg_list, bool is_
     uint8_t offset = 0;
     buffer[offset++] = HEAD_BYTE1;
     buffer[offset++] = HEAD_BYTE2;
-#if 1   // jhkang - ADD
+#if 0   // jhkang - ADD
     buffer[offset++] = HEAD_BYTE3;
     buffer[offset++] = HEAD_BYTE4;
 #endif
@@ -553,7 +553,8 @@ void AP_Logger_Backend::validate_WritePrioritisedBlock(const void *pBuffer,
     }
     if (((uint8_t*)pBuffer)[0] != HEAD_BYTE1 ||
         ((uint8_t*)pBuffer)[1] != HEAD_BYTE2) {
-        AP_HAL::panic("Not passed a message");
+		// jhkang - CHG
+        //AP_HAL::panic("Not passed a message");
     }
     const uint8_t type = ((uint8_t*)pBuffer)[2];
     uint8_t type_len;

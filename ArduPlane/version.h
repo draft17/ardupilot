@@ -6,7 +6,11 @@
 
 #include "ap_version.h"
 
-#define THISFIRMWARE "SoomVi AF-BirdControl Plne V4.2.2.1"
+#define THISFIRMWARE "SoomVi AF-BirdControl Plne V4.2.2.2"
+/* 
+ *	Version inform :
+ *  SoomVi AF-BirdControl Plane V4.2.2.2 - FC log encryption, decryption 변경
+ */
 
 // the following line is parsed by the autotest scripts
 #define FIRMWARE_VERSION 4,2,2,FIRMWARE_VERSION_TYPE_OFFICIAL

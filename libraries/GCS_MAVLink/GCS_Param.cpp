@@ -20,6 +20,10 @@
 #include <AP_Logger/AP_Logger.h>
 #include <AP_BoardConfig/AP_BoardConfig.h>
 
+#include <stdio.h>
+#include <SRV_Channel/SRV_Channel.h>
+
+
 extern const AP_HAL::HAL& hal;
 
 // queue of pending parameter requests and replies
@@ -267,6 +271,23 @@ void GCS_MAVLINK::handle_param_set(const mavlink_message_t &msg)
     char key[AP_MAX_NAME_SIZE+1];
     strncpy(key, (char *)packet.param_id, AP_MAX_NAME_SIZE);
     key[AP_MAX_NAME_SIZE] = 0;
+                                                                                                                          
+#if 1 // jhkang-ADD for engine start / flameout test
+    printf("key = %s v=%f\n", packet.param_id, packet.param_value);                                                       
+    if(!strcmp(key, "MOTOR_STOP"))
+    {
+		if(static_cast<int>(packet.param_value) != 0 ) {
+            if( static_cast<int>(packet.param_value) == 1) {       // engine start
+				SRV_Channels::set_emergency_stop(true);
+                gcs().send_text(MAV_SEVERITY_INFO, "Motor E-stop! before parachute operation");
+            }
+        }
+		else {
+			printf("Parachute! packet.param_value NAN!\n");
+    	}
+		return;
+	}
+#endif
 
     // find existing param so we can get the old value
     uint16_t parameter_flags = 0;

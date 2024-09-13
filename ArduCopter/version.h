@@ -12,8 +12,9 @@
    V4.2.2.5 - Kill Motor rev3 - immediately act thrust_boost
    V4.2.2.6 - Kill Motor rev4 - rangefinder force set distance
    V4.2.2.7 - Kill Motor rev5 - FC log encryption, decryption 변경
+   V4.2.2.8 - Kill Motor rev6 - TF03 수정 & 낙하산 동작전에 MOTOR E-STOP
 */
-#define THISFIRMWARE "SoomVi AF-BirdControl V4.2.2.7-Kill Motor rev5"
+#define THISFIRMWARE "SoomVi AF-BirdControl V4.2.2.8-Kill Motor rev6"
 // Enable Bendy Ruller ground speed > 3 
 
 // the following line is parsed by the autotest scripts

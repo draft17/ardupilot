@@ -6,10 +6,11 @@
 
 #include "ap_version.h"
 
-#define THISFIRMWARE "SoomVi AF-BirdControl Plne V4.2.2.2"
+#define THISFIRMWARE "SoomVi AF-BirdControl Plane V4.2.2.3"
 /* 
  *	Version inform :
  *  SoomVi AF-BirdControl Plane V4.2.2.2 - FC log encryption, decryption 변경
+ *  SoomVi AF-BirdControl Plane V4.2.2.3 - GCS에서 set_parameter를 이용한 Motor E-STOP 구현'
  */
 
 // the following line is parsed by the autotest scripts

@@ -116,11 +116,6 @@ private:
     void adjust_velocity_exclusion_circles(float kP, float accel_cmss, Vector2f &desired_vel_cms, float dt);
 
     /*
-     * Adjusts the desired velocity for the beacon fence.
-     */
-    void adjust_velocity_beacon_fence(float kP, float accel_cmss, Vector2f &desired_vel_cms, float dt);
-
-    /*
      * Adjusts the desired velocity based on output from the proximity sensor
      */
     void adjust_velocity_proximity(float kP, float accel_cmss, Vector2f &desired_vel_cms, float dt);

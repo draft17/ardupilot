@@ -195,42 +195,6 @@ void NavEKF2::Log_Write_Quaternion(uint8_t _core, LogMessages msg_id, uint64_t t
     AP::logger().WriteBlock(&pktq1, sizeof(pktq1));
 }
 
-void NavEKF2::Log_Write_Beacon(uint64_t time_us) const
-{
-    if (AP::beacon() != nullptr) {
-        uint8_t ID;
-        float rng;
-        float innovVar;
-        float innov;
-        float testRatio;
-        Vector3f beaconPosNED;
-        float bcnPosOffsetHigh;
-        float bcnPosOffsetLow;
-        if (getRangeBeaconDebug(-1, ID, rng, innov, innovVar, testRatio, beaconPosNED, bcnPosOffsetHigh, bcnPosOffsetLow)) {
-            if (rng > 0.0f) {
-                struct log_RngBcnDebug pkt10 = {
-                    LOG_PACKET_HEADER_INIT(LOG_NKF10_MSG),
-                    time_us : time_us,
-                    ID : (uint8_t)ID,
-                    rng : (int16_t)(100*rng),
-                    innov : (int16_t)(100*innov),
-                    sqrtInnovVar : (uint16_t)(100*safe_sqrt(innovVar)),
-                    testRatio : (uint16_t)(100*constrain_float(testRatio,0.0f,650.0f)),
-                    beaconPosN : (int16_t)(100*beaconPosNED.x),
-                    beaconPosE : (int16_t)(100*beaconPosNED.y),
-                    beaconPosD : (int16_t)(100*beaconPosNED.z),
-                    offsetHigh : (int16_t)(100*bcnPosOffsetHigh),
-                    offsetLow : (int16_t)(100*bcnPosOffsetLow),
-                    posN : 0,
-                    posE : 0,
-                    posD : 0
-                };
-                AP::logger().WriteBlock(&pkt10, sizeof(pkt10));
-            }
-        }
-    }
-}
-
 void NavEKF2::Log_Write()
 {
     // only log if enabled
@@ -264,9 +228,6 @@ void NavEKF2::Log_Write()
         Log_Write_NKF4(2, LOG_NKF14_MSG, time_us);
         Log_Write_Quaternion(2, LOG_NKQ3_MSG, time_us);
     }
-
-    // write range beacon fusion debug packet if the range value is non-zero
-    Log_Write_Beacon(time_us);
 
     // log EKF timing statistics every 5s
     static uint32_t lastTimingLogTime_ms = 0;

@@ -116,7 +116,6 @@ public:
         SerialProtocol_Volz = 14,                    // Volz servo protocol
         SerialProtocol_Sbus1 = 15,
         SerialProtocol_ESCTelemetry = 16,
-        SerialProtocol_Devo_Telem = 17,
         SerialProtocol_OpticalFlow = 18,
         SerialProtocol_Robotis = 19,
         SerialProtocol_NMEAOutput = 20,

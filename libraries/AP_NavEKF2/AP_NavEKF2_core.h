@@ -624,7 +624,6 @@ private:
     // determine when to perform fusion of GPS position and  velocity measurements
     void SelectVelPosFusion();
 
-    // determine when to perform fusion of range measurements take relative to a beacon at a known NED position
     void SelectRngBcnFusion();
 
     // determine when to perform fusion of magnetometer measurements

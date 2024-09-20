@@ -38,9 +38,7 @@ extern const AP_HAL::HAL& hal;
 
 SRV_Channel *SRV_Channels::channels;
 SRV_Channels *SRV_Channels::_singleton;
-AP_Volz_Protocol *SRV_Channels::volz_ptr;
 AP_SBusOut *SRV_Channels::sbus_ptr;
-AP_RobotisServo *SRV_Channels::robotis_ptr;
 
 #if HAL_SUPPORT_RCOUT_SERIAL
 AP_BLHeli *SRV_Channels::blheli_ptr;
@@ -136,10 +134,6 @@ const AP_Param::GroupInfo SRV_Channels::var_info[] = {
     // @Units: Hz
     AP_GROUPINFO("_RATE",  18, SRV_Channels, default_rate, 50),
 
-    // @Group: _VOLZ_
-    // @Path: ../AP_Volz_Protocol/AP_Volz_Protocol.cpp
-    AP_SUBGROUPINFO(volz, "_VOLZ_",  19, SRV_Channels, AP_Volz_Protocol),
-
     // @Group: _SBUS_
     // @Path: ../AP_SBusOut/AP_SBusOut.cpp
     AP_SUBGROUPINFO(sbus, "_SBUS_",  20, SRV_Channels, AP_SBusOut),
@@ -150,10 +144,6 @@ const AP_Param::GroupInfo SRV_Channels::var_info[] = {
     AP_SUBGROUPINFO(blheli, "_BLH_",  21, SRV_Channels, AP_BLHeli),
 #endif
 
-    // @Group: _ROB_
-    // @Path: ../AP_RobotisServo/AP_RobotisServo.cpp
-    AP_SUBGROUPINFO(robotis, "_ROB_",  22, SRV_Channels, AP_RobotisServo),
-    
     AP_GROUPEND
 };
 
@@ -173,9 +163,7 @@ SRV_Channels::SRV_Channels(void)
         channels[i].ch_num = i;
     }
 
-    volz_ptr = &volz;
     sbus_ptr = &sbus;
-    robotis_ptr = &robotis;
 #if HAL_SUPPORT_RCOUT_SERIAL
     blheli_ptr = &blheli;
 #endif
@@ -236,14 +224,9 @@ void SRV_Channels::push()
 {
     hal.rcout->push();
 
-    // give volz library a chance to update
-    volz_ptr->update();
-
     // give sbus library a chance to update
     sbus_ptr->update();
 
-    // give robotis library a chance to update
-    robotis_ptr->update();
 	AP_MSC *ap_msc = AP_MSC::get_msc();
 	ap_msc->SRV_push_servos();
     

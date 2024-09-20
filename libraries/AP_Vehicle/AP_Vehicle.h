@@ -24,7 +24,6 @@
 #include <AP_Baro/AP_Baro.h>
 #include <AP_BoardConfig/AP_BoardConfig.h>     // board configuration library
 #include <AP_BoardConfig/AP_BoardConfig_CAN.h>
-#include <AP_Button/AP_Button.h>
 #include <AP_GPS/AP_GPS.h>
 #include <AP_Logger/AP_Logger.h>
 #include <AP_Notify/AP_Notify.h>                    // Notify library
@@ -121,7 +120,6 @@ protected:
     AP_Baro barometer;
     Compass compass;
     AP_InertialSensor ins;
-    AP_Button button;
     RangeFinder rangefinder;
 
     AP_RSSI rssi;

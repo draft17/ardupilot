@@ -17,7 +17,6 @@
 #include <AP_AHRS/AP_AHRS.h>     // AHRS library
 #include <AC_Fence/AC_Fence.h>         // Failsafe fence library
 #include <AP_Proximity/AP_Proximity.h>
-#include <AP_Beacon/AP_Beacon.h>
 
 #include <stdio.h>
 
@@ -94,10 +93,6 @@ void AC_Avoid::adjust_velocity(float kP, float accel_cmss, Vector2f &desired_vel
         adjust_velocity_inclusion_and_exclusion_polygons(kP, accel_cmss_limited, desired_vel_cms, dt);
         adjust_velocity_inclusion_circles(kP, accel_cmss_limited, desired_vel_cms, dt);
         adjust_velocity_exclusion_circles(kP, accel_cmss_limited, desired_vel_cms, dt);
-    }
-
-    if ((_enabled & AC_AVOID_STOP_AT_BEACON_FENCE) > 0) {
-        adjust_velocity_beacon_fence(kP, accel_cmss_limited, desired_vel_cms, dt);
     }
 
     if ((_enabled & AC_AVOID_USE_PROXIMITY_SENSOR) > 0 && _proximity_enabled) {
@@ -657,33 +652,6 @@ void AC_Avoid::adjust_velocity_exclusion_circles(float kP, float accel_cmss, Vec
             }
         }
     }
-}
-
-/*
- * Adjusts the desired velocity for the beacon fence.
- */
-void AC_Avoid::adjust_velocity_beacon_fence(float kP, float accel_cmss, Vector2f &desired_vel_cms, float dt)
-{
-    AP_Beacon *_beacon = AP::beacon();
-
-    // exit if the beacon is not present
-    if (_beacon == nullptr) {
-        return;
-    }
-
-    // get boundary from beacons
-    uint16_t num_points = 0;
-    const Vector2f* boundary = _beacon->get_boundary_points(num_points);
-    if ((boundary == nullptr) || (num_points == 0)) {
-        return;
-    }
-
-    // adjust velocity using beacon
-    float margin = 0;
-    if (AP::fence()) {
-        margin = AP::fence()->get_margin();
-    }
-    adjust_velocity_polygon(kP, accel_cmss, desired_vel_cms, boundary, num_points, true, margin, dt, true);
 }
 
 /*

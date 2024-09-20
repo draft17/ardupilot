@@ -15,7 +15,7 @@
 #include <AP_Logger/LogStructure.h>
 #include <AP_Motors/AP_Motors.h>
 #include <AP_Rally/AP_Rally.h>
-#include <AP_Beacon/AP_Beacon.h>
+//#include <AP_Beacon/AP_Beacon.h>
 #include <AP_Proximity/AP_Proximity.h>
 #include <AP_InertialSensor/AP_InertialSensor_Backend.h>
 #include <AP_Vehicle/ModeReason.h>
@@ -278,7 +278,7 @@ public:
                           const RallyLocation &rally_point);
     void Write_VisualOdom(float time_delta, const Vector3f &angle_delta, const Vector3f &position_delta, float confidence);
     void Write_AOA_SSA(AP_AHRS &ahrs);
-    void Write_Beacon(AP_Beacon &beacon);
+    //void Write_Beacon(AP_Beacon &beacon);
     void Write_Proximity(AP_Proximity &proximity);
     void Write_SRTL(bool active, uint16_t num_points, uint16_t max_points, uint8_t action, const Vector3f& point);
     void Write_OABendyRuler(bool active, float target_yaw, float margin, const Location &final_dest, const Location &oa_dest);

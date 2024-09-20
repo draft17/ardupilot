@@ -2048,10 +2048,6 @@ void GCS::setup_uarts()
             frsky = nullptr;
         }
     }
-
-#if !HAL_MINIMIZE_FEATURES
-    devo_telemetry.init();
-#endif
 }
 
 // report battery2 state

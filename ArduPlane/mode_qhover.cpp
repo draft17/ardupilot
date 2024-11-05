@@ -32,6 +32,11 @@ void ModeQHover::run()
     } else {
         quadplane.hold_hover(quadplane.get_pilot_desired_climb_rate_cms());
     }
+#if 0
+    if (!quadplane.motors->armed()) {
+        plane.mode_qhover._enter();
+    }
+#endif
 }
 
 #endif

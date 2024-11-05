@@ -1270,7 +1270,8 @@ float QuadPlane::get_pilot_desired_climb_rate_cms(void) const
  */
 void QuadPlane::init_throttle_wait(void)
 {
-    if (plane.get_throttle_input() >= 10 ||
+    //if (plane.get_throttle_input() >= 10 || jhkang - CHG
+    if (plane.get_throttle_input() >= 55 ||
         plane.is_flying()) {
         throttle_wait = false;
     } else {
@@ -1766,7 +1767,8 @@ void QuadPlane::update(void)
 
     // disable throttle_wait when throttle rises above 10%
     if (throttle_wait &&
-        (plane.get_throttle_input() > 10 ||
+        //(plane.get_throttle_input() > 10 ||
+        (plane.get_throttle_input() > 55 ||    // jhkang - CHG
          !rc().has_valid_input())) {
         throttle_wait = false;
     }
@@ -2848,7 +2850,7 @@ void QuadPlane::takeoff_controller(void)
                                                                   get_pilot_input_yaw_rate_cds() + get_weathervane_yaw_rate_cds());
 
     float vel_z = wp_nav->get_default_speed_up();
-    if (plane.control_mode == &plane.mode_guided && guided_takeoff) {
+     if (plane.control_mode == &plane.mode_guided && guided_takeoff) {
         // for guided takeoff we aim for a specific height with zero
         // velocity at that height
         Location origin;

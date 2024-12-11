@@ -1660,11 +1660,43 @@ void GCS_MAVLINK::send_raw_imu()
     const AP_InertialSensor &ins = AP::ins();
     const Compass &compass = AP::compass();
 
+	
+#if 0	// jhkang - ORG
     const Vector3f &accel = ins.get_accel(0);
     const Vector3f &gyro = ins.get_gyro(0);
+#else	// jhkang - ADD 
+	Vector3f accel;
+	Vector3f gyro;
+
+	if(!AP_Notify::diag_status.gyro_failed_insert[0]) {	// jhkang
+    	accel = ins.get_accel(0);
+    	gyro = ins.get_gyro(0);
+	}
+	else if(!AP_Notify::diag_status.gyro_failed_insert[1]) {
+    	accel = ins.get_accel(1);
+    	gyro = ins.get_gyro(1);
+	}
+	else {
+    	accel = ins.get_accel(2);
+    	gyro = ins.get_gyro(2);
+	}
+#endif
+
     Vector3f mag;
     if (compass.get_count() >= 1) {
+#if 0	// jhkang - ORG
         mag = compass.get_field(0);
+#else	// jhkang - ADD
+		if(!AP_Notify::diag_status.gyro_failed_insert[0]) {	// jhkang
+        	mag = compass.get_field(0);
+		}
+		else if(!AP_Notify::diag_status.gyro_failed_insert[1]) {
+        	mag = compass.get_field(1);
+		}
+		else {
+        	mag = compass.get_field(2);
+		}
+#endif
     } else {
         mag.zero();
     }
@@ -4483,18 +4515,24 @@ bool GCS_MAVLINK::try_send_message(const enum ap_message id)
         break;
 
     case MSG_SCALED_IMU:
-        CHECK_PAYLOAD_SIZE(SCALED_IMU);
-        send_scaled_imu(0, mavlink_msg_scaled_imu_send);
+		if(!AP_Notify::diag_status.gyro_failed_insert[0]) {	// jhkang
+			CHECK_PAYLOAD_SIZE(SCALED_IMU);
+			send_scaled_imu(0, mavlink_msg_scaled_imu_send);
+		}
         break;
 
     case MSG_SCALED_IMU2:
-        CHECK_PAYLOAD_SIZE(SCALED_IMU2);
-        send_scaled_imu(1, mavlink_msg_scaled_imu2_send);
+		if(!AP_Notify::diag_status.gyro_failed_insert[1]) {	// jhkang
+			CHECK_PAYLOAD_SIZE(SCALED_IMU2);
+			send_scaled_imu(1, mavlink_msg_scaled_imu2_send);
+		}
         break;
 
     case MSG_SCALED_IMU3:
-        CHECK_PAYLOAD_SIZE(SCALED_IMU3);
-        send_scaled_imu(2, mavlink_msg_scaled_imu3_send);
+		if(!AP_Notify::diag_status.gyro_failed_insert[2]) {	// jhkang
+			CHECK_PAYLOAD_SIZE(SCALED_IMU3);
+			send_scaled_imu(2, mavlink_msg_scaled_imu3_send);
+		}
         break;
 
     case MSG_SCALED_PRESSURE:

@@ -592,7 +592,8 @@ bool AP_Arming::hardware_safety_check(bool report)
 
       // check if safety switch has been pushed
       if (hal.util->safety_switch_state() == AP_HAL::Util::SAFETY_DISARMED) {
-          check_failed(ARMING_CHECK_SWITCH, report, "SAFETYSW :: PAV Safety Switch On");
+          //check_failed(ARMING_CHECK_SWITCH, report, "SAFETYSW :: PAV Safety Switch On");
+          check_failed(ARMING_CHECK_SWITCH, report, "SAFETYSW :: CAV Safety Switch On");
           return false;
       }
     }

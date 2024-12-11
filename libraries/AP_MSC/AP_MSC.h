@@ -117,8 +117,12 @@ public:
 
 #else // MSC_UNIX_X
 
+	/* jhkang - CHG
     uint8_t msc_spidata_tx[8];
     uint8_t msc_spidata_rx[8];
+	*/
+    uint8_t msc_spidata_tx[16];
+    uint8_t msc_spidata_rx[16];
 
     struct spitx
     {
@@ -127,6 +131,8 @@ public:
         uint32_t rpm : 12;
         uint32_t reserved : 16;
         uint32_t spiCRC : 32;
+		uint32_t reserved2 : 32;
+		uint32_t reserved3 : 32;
     } *spitxdata;
 
     struct spirx
@@ -136,6 +142,8 @@ public:
         uint32_t err : 16;
         uint32_t reserved : 1;
         uint32_t spiCRC : 32;
+		uint32_t reserved2 : 32;
+		uint32_t reserved3 : 32;
     } *spirxdata;
 
 #endif

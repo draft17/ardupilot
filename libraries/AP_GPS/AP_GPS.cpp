@@ -721,6 +721,11 @@ void AP_GPS::update_instance(uint8_t instance)
 			gcs().send_text(MAV_SEVERITY_INFO, "GPS Fail %d %d", instance, state[instance].status);
 
         }
+#if 0
+      struct {
+          uint32_t err_code;
+          uint32_t rpm;
+#endif
     } else {
         if (state[instance].uart_timestamp_ms != 0) {
             // set the timestamp for this messages based on

@@ -35,7 +35,8 @@ const AP_FWVersion AP_FWVersion::fwver{
     .middleware_hash_str = nullptr,
 #ifdef CHIBIOS_GIT_VERSION
     //.os_name = "ChibiOS",
-    .os_name = "PAV-OS",
+    //.os_name = "PAV-OS",
+    .os_name = "CAV-OS",
     .os_hash_str = CHIBIOS_GIT_VERSION,
 #else
     .os_name = nullptr,

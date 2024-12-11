@@ -172,7 +172,8 @@ void AP_MSC::SRV_send_esc(void)
 					_test_timer2 = AP_HAL::millis();
 				}
 			} else {
-				if(AP_HAL::millis() - _test_timer2 > 4000) {
+				//if(AP_HAL::millis() - _test_timer2 > 4000) {
+				if(0) {	// jhkang
 					gcs().send_text(MAV_SEVERITY_INFO, "MSC crc err %02x%02x%02x%02x %02x%02x%02x%02x	%02x%02x%02x%02x %02x%02x%02x%02x", 
 							msc_spidata_rx[0], msc_spidata_rx[1], msc_spidata_rx[2], msc_spidata_rx[3], msc_spidata_rx[4], msc_spidata_rx[5], msc_spidata_rx[6], msc_spidata_rx[7],
 							msc_spidata_rx[8], msc_spidata_rx[9], msc_spidata_rx[10], msc_spidata_rx[11], msc_spidata_rx[12], msc_spidata_rx[13], msc_spidata_rx[14], msc_spidata_rx[15]);
@@ -205,6 +206,8 @@ void AP_MSC::SRV_send_esc(void)
 				else spitxdata->reserved = 0;
 				//
                 spitxdata->spiCRC = crc_crc32(0xFFFFFFFF, msc_spidata_tx, 4);
+				spitxdata->reserved2 = 0x11223344;
+				spitxdata->reserved3 = 0x55667788;
 				memset(msc_spidata_rx, 0, sizeof(msc_spidata_rx));
 
 #if 1 // YIG-ADD : for clear SPI crc error
@@ -215,7 +218,8 @@ void AP_MSC::SRV_send_esc(void)
                 }
 
                 //_dev->transfer(msc_spidata_tx, 8, msc_spidata_rx, 8);
-                _dev->transfer_fullduplex(msc_spidata_tx, msc_spidata_rx, 8);
+                //_dev->transfer_fullduplex(msc_spidata_tx, msc_spidata_rx, 8);	// jhkang -CHG
+                _dev->transfer_fullduplex(msc_spidata_tx, msc_spidata_rx, 16);
 
                 _dev->get_semaphore()->give();
 
@@ -225,7 +229,8 @@ void AP_MSC::SRV_send_esc(void)
 						_test_timer2 = AP_HAL::millis();
 					}
 				} else {
-					if(AP_HAL::millis() - _test_timer2 > 4000) {
+					//if(AP_HAL::millis() - _test_timer2 > 4000) {
+					if(0) {	// jhkang
 						gcs().send_text(MAV_SEVERITY_INFO, "MSC crc err %02x%02x%02x%02x %02x%02x%02x%02x", 
 								msc_spidata_rx[0], msc_spidata_rx[1], msc_spidata_rx[2], msc_spidata_rx[3], msc_spidata_rx[4], msc_spidata_rx[5], msc_spidata_rx[6], msc_spidata_rx[7]);
 						_test_timer2 = AP_HAL::millis();

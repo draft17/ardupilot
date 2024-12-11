@@ -6,7 +6,8 @@
 
 #include "ap_version.h"
 
-#define THISFIRMWARE "PAV-SW V4.0.3"
+//#define THISFIRMWARE "PAV-SW V4.0.3"
+#define THISFIRMWARE "CAV-SW V4.0.3.1"
 
 // the following line is parsed by the autotest scripts
 #define FIRMWARE_VERSION 4,0,3,FIRMWARE_VERSION_TYPE_OFFICIAL

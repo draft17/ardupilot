@@ -200,15 +200,16 @@ bool Copter::check_diagnosis()
 	   (AP_Notify::diag_status.gyro_failed[0]    && AP_Notify::diag_status.gyro_failed[1]    && AP_Notify::diag_status.gyro_failed[2])    ||
 	   (AP_Notify::diag_status.accel_failed[0]   && AP_Notify::diag_status.accel_failed[1]   && AP_Notify::diag_status.accel_failed[2])   ||
 	   (AP_Notify::diag_status.compass_failed[0] && AP_Notify::diag_status.compass_failed[1] && AP_Notify::diag_status.compass_failed[2]) ||
-	   (AP_Notify::diag_status.gps_failed[0]     && AP_Notify::diag_status.gps_failed[1]     && AP_Notify::diag_status.gps_failed[2])
+	   //(AP_Notify::diag_status.gps_failed[0]     && AP_Notify::diag_status.gps_failed[1]     && AP_Notify::diag_status.gps_failed[2])
+	   (AP_Notify::diag_status.gps_failed[0]     && AP_Notify::diag_status.gps_failed[1])	// jhkang - CHG
 	  )
 	{
 		if(!AP_Notify::diag_status.fc_switch_over)
 		{
 			AP_Notify::diag_status.fc_switch_over = true;
-#if 0 // YIG-IMSI
+#if 1 // YIG-IMSI
 			msc.switch_over(0);
-			Log_Write_Event(DATA_SWITCHOVER_RELEASE);
+			Log_Write_Event(DATA_SWITCH_OVER_RELEASED);
 			gcs().send_text(MAV_SEVERITY_CRITICAL, "SWITCHOVER TO FC#2");
 #endif
 		}

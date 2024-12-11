@@ -522,7 +522,8 @@ bool GCS_MAVLINK_Copter::params_ready() const
 void GCS_MAVLINK_Copter::send_banner()
 {
     GCS_MAVLINK::send_banner();
-    send_text(MAV_SEVERITY_INFO, "PAV Frame: %s", copter.get_frame_string());
+    //send_text(MAV_SEVERITY_INFO, "PAV Frame: %s", copter.get_frame_string());
+    send_text(MAV_SEVERITY_INFO, "CAV Frame: %s", copter.get_frame_string());
 }
 
 // a RC override message is considered to be a 'heartbeat' from the ground station for failsafe purposes
@@ -1284,7 +1285,8 @@ void Copter::mavlink_delay_cb()
     }
     if (tnow - last_5s > 5000) {
         last_5s = tnow;
-        gcs().send_text(MAV_SEVERITY_INFO, "Initialising PAV SW");
+        //gcs().send_text(MAV_SEVERITY_INFO, "Initialising PAV SW");
+        gcs().send_text(MAV_SEVERITY_INFO, "Initialising CAV SW");
     }
 
     logger.EnableWrites(true);

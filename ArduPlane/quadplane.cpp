@@ -1795,6 +1795,10 @@ void QuadPlane::update(void)
             Log_Write_QControl_Tuning();
         }
     }
+	// jhkang - ADD
+	else {
+		throttle_wait = true;
+	}
 
 }
 

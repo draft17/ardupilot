@@ -27,7 +27,7 @@
   #include <AP_UAVCAN/AP_UAVCAN.h>
 
   // To be replaced with macro saying if KDECAN library is included
-  #if APM_BUILD_COPTER_OR_HELI || APM_BUILD_TYPE(APM_BUILD_ArduPlane) || APM_BUILD_TYPE(APM_BUILD_ArduSub)
+  #if APM_BUILD_COPTER_OR_HELI
     #include <AP_KDECAN/AP_KDECAN.h>
   #endif
   #include <AP_ToshibaCAN/AP_ToshibaCAN.h>

@@ -739,7 +739,8 @@ size_t Util::last_crash_dump_size() const
         return 0;
     }
     if (size == 0xFFFFFFFF) {
-        GCS_SEND_TEXT(MAV_SEVERITY_ERROR, "Crash Dump incomplete, dumping what we got!");
+		//jhkang 
+        //GCS_SEND_TEXT(MAV_SEVERITY_ERROR, "Crash Dump incomplete, dumping what we got!");
         size = stm32_crash_dump_max_size();
     }
     return size;

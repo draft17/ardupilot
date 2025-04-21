@@ -67,7 +67,7 @@
   #include <AP_Common/AP_Common.h>
 
   // To be replaced with macro saying if KDECAN library is included
-  #if APM_BUILD_COPTER_OR_HELI || APM_BUILD_TYPE(APM_BUILD_ArduPlane) || APM_BUILD_TYPE(APM_BUILD_ArduSub)
+  #if APM_BUILD_COPTER_OR_HELI
     #include <AP_KDECAN/AP_KDECAN.h>
   #endif
   #include <AP_ToshibaCAN/AP_ToshibaCAN.h>
@@ -4030,7 +4030,7 @@ MAV_RESULT GCS_MAVLINK::handle_command_preflight_can(const mavlink_command_long_
         switch (AP::can().get_driver_type(i)) {
             case AP_CANManager::Driver_Type_KDECAN: {
 // To be replaced with macro saying if KDECAN library is included
-#if APM_BUILD_COPTER_OR_HELI || APM_BUILD_TYPE(APM_BUILD_ArduPlane) || APM_BUILD_TYPE(APM_BUILD_ArduSub)
+#if APM_BUILD_COPTER_OR_HELI
                 AP_KDECAN *ap_kdecan = AP_KDECAN::get_kdecan(i);
 
                 if (ap_kdecan != nullptr) {
@@ -4044,7 +4044,7 @@ MAV_RESULT GCS_MAVLINK::handle_command_preflight_can(const mavlink_command_long_
             }
             case AP_CANManager::Driver_Type_CANTester: {
 // To be replaced with macro saying if KDECAN library is included
-#if (APM_BUILD_COPTER_OR_HELI || APM_BUILD_TYPE(APM_BUILD_ArduPlane) || APM_BUILD_TYPE(APM_BUILD_ArduSub)) && (HAL_MAX_CAN_PROTOCOL_DRIVERS > 1 && !HAL_MINIMIZE_FEATURES)
+#if (APM_BUILD_COPTER_OR_HELI) && (HAL_MAX_CAN_PROTOCOL_DRIVERS > 1 && !HAL_MINIMIZE_FEATURES)
                 CANTester *cantester = CANTester::get_cantester(i);
 
                 if (cantester != nullptr) {
@@ -5049,53 +5049,6 @@ void GCS_MAVLINK::send_generator_status() const
 
 void GCS_MAVLINK::send_water_depth() const
 {
-#if APM_BUILD_TYPE(APM_BUILD_Rover)
-    if (!HAVE_PAYLOAD_SPACE(chan, WATER_DEPTH)) {
-        return;
-    }
-
-    RangeFinder *rangefinder = RangeFinder::get_singleton();
-
-    if (rangefinder == nullptr || !rangefinder->has_orientation(ROTATION_PITCH_270)){
-        return;
-    } 
-
-    // get position
-    const AP_AHRS &ahrs = AP::ahrs();
-    Location loc;
-    IGNORE_RETURN(ahrs.get_location(loc));
-
-    for (uint8_t i=0; i<rangefinder->num_sensors(); i++) {
-        const AP_RangeFinder_Backend *s = rangefinder->get_backend(i);
-        
-        if (s == nullptr || s->orientation() != ROTATION_PITCH_270 || !s->has_data()) {
-            continue;
-        }
-
-        // get temperature
-        float temp_C;
-        if (!s->get_temp(temp_C)) {
-            temp_C = 0.0f;
-        }
-
-        const bool sensor_healthy = (s->status() == RangeFinder::Status::Good);
-
-        mavlink_msg_water_depth_send(
-            chan,
-            AP_HAL::millis(),   // time since system boot TODO: take time of measurement
-            i,                  // rangefinder instance
-            sensor_healthy,     // sensor healthy
-            loc.lat,            // latitude of vehicle
-            loc.lng,            // longitude of vehicle
-            loc.alt * 0.01f,    // altitude of vehicle (MSL)
-            ahrs.get_roll(),    // roll in radians
-            ahrs.get_pitch(),   // pitch in radians
-            ahrs.get_yaw(),     // yaw in radians
-            s->distance(),    // distance in meters
-            temp_C);            // temperature in degC
-    }
-
-#endif
 }
 
 void GCS_MAVLINK::send_uavionix_adsb_out_status() const

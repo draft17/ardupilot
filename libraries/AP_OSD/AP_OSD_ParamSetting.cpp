@@ -109,7 +109,7 @@ const AP_Param::GroupInfo AP_OSD_ParamSetting::var_info[] = {
 
 // at the cost of a little flash, we can create much better ranges and values for certain important settings
 // common labels - all strings must be upper case
-#if APM_BUILD_TYPE(APM_BUILD_ArduPlane) || APM_BUILD_COPTER_OR_HELI
+#if APM_BUILD_COPTER_OR_HELI
 
 static const char* SERIAL_PROTOCOL_VALUES[] = {
     "", "MAV", "MAV2", "FSKY_D", "FSKY_S", "GPS", "", "ALEX", "STORM", "RNG", 
@@ -137,52 +137,6 @@ static const char* SERVO_FUNCTIONS[] = {
 
 #endif
 
-#if APM_BUILD_TYPE(APM_BUILD_ArduPlane)
-
-static const char* AUX_OPTIONS[] = {
-    "NONE", "", "", "", "RTL", "", "", "", "", "CAM_TRG",
-    "", "", "", "", "", "", "AUTO", "", "", "",
-    "", "", "", "", "MIS_RST", "", "", "", "RLY", "LAND_GR",
-    "LOST_SND", "M_ESTOP", "", "", "", "RLY3", "RLY4", "", "OA_ADSB", "",
-    "", "ARM/DS", "", "INVERT", "", "", "RC_OVRD", "", "", "",
-    "", "MANUAL", "", "", "", "GUIDE", "LOIT", "", "CLR_WP", "",
-    "", "", "COMP_LRN", "", "REV_THR", "GPS_DIS", "RLY5", "RLY6", "", "",
-    "", "", "CIRCLE", "", "", "", "", "TAKEOFF", "RCAM_CTL", "RCAM_OSD",
-    "", "DSARM", "QASS3POS", "", "AIR", "GEN", "TER_AUTO", "CROW_SEL", "SOAR", "", 
-    "", "", "", "", "", "", "", "", "", "",
-    "KILLIMU1", "KILLIMU2", "CAM_TOG", "", "", "GPSYAW_DIS"
-};
-
-static const char* FLTMODES[] = {
-    "MAN", "CIRC", "STAB", "TRAIN", "ACRO", "FBWA", "FBWB", "CRUISE", "ATUNE", "", "AUTO",
-    "RTL", "LOIT", "TKOF", "ADSB", "GUID", "", "QSTAB", "QHOV", "QLOIT", "QLAND",
-    "QRTL", "QTUNE", "QACRO", "THRML", "L2QLND"
-};
-
-static const char* FS_ACT[] = {
-    "NONE", "RTL", "LAND", "TERM", "QLAND", "PARA"
-};
-
-static const char* FS_SHRT_ACTNS[] = {
-    "CRC_NOCHNGE", "CIRC", "FBWA", "DSABLE"
-};
-
-static const char* FS_LNG_ACTNS[] = {
-    "CNTNUE", "RTL", "GLIDE", "PARACHT"
-};
-
-// plane parameters
-const AP_OSD_ParamSetting::ParamMetadata AP_OSD_ParamSetting::_param_metadata[OSD_PARAM_NUM_TYPES] = {
-    { -1, AP_SerialManager::SerialProtocol_NumProtocols - 1,    1, ARRAY_SIZE(SERIAL_PROTOCOL_VALUES), SERIAL_PROTOCOL_VALUES },  // OSD_PARAM_SERIAL_PROTOCOL
-    { 0, SRV_Channel::k_nr_aux_servo_functions - 1,             1, ARRAY_SIZE(SERVO_FUNCTIONS), SERVO_FUNCTIONS },                // OSD_PARAM_SERVO_FUNCTION
-    { 0, 105, 1, ARRAY_SIZE(AUX_OPTIONS), AUX_OPTIONS },                        // OSD_PARAM_AUX_FUNCTION
-    { 0, 25, 1,  ARRAY_SIZE(FLTMODES), FLTMODES },                              // OSD_PARAM_FLIGHT_MODE
-    { 0, 5, 1,   ARRAY_SIZE(FS_ACT), FS_ACT },                                  // OSD_PARAM_FAILSAFE_ACTION
-    { 0, 3, 1,   ARRAY_SIZE(FS_SHRT_ACTNS), FS_SHRT_ACTNS },                    // OSD_PARAM_FAILSAFE_ACTION_1
-    { 0, 3, 1,   ARRAY_SIZE(FS_LNG_ACTNS), FS_LNG_ACTNS },                      // OSD_PARAM_FAILSAFE_ACTION_2
-};
-
-#elif APM_BUILD_COPTER_OR_HELI
 
 static const char* AUX_OPTIONS[] = {
     "NONE", "", "FLIP", "SIMP", "RTL", "SAV_TRM", "", "SAV_WP", "", "CAM_TRG",
@@ -229,9 +183,6 @@ const AP_OSD_ParamSetting::ParamMetadata AP_OSD_ParamSetting::_param_metadata[OS
     { 0, 5, 1,   ARRAY_SIZE(THR_FS_ACT), THR_FS_ACT },                          // OSD_PARAM_FAILSAFE_ACTION_2
 };
 
-#else
-const AP_OSD_ParamSetting::ParamMetadata AP_OSD_ParamSetting::_param_metadata[OSD_PARAM_NUM_TYPES] = {};
-#endif
 
 extern const AP_HAL::HAL& hal;
 

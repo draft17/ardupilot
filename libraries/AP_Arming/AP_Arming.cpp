@@ -52,7 +52,7 @@
   #include <AP_PiccoloCAN/AP_PiccoloCAN.h>
 
   // To be replaced with macro saying if KDECAN library is included
-  #if APM_BUILD_COPTER_OR_HELI || APM_BUILD_TYPE(APM_BUILD_ArduPlane) || APM_BUILD_TYPE(APM_BUILD_ArduSub)
+  #if APM_BUILD_COPTER_OR_HELI
     #include <AP_KDECAN/AP_KDECAN.h>
   #endif
   #include <AP_UAVCAN/AP_UAVCAN.h>
@@ -67,11 +67,7 @@
 #define AP_ARMING_ACCEL_ERROR_THRESHOLD 0.75f
 #define AP_ARMING_AHRS_GPS_ERROR_MAX    10      // accept up to 10m difference between AHRS and GPS
 
-#if APM_BUILD_TYPE(APM_BUILD_ArduPlane)
-  #define ARMING_RUDDER_DEFAULT         (uint8_t)RudderArming::ARMONLY
-#else
-  #define ARMING_RUDDER_DEFAULT         (uint8_t)RudderArming::ARMDISARM
-#endif
+#define ARMING_RUDDER_DEFAULT         (uint8_t)RudderArming::ARMDISARM
 
 extern const AP_HAL::HAL& hal;
 
@@ -443,11 +439,6 @@ bool AP_Arming::compass_checks(bool report)
             return false;
         }
         // check compass learning is on or offsets have been set
-#if !APM_BUILD_COPTER_OR_HELI && !APM_BUILD_TYPE(APM_BUILD_Blimp)
-        // check compass offsets have been set if learning is off
-        // copter and blimp always require configured compasses
-        if (!_compass.learn_offsets_enabled())
-#endif
         {
             char failure_msg[50] = {};
             if (!_compass.configured(failure_msg, ARRAY_SIZE(failure_msg))) {
@@ -995,7 +986,7 @@ bool AP_Arming::can_checks(bool report)
             switch (AP::can().get_driver_type(i)) {
                 case AP_CANManager::Driver_Type_KDECAN: {
 // To be replaced with macro saying if KDECAN library is included
-#if APM_BUILD_COPTER_OR_HELI || APM_BUILD_TYPE(APM_BUILD_ArduPlane) || APM_BUILD_TYPE(APM_BUILD_ArduSub)
+#if APM_BUILD_COPTER_OR_HELI
                     AP_KDECAN *ap_kdecan = AP_KDECAN::get_kdecan(i);
                     if (ap_kdecan != nullptr && !ap_kdecan->pre_arm_check(fail_msg, ARRAY_SIZE(fail_msg))) {
                         check_failed(ARMING_CHECK_SYSTEM, report, "KDECAN: %s", fail_msg);

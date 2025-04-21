@@ -40,9 +40,6 @@
 #include <AP_Terrain/AP_Terrain.h>
 #include <AP_RangeFinder/AP_RangeFinder.h>
 #include <AP_Vehicle/AP_Vehicle.h>
-#if APM_BUILD_TYPE(APM_BUILD_Rover)
-#include <AP_WindVane/AP_WindVane.h>
-#endif
 #include <AP_Filesystem/AP_Filesystem.h>
 
 #include <ctype.h>
@@ -1690,7 +1687,6 @@ void AP_OSD_Screen::draw_compass(uint8_t x, uint8_t y)
 
 void AP_OSD_Screen::draw_wind(uint8_t x, uint8_t y)
 {
-#if !APM_BUILD_TYPE(APM_BUILD_Rover)
     AP_AHRS &ahrs = AP::ahrs();
     WITH_SEMAPHORE(ahrs.get_semaphore());
     Vector3f v = ahrs.wind_estimate();
@@ -1703,13 +1699,6 @@ void AP_OSD_Screen::draw_wind(uint8_t x, uint8_t y)
         angle = wrap_2PI(angle + atan2f(v.y, v.x) - ahrs.yaw);
     }
     draw_speed(x + 1, y, angle, length);
-
-#else
-    const AP_WindVane* windvane = AP_WindVane::get_singleton();
-    if (windvane != nullptr) {
-        draw_speed(x + 1, y, wrap_2PI(windvane->get_apparent_wind_direction_rad() + M_PI), windvane->get_apparent_wind_speed());
-    }
-#endif
 
     backend->write(x, y, false, "%c", SYMBOL(SYM_WSPD));
 }

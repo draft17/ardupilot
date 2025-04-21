@@ -20,7 +20,7 @@
   values for example sketches
  */
 #define APM_BUILD_Rover      1
-#define APM_BUILD_ArduCopter     2
+#define APM_BUILD_Scopter     2
 #define APM_BUILD_ArduPlane      3
 #define APM_BUILD_AntennaTracker 4
 #define APM_BUILD_UNKNOWN        5
@@ -43,7 +43,7 @@
 /*
   Copter and heli share a lot of code. This macro makes it easier to check for both
 */
-#define APM_BUILD_COPTER_OR_HELI (APM_BUILD_TYPE(APM_BUILD_ArduCopter) || APM_BUILD_TYPE(APM_BUILD_Heli))
+#define APM_BUILD_COPTER_OR_HELI (APM_BUILD_TYPE(APM_BUILD_Scopter) || APM_BUILD_TYPE(APM_BUILD_Heli))
 
 #else 
 #define APM_BUILD_TYPE(type) @Invalid_use_of_APM_BUILD_TYPE

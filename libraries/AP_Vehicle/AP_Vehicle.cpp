@@ -206,7 +206,7 @@ void AP_Vehicle::setup()
     efi.init();
 #endif
 
-    gcs().send_text(MAV_SEVERITY_INFO, "ArduPilot Ready");
+    gcs().send_text(MAV_SEVERITY_INFO, "GENESIS Ready");
 }
 
 void AP_Vehicle::loop()
@@ -347,7 +347,7 @@ void AP_Vehicle::scheduler_delay_callback()
         if (AP_BoardConfig::in_config_error()) {
             gcs().send_text(MAV_SEVERITY_CRITICAL, "Config Error: fix problem then reboot");
         } else {
-            gcs().send_text(MAV_SEVERITY_INFO, "Initialising ArduPilot");
+            gcs().send_text(MAV_SEVERITY_INFO, "Initialising GENESIS");
         }
     }
 

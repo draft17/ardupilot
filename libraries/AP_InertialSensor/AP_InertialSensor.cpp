@@ -12,9 +12,7 @@
 #include <AP_BoardConfig/AP_BoardConfig.h>
 #include <AP_AHRS/AP_AHRS.h>
 #include <AP_ExternalAHRS/AP_ExternalAHRS.h>
-#if !APM_BUILD_TYPE(APM_BUILD_Rover)
 #include <AP_Motors/AP_Motors_Class.h>
-#endif
 
 #include "AP_InertialSensor.h"
 #include "AP_InertialSensor_BMI160.h"
@@ -51,19 +49,9 @@ extern const AP_HAL::HAL& hal;
 
 
 
-#if APM_BUILD_COPTER_OR_HELI
 #define DEFAULT_GYRO_FILTER  20
 #define DEFAULT_ACCEL_FILTER 20
 #define DEFAULT_STILL_THRESH 2.5f
-#elif APM_BUILD_TYPE(APM_BUILD_Rover)
-#define DEFAULT_GYRO_FILTER  4
-#define DEFAULT_ACCEL_FILTER 10
-#define DEFAULT_STILL_THRESH 0.1f
-#else
-#define DEFAULT_GYRO_FILTER  20
-#define DEFAULT_ACCEL_FILTER 20
-#define DEFAULT_STILL_THRESH 0.1f
-#endif
 
 #if defined(STM32H7) || defined(STM32F7)
 #define MPU_FIFO_FASTSAMPLE_DEFAULT 1
@@ -883,7 +871,7 @@ AP_InertialSensor::init(uint16_t loop_rate)
         notch.calculated_notch_freq_hz[0] = notch.params.center_freq_hz();
         notch.num_calculated_notch_frequencies = 1;
         notch.num_dynamic_notches = 1;
-#if APM_BUILD_COPTER_OR_HELI || APM_BUILD_TYPE(APM_BUILD_ArduPlane)
+#if APM_BUILD_COPTER_OR_HELI
         if (notch.params.hasOption(HarmonicNotchFilterParams::Options::DynamicHarmonic)) {
 #if HAL_WITH_DSP
         if (notch.params.tracking_mode() == HarmonicNotchDynamicMode::UpdateGyroFFT) {

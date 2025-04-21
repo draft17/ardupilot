@@ -12,9 +12,6 @@
 #include <AC_Fence/AC_Fence.h>
 #include <AP_Vehicle/AP_Vehicle.h>
 #include <GCS_MAVLink/GCS.h>
-#if APM_BUILD_TYPE(APM_BUILD_Rover)
-#include <AP_WindVane/AP_WindVane.h>
-#endif
 
 #if HAL_WITH_FRSKY_TELEM_BIDIRECTIONAL
 #include "AP_Frsky_MAVlite.h"
@@ -239,7 +236,6 @@ bool AP_Frsky_SPort_Passthrough::is_packet_ready(uint8_t idx, bool queue_empty)
         }
         break;
     case WIND:
-#if !APM_BUILD_TYPE(APM_BUILD_Rover)
     {
         float a;
         WITH_SEMAPHORE(AP::ahrs().get_semaphore());
@@ -248,12 +244,6 @@ bool AP_Frsky_SPort_Passthrough::is_packet_ready(uint8_t idx, bool queue_empty)
             packet_ready = true;
         }
     }
-#else
-    {
-        const AP_WindVane* windvane = AP_WindVane::get_singleton();
-        packet_ready = windvane != nullptr && windvane->enabled();
-    }
-#endif
         break;
     case WAYPOINT:
         {
@@ -743,7 +733,6 @@ uint32_t AP_Frsky_SPort_Passthrough::calc_terrain(void)
  */
 uint32_t AP_Frsky_SPort_Passthrough::calc_wind(void)
 {
-#if !APM_BUILD_TYPE(APM_BUILD_Rover)
     Vector3f v;
     {
         AP_AHRS &ahrs = AP::ahrs();
@@ -754,20 +743,6 @@ uint32_t AP_Frsky_SPort_Passthrough::calc_wind(void)
     uint32_t value = prep_number(roundf(wrap_360(degrees(atan2f(-v.y, -v.x))) * (1.0f/3.0f)), 2, 0);
     // wind speed in dm/s
     value |= prep_number(roundf(v.length() * 10), 2, 1) << WIND_SPEED_OFFSET;
-#else
-    const AP_WindVane* windvane = AP_WindVane::get_singleton();
-    uint32_t value = 0;
-    if (windvane != nullptr && windvane->enabled()) {
-        // true wind angle in 3 degree increments 0,360 (unsigned)
-        value = prep_number(roundf(wrap_360(degrees(windvane->get_true_wind_direction_rad())) * (1.0f/3.0f)), 2, 0);
-        // true wind speed in dm/s
-        value |= prep_number(roundf(windvane->get_true_wind_speed() * 10), 2, 1) << WIND_SPEED_OFFSET;
-        // apparent wind angle in 3 degree increments -180,180 (signed)
-        value |= prep_number(roundf(degrees(windvane->get_apparent_wind_direction_rad()) * (1.0f/3.0f)), 2, 0);
-        // apparent wind speed in dm/s
-        value |= prep_number(roundf(windvane->get_apparent_wind_speed() * 10), 2, 1) << WIND_APPARENT_SPEED_OFFSET;
-    }
-#endif
     return value;
 }
  /*

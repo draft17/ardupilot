@@ -116,6 +116,12 @@ bool AP_RangeFinder_Benewake::get_reading(float &reading_m)
         }
     }
 
+	// jhkang - ADD
+	if (gcs().dummy_dst) {
+		reading_m = get_dummy_dst();
+		return true;
+	}
+
     if (count > 0) {
         // return average distance of readings
         reading_m = (sum_cm * 0.01f) / count;

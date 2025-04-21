@@ -6,7 +6,12 @@
 
 #include "ap_version.h"
 
-#define THISFIRMWARE "2025-NavyBaseGuard-422"
+/*
+ * 2025-NavyBaseGuard-4221 - rangefinder force set distance
+ */
+
+//#define THISFIRMWARE "2025-NavyBaseGuard-422"
+#define THISFIRMWARE "2025-NavyBaseGuard-4221"
 
 // the following line is parsed by the autotest scripts
 #define FIRMWARE_VERSION 4,2,2,FIRMWARE_VERSION_TYPE_OFFICIAL

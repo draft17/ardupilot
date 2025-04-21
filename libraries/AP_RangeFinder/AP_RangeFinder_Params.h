@@ -27,4 +27,6 @@ public:
     AP_Int8  ground_clearance_cm;
     AP_Int8  address;
     AP_Int8  orientation;
+	//jhkang-ADD
+	AP_Int16 dummy_rng_dst;
 };
